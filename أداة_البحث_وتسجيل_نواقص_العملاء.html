@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صيدلية أسافرة | البحث وتسجيل نواقص العملاء</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --teal:#0f766e;
+    --teal-dark:#0b5a54;
+    --teal-light:#e6f5f3;
+    --amber:#d97706;
+    --red:#dc2626;
+    --gray-bg:#f5f7f8;
+    --border:#dbe3e2;
+    --text:#1f2a2a;
+    --muted:#6b7a79;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Tahoma, "Cairo", Arial, sans-serif;
+    background:var(--gray-bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg,var(--teal),var(--teal-dark));
+    color:#fff;
+    padding:22px 28px;
+  }
+  header h1{margin:0 0 4px 0;font-size:22px;}
+  header p{margin:0;opacity:.9;font-size:14px;}
+
+  .container{max-width:1280px;margin:0 auto;padding:20px;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+
+  .upload-zone{
+    border:2px dashed var(--teal);
+    border-radius:10px;
+    padding:28px;
+    text-align:center;
+    background:var(--teal-light);
+    cursor:pointer;
+    transition:.15s;
+  }
+  .upload-zone:hover{background:#d9efec;}
+  .upload-zone input{display:none;}
+  .upload-zone .icon{font-size:34px;margin-bottom:8px;}
+  .upload-zone .hint{font-size:12px;color:var(--muted);margin-top:6px;}
+  .file-name{margin-top:10px;font-size:13px;color:var(--teal-dark);font-weight:600;}
+
+  .summary{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .stat{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+    text-align:center;
+  }
+  .stat .num{font-size:22px;font-weight:700;color:var(--teal-dark);}
+  .stat .label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .search-wrap{position:relative;}
+  #searchInput{
+    width:100%;
+    padding:14px 16px;
+    border:2px solid var(--teal);
+    border-radius:10px;
+    font-size:16px;
+  }
+  #searchInput:focus{outline:none;border-color:var(--teal-dark);}
+
+  .suggestions{
+    position:absolute;
+    z-index:20;
+    top:calc(100% + 6px);
+    right:0;left:0;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    max-height:340px;
+    overflow:auto;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+  }
+  .sugg-item{
+    padding:10px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    border-bottom:1px solid var(--border);
+  }
+  .sugg-item:last-child{border-bottom:none;}
+  .sugg-item:hover{background:var(--teal-light);}
+  .sugg-name{font-weight:600;flex:1;text-align:right;}
+  .sugg-meta{font-size:12px;color:var(--muted);white-space:nowrap;}
+
+  .no-match-box{
+    margin-top:10px;
+    padding:14px;
+    background:#fff8e6;
+    border:1px solid #f2d492;
+    border-radius:8px;
+    text-align:center;
+  }
+  .no-match-box p{margin:0 0 10px 0;font-size:13.5px;color:#7a5b06;}
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  .toolbar input[type=text]{
+    flex:1;
+    min-width:180px;
+    padding:9px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:14px;
+  }
+  button{
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    padding:9px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    transition:.15s;
+  }
+  .btn-primary{background:var(--teal);color:#fff;}
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-secondary{background:#fff;color:var(--teal-dark);border:1px solid var(--teal);}
+  .btn-secondary:hover{background:var(--teal-light);}
+  .btn-danger{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .btn-danger:hover{background:#fde8e8;}
+  .btn-export{background:var(--amber);color:#fff;font-size:14.5px;padding:12px 22px;}
+  .btn-export:hover{background:#b45f04;}
+  .btn-export:disabled{background:#cbb8a0;cursor:not-allowed;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    position:sticky;top:0;
+    background:var(--teal-dark);
+    color:#fff;
+    padding:9px 6px;
+    font-weight:600;
+    white-space:nowrap;
+    text-align:center;
+  }
+  tbody td{
+    padding:7px;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+  }
+  tbody tr:hover{background:var(--teal-light);}
+  td.name-cell{text-align:right;font-weight:600;max-width:220px;}
+  .table-wrap{max-height:480px;overflow:auto;border:1px solid var(--border);border-radius:8px;}
+
+  input[type=number],input[type=text].cell-input{
+    padding:5px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    text-align:center;
+    width:80px;
+  }
+
+  .badge{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .badge-new{background:#fde8e8;color:var(--red);}
+  .badge-known{background:#e7f6ee;color:#15803d;}
+
+  .empty-state{text-align:center;padding:40px;color:var(--muted);}
+  footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;}
+
+  .note{
+    background:#fff8e6;
+    border:1px solid #f2d492;
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:13px;
+    color:#7a5b06;
+    margin-bottom:16px;
+    line-height:1.8;
+  }
+  .note b{color:#5c4404;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔎 صيدلية أسافرة — البحث وتسجيل نواقص العملاء</h1>
+  <p>لما عميل يسأل عن صنف: ابحث عنه، سجّله في نواقص اليوم بضغطة واحدة. لو مش موجود في القائمة، اكتبه وهيتضاف تلقائيًا.</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="upload-zone" id="dropZone">
+      <div class="icon">📄⬆️</div>
+      <div><strong>اضغط هنا لرفع ملف الأصناف (Excel)</strong></div>
+      <div class="hint">.xlsx / .xls — يتم التحليل بالكامل داخل المتصفح، لا يُرفع أي ملف لأي سيرفر</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+      <div class="file-name" id="fileName"></div>
+    </div>
+  </div>
+
+  <div id="mainArea" style="display:none">
+
+    <div class="note">
+      اكتب اسم الصنف في مربع البحث واختر من القائمة لتسجيله في نواقص اليوم مباشرة. لو الصنف مش موجود، هيظهر لك زرار لإضافته كصنف جديد وتسجيله في نفس الوقت. كل عملية تسجيل بتتحط سطر منفصل حتى لو نفس الصنف اتسأل عنه أكتر من مرة.
+    </div>
+
+    <div class="card">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="🔍 اكتب اسم الصنف اللي العميل سأل عنه..." autocomplete="off">
+        <div class="suggestions" id="suggestions" style="display:none"></div>
+      </div>
+      <div class="no-match-box" id="noMatchBox" style="display:none">
+        <p>مفيش صنف مطابق لـ "<span id="noMatchText"></span>" في القائمة.</p>
+        <button class="btn-primary" id="addNewBtn">➕ إضافة كصنف جديد وتسجيله في النواقص</button>
+      </div>
+    </div>
+
+    <div id="summarySection" class="summary" style="display:none"></div>
+
+    <div class="card" id="logCard" style="display:none">
+      <div class="toolbar">
+        <input type="text" id="logSearchBox" placeholder="🔍 ابحث داخل سجل اليوم...">
+        <button class="btn-danger" id="clearLogBtn">🗑️ مسح سجل اليوم</button>
+      </div>
+      <div class="table-wrap">
+        <table id="logTable">
+          <thead>
+            <tr>
+              <th>الوقت</th>
+              <th>الصنف</th>
+              <th>الكود</th>
+              <th>السعر</th>
+              <th>نسبة الخصم</th>
+              <th>النوع</th>
+              <th>حذف</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+
+      <div style="text-align:center;margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn-export" id="exportLogBtn">⬇️ تصدير نواقص اليوم (Excel)</button>
+        <button class="btn-secondary" id="exportMasterBtn">⬇️ تصدير قائمة الأصناف المحدّثة</button>
+      </div>
+    </div>
+
+    <div class="empty-state" id="emptyLog">لسه ملحقتش تسجّل أي صنف النهاردة.</div>
+
+  </div>
+
+</div>
+
+<footer>تُنفَّذ جميع العمليات محليًا داخل متصفحك — لا يتم إرسال أي بيانات خارجية. صدّر سجل اليوم قبل غلق الصفحة، البيانات مش بتتحفظ تلقائيًا.</footer>
+
+<script>
+let masterItems = []; // {code,name,price,discountPct,lastCost,units,stock,avgCost,avgCostPct,custom}
+let todayLog = [];     // {time,name,code,price,discount,custom}
+let masterHeaders = ['كود','اسم الصنف','سعر البيع','نسبة الخصم','اخر سعر تكلفة','عدد الاجزاء','الرصيد الحالى','متوسط التكلفة','%متوسط التكلفة'];
+let currentMatches = [];
+
+function normalize(s){ return (s||'').toString().replace(/\s+/g,' ').trim(); }
+function toNumber(v){
+  if(v===undefined||v===null||v==='') return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
+function findHeaderRow(rows){
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const row = rows[i].map(normalize);
+    const hasCode = row.some(c=>c.includes('كود'));
+    const hasName = row.some(c=>c.includes('اسم'));
+    if(hasCode && hasName) return i;
+  }
+  return -1;
+}
+
+function mapColumns(headerRow){
+  const cols = headerRow.map(normalize);
+  const find = (pred)=>cols.findIndex(pred);
+  return {
+    code: find(c=>c.includes('كود')),
+    name: find(c=>c.includes('اسم')),
+    price: find(c=>c.includes('سعر البيع') || (c.includes('سعر') && !c.includes('تكلفة'))),
+    discountPct: find(c=>c.includes('خصم')),
+    lastCost: find(c=>c.includes('تكلفة') && c.includes('اخر')),
+    units: find(c=>c.includes('اجزاء')),
+    stock: find(c=>c.includes('رصيد')),
+    avgCost: find(c=>c.includes('متوسط') && c.includes('تكلفة') && !c.includes('%')),
+    avgCostPct: find(c=>c.includes('%') && c.includes('متوسط'))
+  };
+}
+
+function parseMasterWorkbook(workbook){
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+
+  const headerIdx = findHeaderRow(rows);
+  if(headerIdx===-1) throw new Error('لم يتم العثور على صف العناوين (الكود / الاسم) في ملف الأصناف.');
+  const idx = mapColumns(rows[headerIdx]);
+  if(idx.name===-1) throw new Error('لم يتم التعرف على عمود اسم الصنف في الملف.');
+
+  const out = [];
+  for(let r=headerIdx+1;r<rows.length;r++){
+    const row = rows[r];
+    if(!row || row.every(c=>c===''||c===null||c===undefined)) continue;
+    const name = idx.name>-1 ? normalize(row[idx.name]) : '';
+    if(!name) continue;
+    out.push({
+      code: idx.code>-1 ? normalize(row[idx.code]) : '',
+      name,
+      price: idx.price>-1 ? (toNumber(row[idx.price])===null?'':toNumber(row[idx.price])) : '',
+      discountPct: idx.discountPct>-1 ? (toNumber(row[idx.discountPct])===null?'':toNumber(row[idx.discountPct])) : '',
+      lastCost: idx.lastCost>-1 ? row[idx.lastCost] : '',
+      units: idx.units>-1 ? row[idx.units] : '',
+      stock: idx.stock>-1 ? row[idx.stock] : '',
+      avgCost: idx.avgCost>-1 ? row[idx.avgCost] : '',
+      avgCostPct: idx.avgCostPct>-1 ? row[idx.avgCostPct] : '',
+      custom: false
+    });
+  }
+  return out;
+}
+
+document.getElementById('dropZone').addEventListener('click', ()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', handleFile);
+['dragover','drop'].forEach(evt=>{
+  document.getElementById('dropZone').addEventListener(evt, e=>{
+    e.preventDefault();
+    if(evt==='drop' && e.dataTransfer.files.length){
+      document.getElementById('fileInput').files = e.dataTransfer.files;
+      handleFile({target:{files:e.dataTransfer.files}});
+    }
+  });
+});
+
+function handleFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  document.getElementById('fileName').textContent = '📎 ' + file.name;
+
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = new Uint8Array(ev.target.result);
+      const workbook = XLSX.read(data, {type:'array'});
+      masterItems = parseMasterWorkbook(workbook);
+      document.getElementById('mainArea').style.display='block';
+      renderSummary();
+      renderLogTable();
+      document.getElementById('searchInput').focus();
+    }catch(err){
+      alert('حدث خطأ أثناء قراءة الملف:\n' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---- search ----
+document.getElementById('searchInput').addEventListener('input', onSearchInput);
+document.getElementById('searchInput').addEventListener('focus', onSearchInput);
+
+function onSearchInput(){
+  const q = normalize(document.getElementById('searchInput').value).toLowerCase();
+  const box = document.getElementById('suggestions');
+  const noMatch = document.getElementById('noMatchBox');
+  if(!q){
+    box.style.display='none';
+    noMatch.style.display='none';
+    return;
+  }
+  currentMatches = masterItems
+    .map((item, idx)=>({item, idx}))
+    .filter(({item})=> item.name.toLowerCase().includes(q) || (item.code && item.code.toLowerCase().includes(q)))
+    .slice(0, 30);
+
+  if(currentMatches.length){
+    box.innerHTML = currentMatches.map(({item, idx})=>`
+      <div class="sugg-item" data-idx="${idx}">
+        <span class="sugg-name">${item.name}</span>
+        <span class="sugg-meta">${item.code?('كود '+item.code+' | '):''}${item.price!==''?item.price+' ج.م':''}${item.stock!==''?(' | متبقي '+item.stock):''}</span>
+      </div>`).join('');
+    box.style.display='block';
+    noMatch.style.display='none';
+    document.querySelectorAll('.sugg-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const idx = parseInt(el.dataset.idx);
+        registerLog(masterItems[idx], idx, false);
+      });
+    });
+  }else{
+    box.style.display='none';
+    noMatch.style.display='block';
+    document.getElementById('noMatchText').textContent = document.getElementById('searchInput').value.trim();
+  }
+}
+
+document.getElementById('addNewBtn').addEventListener('click', ()=>{
+  const name = normalize(document.getElementById('searchInput').value);
+  if(!name) return;
+  const newItem = {code:'', name, price:'', discountPct:'', lastCost:'', units:'', stock:'', avgCost:'', avgCostPct:'', custom:true};
+  masterItems.push(newItem);
+  registerLog(newItem, masterItems.length-1, true);
+});
+
+function registerLog(item, masterIdx, isNew){
+  const now = new Date();
+  const time = now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+  todayLog.push({
+    time,
+    name: item.name,
+    code: item.code,
+    price: item.price,
+    discount: item.discountPct,
+    custom: isNew,
+    masterIdx
+  });
+  document.getElementById('searchInput').value='';
+  document.getElementById('suggestions').style.display='none';
+  document.getElementById('noMatchBox').style.display='none';
+  renderSummary();
+  renderLogTable();
+  document.getElementById('searchInput').focus();
+}
+
+function renderSummary(){
+  const total = todayLog.length;
+  const uniqueNames = new Set(todayLog.map(l=>l.name.toLowerCase()));
+  const newCount = todayLog.filter(l=>l.custom).length;
+  const section = document.getElementById('summarySection');
+  if(total===0){ section.style.display='none'; return; }
+  section.style.display='grid';
+  section.innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="label">إجمالي التسجيلات اليوم</div></div>
+    <div class="stat"><div class="num">${uniqueNames.size}</div><div class="label">أصناف فريدة</div></div>
+    <div class="stat"><div class="num">${newCount}</div><div class="label">أصناف جديدة أُضيفت</div></div>
+  `;
+}
+
+function fmt(v){ return (v===''||v===null||v===undefined) ? '—' : v; }
+
+function renderLogTable(){
+  const logCard = document.getElementById('logCard');
+  const emptyLog = document.getElementById('emptyLog');
+  if(todayLog.length===0){
+    logCard.style.display='none';
+    emptyLog.style.display='block';
+    return;
+  }
+  logCard.style.display='block';
+  emptyLog.style.display='none';
+
+  const search = normalize(document.getElementById('logSearchBox').value).toLowerCase();
+  const body = document.getElementById('logBody');
+  let rowsHtml = '';
+  todayLog.forEach((entry, idx)=>{
+    if(search && !entry.name.toLowerCase().includes(search)) return;
+    rowsHtml += `
+    <tr data-idx="${idx}">
+      <td>${entry.time}</td>
+      <td class="name-cell">${entry.name}</td>
+      <td>${fmt(entry.code)}</td>
+      <td><input type="number" class="price-input" data-idx="${idx}" value="${entry.price===''?'':entry.price}" step="0.01"></td>
+      <td><input type="number" class="disc-input" data-idx="${idx}" value="${entry.discount===''?'':entry.discount}" step="0.01"></td>
+      <td>${entry.custom ? '<span class="badge badge-new">جديد</span>' : '<span class="badge badge-known">من القائمة</span>'}</td>
+      <td><button class="btn-danger del-btn" data-idx="${idx}">✕</button></td>
+    </tr>`;
+  });
+  body.innerHTML = rowsHtml || `<tr><td colspan="7" style="padding:20px;color:#999;">لا توجد نتائج مطابقة</td></tr>`;
+
+  document.querySelectorAll('.price-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const i = parseInt(e.target.dataset.idx);
+      const v = e.target.value===''? '' : parseFloat(e.target.value);
+      todayLog[i].price = v;
+      if(todayLog[i].masterIdx!==undefined && masterItems[todayLog[i].masterIdx]) masterItems[todayLog[i].masterIdx].price = v;
+    });
+  });
+  document.querySelectorAll('.disc-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const i = parseInt(e.target.dataset.idx);
+      const v = e.target.value===''? '' : parseFloat(e.target.value);
+      todayLog[i].discount = v;
+      if(todayLog[i].masterIdx!==undefined && masterItems[todayLog[i].masterIdx]) masterItems[todayLog[i].masterIdx].discountPct = v;
+    });
+  });
+  document.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const i = parseInt(e.target.dataset.idx);
+      todayLog.splice(i,1);
+      renderSummary();
+      renderLogTable();
+    });
+  });
+}
+
+document.getElementById('logSearchBox').addEventListener('input', renderLogTable);
+
+document.getElementById('clearLogBtn').addEventListener('click', ()=>{
+  if(todayLog.length===0) return;
+  if(!confirm('هيتم مسح كل سجل النواقص المسجل اليوم. متابعة؟')) return;
+  todayLog = [];
+  renderSummary();
+  renderLogTable();
+});
+
+document.getElementById('exportLogBtn').addEventListener('click', ()=>{
+  if(todayLog.length===0){ alert('لا يوجد أي تسجيل اليوم بعد.'); return; }
+  const rows = todayLog.map(l=>({
+    'الوقت': l.time,
+    'الصنف': l.name,
+    'الكود': l.code,
+    'السعر': l.price,
+    'نسبة الخصم': l.discount,
+    'النوع': l.custom ? 'صنف جديد' : 'من القائمة'
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:10},{wch:32},{wch:10},{wch:10},{wch:12},{wch:12}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'نواقص اليوم');
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `نواقص_${stamp}.xlsx`);
+});
+
+document.getElementById('exportMasterBtn').addEventListener('click', ()=>{
+  const rows = masterItems.map(it=>({
+    'كود': it.code,
+    'اسم الصنف': it.name,
+    'سعر البيع': it.price,
+    'نسبة الخصم': it.discountPct,
+    'اخر سعر تكلفة': it.lastCost,
+    'عدد الاجزاء': it.units,
+    'الرصيد الحالى': it.stock,
+    'متوسط التكلفة': it.avgCost,
+    '%متوسط التكلفة': it.avgCostPct,
+    'ملاحظة': it.custom ? 'صنف جديد' : ''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'الاصناف');
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `الاصناف_محدث_${stamp}.xlsx`);
+});
+
+// hide suggestions when clicking outside
+document.addEventListener('click', (e)=>{
+  const wrap = document.querySelector('.search-wrap');
+  if(!wrap.contains(e.target)){
+    document.getElementById('suggestions').style.display='none';
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<!--
+  ==========================================================
+  صفحة "تواصل واتساب" لصيدلية أصفرا
+  ==========================================================
+  طريقة الاستخدام:
+  1) غيّر رقم الواتساب في المتغير PHARMACY_WHATSAPP_NUMBER تحت
+     (اكتب الرقم بصيغة دولية بدون + وبدون مسافات، مثال لمصر: 201001234567)
+  2) غيّر اسم الصيدلية والعنوان لو حابب.
+  3) ارفع الملف على أي استضافة مجانية (Netlify Drop / GitHub Pages)
+     عشان يبقى ليه رابط، وبعدين اعمل QR Code لينك ده وطبعه وحطه في الصيدلية.
+  ==========================================================
+-->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تواصل مع صيدلية أصفرا عبر واتساب</title>
+<style>
+  :root{
+    --wa-green:#25D366;
+    --wa-dark:#075E54;
+    --bg:#f4f7f6;
+    --card:#ffffff;
+    --text:#1b1b1b;
+    --muted:#6b7280;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Tahoma, Arial, sans-serif;
+    background:linear-gradient(180deg,var(--wa-dark) 0%,var(--bg) 220px);
+    min-height:100vh;
+    color:var(--text);
+  }
+  .wrap{
+    max-width:480px;
+    margin:0 auto;
+    padding:24px 16px 60px;
+  }
+  header{
+    text-align:center;
+    color:#fff;
+    padding:18px 0 20px;
+  }
+  header .logo{
+    width:64px;height:64px;border-radius:50%;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 10px;
+    font-size:30px;
+  }
+  header h1{margin:0;font-size:20px;}
+  header p{margin:6px 0 0;font-size:13px;opacity:.9;}
+
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:0 6px 24px rgba(0,0,0,.08);
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:15px;
+    margin:0 0 12px;
+    color:var(--wa-dark);
+  }
+  .categories{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .cat-btn{
+    border:2px solid #e5e7eb;
+    background:#fafafa;
+    border-radius:12px;
+    padding:12px 8px;
+    text-align:center;
+    font-size:13px;
+    cursor:pointer;
+    transition:.15s;
+    user-select:none;
+  }
+  .cat-btn .emoji{display:block;font-size:22px;margin-bottom:4px;}
+  .cat-btn.active{
+    border-color:var(--wa-green);
+    background:#e9fbf0;
+    font-weight:bold;
+  }
+
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin:14px 0 6px;
+  }
+  input[type=text], input[type=tel], textarea{
+    width:100%;
+    border:1.5px solid #e5e7eb;
+    border-radius:10px;
+    padding:11px 12px;
+    font-size:14px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  textarea{min-height:80px;}
+  input:focus, textarea:focus{outline:none;border-color:var(--wa-green);}
+
+  .send-btn{
+    width:100%;
+    margin-top:18px;
+    background:var(--wa-green);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:15px;
+    font-size:16px;
+    font-weight:bold;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+  }
+  .send-btn:active{transform:scale(.98);}
+  .hint{
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+  .fallback{
+    text-align:center;
+    margin-top:8px;
+  }
+  .fallback a{color:var(--wa-dark);font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">💊</div>
+    <h1>صيدلية أصفرا</h1>
+    <p>اكتب طلبك وابعته لينا على واتساب على طول</p>
+  </header>
+
+  <div class="card">
+    <h2>1) نوع الطلب</h2>
+    <div class="categories" id="categories">
+      <div class="cat-btn" data-label="طلب دواء / سؤال عن سعر أو توفر">
+        <span class="emoji">💊</span>طلب دواء / سعر
+      </div>
+      <div class="cat-btn" data-label="حجز طلب أو توصيل">
+        <span class="emoji">🛵</span>حجز / توصيل
+      </div>
+      <div class="cat-btn" data-label="استفسار عام">
+        <span class="emoji">❓</span>استفسار عام
+      </div>
+      <div class="cat-btn" data-label="شكوى أو ملاحظة">
+        <span class="emoji">📝</span>شكوى / ملاحظة
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2) بياناتك (اختياري)</h2>
+    <label>الاسم</label>
+    <input type="text" id="name" placeholder="اكتب اسمك">
+    <label>رقم الموبايل</label>
+    <input type="tel" id="phone" placeholder="01xxxxxxxxx">
+  </div>
+
+  <div class="card">
+    <h2>3) تفاصيل الطلب</h2>
+    <label>اكتب طلبك أو استفسارك بالتفصيل</label>
+    <textarea id="details" placeholder="مثال: عايز بانادول اكسترا 2 علبة، متوفر؟"></textarea>
+  </div>
+
+  <button class="send-btn" id="sendBtn">
+    <span>📲</span> إرسال الطلب عبر واتساب
+  </button>
+  <div class="hint">هيفتح واتساب تلقائي والرسالة هتبقى جاهزة، تمام تدوس إرسال بس</div>
+  <div class="fallback"><a href="#" id="fallbackLink" target="_blank">لو مفتحش واتساب، دوس هنا</a></div>
+
+</div>
+
+<script>
+  // ====== إعدادات الصيدلية - غيّرها هنا ======
+  const PHARMACY_WHATSAPP_NUMBER = "201000000000"; // ⚠️ غيّر ده برقم واتساب الصيدلية (بصيغة دولية بدون +)
+  const PHARMACY_NAME = "صيدلية أصفرا";
+  // ============================================
+
+  const categoryButtons = document.querySelectorAll('.cat-btn');
+  let selectedCategory = null;
+
+  categoryButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      categoryButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedCategory = btn.dataset.label;
+    });
+  });
+
+  function buildWhatsAppLink(){
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const details = document.getElementById('details').value.trim();
+    const now = new Date();
+    const timeStr = now.toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' });
+
+    let message = `مرحباً ${PHARMACY_NAME} 👋\n`;
+    message += `نوع الطلب: ${selectedCategory || 'غير محدد'}\n`;
+    if(name) message += `الاسم: ${name}\n`;
+    if(phone) message += `رقم الموبايل: ${phone}\n`;
+    if(details) message += `التفاصيل: ${details}\n`;
+    message += `\n(تم الإرسال من صفحة الصيدلية - ${timeStr})`;
+
+    const encoded = encodeURIComponent(message);
+    return `https://wa.me/${PHARMACY_WHATSAPP_NUMBER}?text=${encoded}`;
+  }
+
+  document.getElementById('sendBtn').addEventListener('click', ()=>{
+    if(!selectedCategory){
+      alert('من فضلك اختر نوع الطلب الأول 🙏');
+      return;
+    }
+    const link = buildWhatsAppLink();
+    document.getElementById('fallbackLink').href = link;
+    window.location.href = link;
+  });
+</script>
+
+</body>
+</html>

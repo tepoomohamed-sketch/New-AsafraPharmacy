@@ -1,0 +1,6 @@
+﻿node_modules/
+*.backup.*
+.zcode/
+scratch_script_*
+*.tmp
+.~lock.*
