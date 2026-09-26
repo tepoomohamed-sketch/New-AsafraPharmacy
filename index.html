@@ -421,6 +421,7 @@
   .att-sal-chk.on::after{transform:translateX(-16px);}
   /* ── Attendance: error rows ── */
   .att-err-row td{background:rgba(252,129,129,.05);}
+.att-live-row td{background:rgba(72,187,120,.06);}
   .btn-lock{padding:4px 9px;background:linear-gradient(135deg,#744210,#c05621);color:#fbd38d;border:none;border-radius:7px;font-size:.74rem;cursor:pointer;font-weight:800;font-family:'Tajawal',sans-serif;transition:all .15s;white-space:nowrap;}
   .btn-lock:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(192,86,33,.4);}
   .btn-add-missing{padding:5px 10px;background:linear-gradient(135deg,#276749,#38a169);color:#c6f6d5;border:none;border-radius:8px;font-size:.76rem;cursor:pointer;font-weight:800;font-family:'Tajawal',sans-serif;transition:all .15s;white-space:nowrap;margin-top:2px;}
@@ -6499,6 +6500,7 @@ async function loadAttMeta() {
 // ── Live clock ──
 function startAttClock() {
   if (attClockInt) clearInterval(attClockInt);
+  let _liveTickSec = 0;
   const tick = () => {
     const cEl=document.getElementById('attClock');
     const dEl=document.getElementById('attClockDate');
@@ -6506,6 +6508,16 @@ function startAttClock() {
     const now=new Date();
     cEl.textContent=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     if (dEl) dEl.textContent=now.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+    // Real-time live update for active shifts every 60 seconds
+    _liveTickSec++;
+    if (_liveTickSec >= 60) {
+      _liveTickSec = 0;
+      const paneAtt = document.getElementById('pane-att');
+      if (paneAtt && paneAtt.classList.contains('on')) {
+        attRenderAdmin();
+      }
+    }
   };
   tick();
   attClockInt=setInterval(tick,1000);
@@ -6531,7 +6543,7 @@ function attDateOffset(days) {
 // ── دالة مشتركة: كل جلسات الموظف المفتوحة (حضور بلا انصراف) ──
 function attGetUnmatchedSessions(name) {
   const allSess = attBuildSessions(attRecords.filter(r => r.name === name));
-  return allSess.filter(s => s.error === 'لم يسجل الانصراف');
+  return allSess.filter(s => !s.outTime && (s.isLive || s.error === 'لم يسجل الانصراف'));
 }
 
 // ── نفس اليوم: حضور مفتوح → حجب (منع الدخول مرتين) ──
@@ -6739,16 +6751,36 @@ function attBuildSessions(records) {
           inTime:inRec.time, outTime:outRec.time,
           hours, error:null,
           inId:inRec.id, outId:outRec.id,
-          inRec, outRec
+          inRec, outRec,
+          isLive: false
         });
       } else {
-        sessions.push({
-          name, date:inRec.date, outDate:null,
-          inTime:inRec.time, outTime:null,
-          hours:null, error:'لم يسجل الانصراف',
-          inId:inRec.id, outId:null,
-          inRec, outRec:null
-        });
+        const nowMs = Date.now() + (_attServerTsDiff || 0);
+        const inMs = inRec._dt.getTime();
+        const elapsedHours = (nowMs - inMs) / 3600000;
+        // شيفت نشط حالياً (حاضر الآن): سجل حضور ولم يمر عليه أكثر من 16 ساعة
+        const isCurrentShift = (nowMs >= inMs - 300_000) && (elapsedHours <= 16);
+
+        if (isCurrentShift) {
+          sessions.push({
+            name, date:inRec.date, outDate:null,
+            inTime:inRec.time, outTime:null,
+            hours: Math.max(0, elapsedHours),
+            error: null,
+            isLive: true,
+            inId:inRec.id, outId:null,
+            inRec, outRec:null
+          });
+        } else {
+          sessions.push({
+            name, date:inRec.date, outDate:null,
+            inTime:inRec.time, outTime:null,
+            hours:null, error:'لم يسجل الانصراف',
+            isLive: false,
+            inId:inRec.id, outId:null,
+            inRec, outRec:null
+          });
+        }
       }
     });
 
@@ -6816,7 +6848,8 @@ function attRenderEmployee() {
   if (myPivDates.length) {
     const rows = myPivDates.map(d=>{
       const h = myPivMap[d]||0;
-      return `<tr><td class="att-piv-date">${d}</td><td>${h.toFixed(1)} ساعة</td></tr>`;
+      const isLive = myMonthSess.some(s => s.date === d && s.isLive);
+      return `<tr><td class="att-piv-date">${d}</td><td>${h.toFixed(1)} ساعة ${isLive?'<span style="color:#48bb78;font-weight:700;">🟢 (شغال الآن)</span>':''}</td></tr>`;
     });
     const grand = myMonthSess.reduce((a,s)=>a+(s.hours||0),0);
     empPivHtml=`<div class="att-piv-wrap"><table>
@@ -6856,9 +6889,9 @@ function attRenderEmployee() {
           ? (s.outDate && s.outDate!==s.date
               ? `${s.outTime} <span style="font-size:.7rem;color:#f6ad55;" title="يوم ${s.outDate}">+١</span>`
               : s.outTime)
-          : '—'}</td>
-        <td>${s.hours!=null&&!s.error?s.hours.toFixed(1)+' س':'—'}</td>
-        <td>${s.error?`<span class="at-sess-err">⚠️ ${s.error}</span>`:`<span class="at-sess-ok">✅ مكتمل</span>`}</td>
+          : (s.isLive ? '<span style="color:#48bb78;font-weight:700;">🟢 شغال الآن</span>' : '—')}</td>
+        <td>${s.isLive ? `<span style="color:#48bb78;font-weight:700;">${s.hours.toFixed(1)} س 🟢</span>` : (s.hours!=null&&!s.error?s.hours.toFixed(1)+' س':'—')}</td>
+        <td>${s.isLive ? `<span style="background:rgba(72,187,120,.2);color:#48bb78;border-radius:6px;padding:2px 7px;font-size:.78rem;font-weight:700;">🟢 حاضر الآن</span>` : (s.error?`<span class="at-sess-err">⚠️ ${s.error}</span>`:`<span class="at-sess-ok">✅ مكتمل</span>`)}</td>
       </tr>`).join('')}</tbody>
     </table>`;
   document.getElementById('attAdminMgmt').innerHTML='';
@@ -6957,9 +6990,9 @@ function attRenderAdmin() {
           <th>التاريخ</th><th>الموظف</th><th>الحضور</th><th>الانصراف</th><th>الساعات</th><th>الحالة</th>
           ${isAdm ? '<th>إجراء</th>' : ''}
         </tr></thead>
-        <tbody>${filtered.filter(s=>isAttOn(s.name)).map(s=>`<tr class="${s.error?'att-err-row':''}">
+        <tbody>${filtered.filter(s=>isAttOn(s.name)).map(s=>`<tr class="${s.error?'att-err-row':(s.isLive?'att-live-row':'')}">
           <td>${s.date}</td>
-          <td><strong>${esc(s.name)}</strong></td>
+          <td><strong>${esc(s.name)}</strong> ${s.isLive ? '<span style="color:#48bb78;font-size:.75rem;" title="حاضر الآن">🟢</span>' : ''}</td>
           <td>
             ${s.inTime||'—'}
             ${s.inRec?.notes?.includes('إدخال يدوي')||s.inRec?.notes?.includes('تقفيل يدوي')?`<span class="att-lock-badge" title="${esc(s.inRec.notes)}">✍️ مدير</span>`:''}
@@ -6969,14 +7002,15 @@ function attRenderAdmin() {
             ${s.outTime
               ? ((s.outDate&&s.outDate!==s.date?`${s.outTime} <span style="font-size:.7rem;color:#f6ad55;" title="يوم ${s.outDate}">+١</span>`:s.outTime)
                 +(s.outRec?.notes?.includes('إدخال يدوي')||s.outRec?.notes?.includes('تقفيل يدوي')?`<span class="att-lock-badge" title="${esc(s.outRec.notes)}">✍️ مدير</span>`:''))
-              : `<span style="color:#718096;font-size:.8rem;">—</span>`}
+              : (s.isLive ? `<span style="color:#48bb78;font-weight:700;">🟢 شغال الآن</span>` : `<span style="color:#718096;font-size:.8rem;">—</span>`)}
             ${isAdm&&s.outId?`<button class="btn-edit" title="تعديل الانصراف" onclick="attOpenEdit('${s.outId}')">✏️</button>`:''}
           </td>
-          <td>${s.hours!=null&&!s.error?s.hours.toFixed(2)+' س':'—'}</td>
-          <td>${s.error?`<span class="att-err-badge">⚠️ ${esc(s.error)}</span>`:`<span class="at-sess-ok">✅</span>`}</td>
+          <td>${s.isLive ? `<span style="color:#48bb78;font-weight:700;" title="محسوبة حتى الآن">${s.hours.toFixed(2)} س <span style="font-size:.72rem;">(الآن 🟢)</span></span>` : (s.hours!=null&&!s.error?s.hours.toFixed(2)+' س':'—')}</td>
+          <td>${s.isLive ? `<span style="background:rgba(72,187,120,.2);color:#48bb78;border:1px solid rgba(72,187,120,.35);padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:700;">🟢 حاضر الآن</span>` : (s.error?`<span class="att-err-badge">⚠️ ${esc(s.error)}</span>`:`<span class="at-sess-ok">✅</span>`)}</td>
           ${isAdm?`<td style="white-space:nowrap;min-width:120px;">
             ${s.inId?`<button class="btn-del" title="حذف الحضور" onclick="attDeleteRecord('${s.inId}')">🗑ح</button>`:''}
             ${s.outId?`<button class="btn-del" title="حذف الانصراف" onclick="attDeleteRecord('${s.outId}')">🗑ا</button>`:''}
+            ${s.isLive?`<button class="btn-add-missing" style="background:rgba(72,187,120,.16);border:1px solid #48bb78;color:#48bb78;" onclick="attOpenAddMissing('${esc(s.name)}','${esc(s.date)}','انصراف','${esc(s.inTime||'')}')">⏹ تسجيل انصراف</button>`:''}
             ${s.error==='لم يسجل الانصراف'?`<button class="btn-add-missing" onclick="attOpenAddMissing('${esc(s.name)}','${esc(s.date)}','انصراف','${esc(s.inTime||'')}')">➕ إدخال انصراف</button>`:''}
             ${s.error==='لم يسجل الحضور'?`<button class="btn-add-missing btn-add-in" onclick="attOpenAddMissing('${esc(s.name)}','${esc(s.date)}','حضور','${esc(s.outTime||'')}')">➕ إدخال حضور</button>`:''}
           </td>`:''}
@@ -6996,6 +7030,10 @@ function attRenderAdmin() {
     const rows = pivDates.map(d=>{
       const cells = pivEmps.map(n=>{
         const h=pivMap[d]?.[n]||0;
+        const liveSess = validSess.find(s => s.date === d && s.name === n && s.isLive);
+        if (liveSess) {
+          return `<td style="color:#48bb78;font-weight:800;background:rgba(72,187,120,.09);" title="حاضر الآن (شغال)">${h.toFixed(1)}س 🟢</td>`;
+        }
         return `<td class="${h===0?'att-piv-zero':''}">${h>0?h.toFixed(1)+'س':'—'}</td>`;
       });
       const rowTot = pivEmps.reduce((s,n)=>s+(pivMap[d]?.[n]||0),0);
@@ -7511,10 +7549,10 @@ function attShowEmpReport() {
   const allSess = attBuildSessions(attRecords);
   const empSess = allSess.filter(s => s.name === name && s.date && s.date.startsWith(month));
 
-  // ── أيام العمل (جلسات مكتملة) ──
+  // ── أيام العمل (جلسات مكتملة أو جارية) ──
   const workMap = {}; // date → totalHours
   empSess.forEach(s => {
-    if (!s.error && s.hours != null) {
+    if (!s.error && s.hours != null && s.hours > 0) {
       workMap[s.date] = (workMap[s.date] || 0) + s.hours;
     }
   });
@@ -7541,8 +7579,12 @@ function attShowEmpReport() {
   const avgHrs       = workCount > 0 ? totalTracked / workCount : 0;
 
   let minDay = null, maxDay = null;
-  workDays.forEach(d => {
+  const completedWorkDays = workDays.filter(d => !empSess.some(s => s.date === d && s.isLive));
+  const candidateDays = completedWorkDays.length ? completedWorkDays : workDays;
+  candidateDays.forEach(d => {
     if (!minDay || workMap[d] < workMap[minDay]) minDay = d;
+  });
+  workDays.forEach(d => {
     if (!maxDay || workMap[d] > workMap[maxDay]) maxDay = d;
   });
 
