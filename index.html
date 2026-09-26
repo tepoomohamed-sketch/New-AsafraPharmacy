@@ -937,25 +937,25 @@ function ensureXLSX() {
           <div class="type-btn tb-d"    onclick="pickType('ذمم اونلاين',this)">⏳ ذمم أونلاين</div>
         </div>
         <div class="fg-row">
-          <div class="fg"><label for="eDate">📅 التاريخ</label><input type="date" id="eDate"/></div>
+          <div class="fg"><label for="eDate">📅 التاريخ</label><input type="date" id="eDate" onkeydown="handleEntryKeyNav(event,'eDate')"/></div>
           <div class="fg">
             <label id="eCoLbl">🏷 البند / الشركة</label>
-            <select class="fel" id="eCo" onchange="coSelectChanged()">
+            <select class="fel" id="eCo" onchange="coSelectChanged()" onkeydown="handleEntryKeyNav(event,'eCo')">
               <option value="">اختر البند...</option>
             </select>
           </div>
           <div class="fg" id="eInvWrap">
             <label id="eInvLbl">🔢 رقم الفاتورة</label>
-            <input type="text" id="eInv" placeholder="اختياري"/>
-            <select id="eInvSel" style="display:none;"><option value="">اختر الموظف...</option></select>
+            <input type="text" id="eInv" placeholder="اختياري" onkeydown="handleEntryKeyNav(event,'eInv')"/>
+            <select id="eInvSel" style="display:none;" onkeydown="handleEntryKeyNav(event,'eInvSel')"><option value="">اختر الموظف...</option></select>
           </div>
-          <div class="fg"><label id="eAmtLbl">💵 المبلغ (جنيه)</label><input type="number" id="eAmt" placeholder="0" min="0" step="0.01" onkeydown="if(event.key==='Enter')doSave()"/></div>
+          <div class="fg"><label id="eAmtLbl">💵 المبلغ (جنيه)</label><input type="number" id="eAmt" placeholder="0" min="0" step="0.01" onkeydown="handleEntryKeyNav(event,'eAmt')"/></div>
           <div class="fg fg-full">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
               <label for="eNotes" id="eNotesLbl" style="margin-bottom:0;">📝 ملاحظات</label>
               <span id="eNotesAlertBadge" style="display:none;align-items:center;gap:5px;background:rgba(239,68,68,0.15);color:#fc8181;border:1px solid rgba(239,68,68,0.4);padding:3px 12px;border-radius:20px;font-size:0.78rem;font-weight:800;transition:all .25s ease;">⚠️ اسم المرسل إجباري لحفظ الذمم</span>
             </div>
-            <input type="text" id="eNotes" placeholder="عجز 50 ج عند محمد | زيادة 40 ج | بعد مرتجع..." oninput="checkNotesSenderValidation()"/>
+            <input type="text" id="eNotes" placeholder="عجز 50 ج عند محمد | زيادة 40 ج | بعد مرتجع..." oninput="checkNotesSenderValidation()" onkeydown="handleEntryKeyNav(event,'eNotes')"/>
             <div id="eNotesHintMsg" style="display:none;font-size:0.8rem;color:#fc8181;margin-top:6px;font-weight:700;">⚠️ تنبيه: يرجى كتابة اسم الشخص الراسل للمبلغ (مثال: محول من أحمد محمد / رقم المحفظة) لإتمام الحفظ.</div>
           </div>
         </div>
@@ -2888,6 +2888,67 @@ function checkNotesSenderValidation() {
   }
 }
 
+// ═══════════════════════════════════════════
+//  KEYBOARD ENTER NAVIGATION (التنقل السريع بزر Enter)
+// ═══════════════════════════════════════════
+function handleEntryKeyNav(e, field) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+
+  if (field === 'eDate') {
+    const el = document.getElementById('eCo');
+    if (el) el.focus();
+  } else if (field === 'eCo') {
+    const invSel = document.getElementById('eInvSel');
+    const invTxt = document.getElementById('eInv');
+    const target = (invSel && invSel.style.display !== 'none') ? invSel : invTxt;
+    if (target) {
+      target.focus();
+      try { if (target.select) target.select(); } catch(err){}
+    }
+  } else if (field === 'eInv' || field === 'eInvSel') {
+    const amtEl = document.getElementById('eAmt');
+    if (amtEl) {
+      amtEl.focus();
+      try { amtEl.select(); } catch(err){}
+    }
+  } else if (field === 'eAmt') {
+    const notesEl = document.getElementById('eNotes');
+    if (notesEl) {
+      notesEl.focus();
+      try { notesEl.select(); } catch(err){}
+    }
+  } else if (field === 'eNotes') {
+    doSave();
+  }
+}
+
+function handleEditKeyNav(e, field) {
+  if (e.key !== 'Enter') return;
+  if (field === 'editNotes') {
+    if (!e.shiftKey) {
+      e.preventDefault();
+      saveEdit();
+    }
+    return;
+  }
+  e.preventDefault();
+  if (field === 'editDate') {
+    document.getElementById('editType')?.focus();
+  } else if (field === 'editType') {
+    document.getElementById('editCo')?.focus();
+  } else if (field === 'editCo') {
+    const el = document.getElementById('editInv');
+    if (el) { el.focus(); try { el.select(); } catch(err){} }
+  } else if (field === 'editInv') {
+    const el = document.getElementById('editAmt');
+    if (el) { el.focus(); try { el.select(); } catch(err){} }
+  } else if (field === 'editAmt') {
+    const el = document.getElementById('editNotes');
+    if (el) { el.focus(); try { el.select(); } catch(err){} }
+  }
+}
+
 let _allCos = [];  // current type's full options list
 let _coDropIdx = -1;  // keyboard nav index
 
@@ -3012,6 +3073,11 @@ async function doSave() {
     const _inv=document.getElementById('eInv'); if(_inv) _inv.style.display='';
     const _lbl=document.getElementById('eInvLbl'); if(_lbl) _lbl.textContent='🔢 رقم الفاتورة';
     document.getElementById('eDate').value = todayStr();
+    // إرجاع التركيز إلى اختيار البند للتسجيل السريع المتتالي
+    setTimeout(() => {
+      const coEl = document.getElementById('eCo');
+      if (coEl) coEl.focus();
+    }, 120);
     // تحديث فوري للجدول في حالة عدم وصول الـ snapshot بعد
     setTimeout(refreshActivePane, 800);
 
@@ -12398,9 +12464,9 @@ document.addEventListener('keydown', e => {
     <input type="hidden" id="editOldType"/>
     <input type="hidden" id="editOldAmt"/>
     <div class="fg-row">
-      <div class="fg"><label for="editDate">📅 التاريخ</label><input type="date" id="editDate"/></div>
+      <div class="fg"><label for="editDate">📅 التاريخ</label><input type="date" id="editDate" onkeydown="handleEditKeyNav(event,'editDate')"/></div>
       <div class="fg"><label for="editType">📂 النوع</label>
-        <select id="editType" onchange="editTypeChange()">
+        <select id="editType" onchange="editTypeChange()" onkeydown="handleEditKeyNav(event,'editType')">
           <option value="ايرادات">ايرادات</option>
           <option value="مصاريف">مصاريف</option>
           <option value="طلبيات">طلبيات</option>
@@ -12410,15 +12476,15 @@ document.addEventListener('keydown', e => {
         </select>
       </div>
     </div>
-    <div class="fg"><label for="editCo">🏷 البند / الشركة</label><select id="editCo"></select></div>
-    <div class="fg"><label for="editInv">🔢 رقم الفاتورة</label><input type="text" id="editInv" placeholder="اختياري"/></div>
-    <div class="fg"><label for="editAmt">💰 المبلغ (جنيه)</label><input type="number" id="editAmt" step="0.01" min="0" placeholder="0.00"/></div>
+    <div class="fg"><label for="editCo">🏷 البند / الشركة</label><select id="editCo" onkeydown="handleEditKeyNav(event,'editCo')"></select></div>
+    <div class="fg"><label for="editInv">🔢 رقم الفاتورة</label><input type="text" id="editInv" placeholder="اختياري" onkeydown="handleEditKeyNav(event,'editInv')"/></div>
+    <div class="fg"><label for="editAmt">💰 المبلغ (جنيه)</label><input type="number" id="editAmt" step="0.01" min="0" placeholder="0.00" onkeydown="handleEditKeyNav(event,'editAmt')"/></div>
     <div class="fg">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label for="editNotes" id="editNotesLbl" style="margin-bottom:0;">📝 ملاحظات</label>
         <span id="editNotesAlertBadge" style="display:none;font-size:0.75rem;color:#fc8181;font-weight:700;">⚠️ اسم المرسل إجباري للذمم</span>
       </div>
-      <textarea id="editNotes" rows="2" placeholder="اختياري..." oninput="checkEditNotesValidation()"></textarea>
+      <textarea id="editNotes" rows="2" placeholder="اختياري..." oninput="checkEditNotesValidation()" onkeydown="handleEditKeyNav(event,'editNotes')"></textarea>
     </div>
     <div class="err" id="editErr"></div>
     <div style="display:flex;gap:10px;margin-top:8px;">
