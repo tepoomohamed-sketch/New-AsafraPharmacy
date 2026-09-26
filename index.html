@@ -3242,7 +3242,7 @@ function allChkChange() {
 
     if (btnMark) {
       btnMark.style.display = 'inline-flex';
-      btnMark.innerHTML = `✅ تعليم كـ POS (${checked.length})`;
+      btnMark.innerHTML = `✅ تعليم كـ POS (${checkedCount})`;
     }
     if (btnUnmark) {
       btnUnmark.style.display = (posRevInSel > 0) ? 'inline-flex' : 'none';
@@ -3252,7 +3252,7 @@ function allChkChange() {
       btnDel.disabled = false;
       btnDel.style.opacity = '1';
       btnDel.style.cursor = 'pointer';
-      btnDel.innerHTML = `🗑 حذف (${checked.length})`;
+      btnDel.innerHTML = `🗑 حذف (${checkedCount})`;
     }
   } else {
     if (selInfo) {
@@ -3347,7 +3347,7 @@ async function bulkDelEntries() {
     const {error} = await sb.from('entries').update({
       deleted: true,
       deleted_at: Date.now(),
-      deleted_by: me.name || me.uid
+      deleted_by: (me && (me.name || me.uid)) || 'مدير'
     }).in('id', ids);
     if (error) throw error;
 
@@ -7092,15 +7092,29 @@ function attRenderAdmin() {
   </tr>`).join('');
 
   // ⑧ Employee management chips & rate rows
-  const empChips=attEmpNames.map(n=>{
+  const empChips = attEmpNames.map(n => {
     const att = isAttOn(n);
     const sal = isSalOn(n);
-    return `<span class="at-emp-chip">
-      ${esc(n)}
-      <button onclick="attToggleAtt('${esc(n)}')" title="${att?'إيقاف الحضور':'تفعيل الحضور'}" style="background:none;border:none;cursor:pointer;font-size:.82rem;padding:0 3px;line-height:1;filter:grayscale(${att?0:1});opacity:${att?1:.35};">⏱</button>
-      <button onclick="attToggleSalEmp('${esc(n)}')" title="${sal?'إيقاف الرواتب':'تفعيل الرواتب'}" style="background:none;border:none;cursor:pointer;font-size:.82rem;padding:0 3px;line-height:1;filter:grayscale(${sal?0:1});opacity:${sal?1:.35};">💰</button>
-      <button class="at-chip-rename" onclick="attRenameEmployee('${esc(n)}')" title="إعادة تسمية" style="background:none;border:none;color:#63b3ed;cursor:pointer;font-size:.8rem;padding:0 2px;line-height:1;">✏️</button>
-      <button class="at-chip-del" onclick="attRemoveEmployee('${esc(n)}')">✕</button>
+    return `<span class="at-emp-chip" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;margin:2px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;">
+      <strong style="color:var(--text1);font-size:.85rem;">${esc(n)}</strong>
+      <button data-emp="${esc(n)}" onclick="attToggleAtt(this)"
+        title="${att ? 'الحضور مفعّل — اضغط للإيقاف' : 'الحضور متوقف — اضغط للتفعيل'}"
+        style="border:1px solid ${att ? 'rgba(72,187,120,.5)' : 'rgba(160,174,192,.35)'};
+               background:${att ? 'rgba(72,187,120,.2)' : 'rgba(160,174,192,.12)'};
+               color:${att ? '#48bb78' : '#a0aec0'};
+               border-radius:6px;cursor:pointer;font-size:.76rem;font-weight:700;padding:2px 7px;display:inline-flex;align-items:center;gap:3px;transition:all .15s;">
+        ${att ? '⏱ مفعّل' : '⏸ معطّل'}
+      </button>
+      <button data-emp="${esc(n)}" onclick="attToggleSalEmp(this)"
+        title="${sal ? 'الرواتب مفعّلة — اضغط للإيقاف' : 'الرواتب متوقفة — اضغط للتفعيل'}"
+        style="border:1px solid ${sal ? 'rgba(237,137,54,.5)' : 'rgba(160,174,192,.35)'};
+               background:${sal ? 'rgba(237,137,54,.2)' : 'rgba(160,174,192,.12)'};
+               color:${sal ? '#f6ad55' : '#a0aec0'};
+               border-radius:6px;cursor:pointer;font-size:.76rem;font-weight:700;padding:2px 7px;display:inline-flex;align-items:center;gap:3px;transition:all .15s;">
+        ${sal ? '💰 راتب' : '💰 معطّل'}
+      </button>
+      <button class="at-chip-rename" data-emp="${esc(n)}" onclick="attRenameEmployee(this.dataset.emp)" title="إعادة تسمية" style="background:none;border:none;color:#63b3ed;cursor:pointer;font-size:.82rem;padding:0 3px;">✏️</button>
+      <button class="at-chip-del" data-emp="${esc(n)}" onclick="attRemoveEmployee(this.dataset.emp)" title="حذف" style="background:none;border:none;color:#fc8181;cursor:pointer;font-size:.82rem;padding:0 3px;">✕</button>
     </span>`;
   }).join('');
   const safeId = n => n.replace(/\s/g,'_').replace(/[^\w]/g,'');
@@ -7157,7 +7171,12 @@ function attRenderAdmin() {
     ${isAdm ? `
     <!-- ④ Employee management -->
     <div class="at-emp-sec" style="border:1.5px solid #c6f6d5;margin-top:14px;">
-      <div class="at-emp-title">👥 إدارة الموظفين</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div class="at-emp-title" style="margin-bottom:0;">👥 إدارة الموظفين</div>
+        <button class="btn btn-sm" onclick="attActivateAllEmployees()" style="background:rgba(72,187,120,.2);border:1px solid #48bb78;color:#48bb78;padding:4px 12px;font-size:.78rem;font-weight:700;border-radius:8px;cursor:pointer;">
+          ✅ تفعيل الحضور للجميع
+        </button>
+      </div>
       <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end;">
         <div class="fg" style="flex:1;min-width:170px;margin-bottom:0;">
           <input type="text" class="fel" id="newEmpName" placeholder="اسم الموظف الجديد" style="width:100%;"/>
@@ -7409,23 +7428,50 @@ async function attAddEmployee() {
 }
 
 // ── [v13] تبديل حضور/رواتب موظف ──
-async function attToggleAtt(name) {
-  if (attAttOff.has(name)) attAttOff.delete(name);
-  else attAttOff.add(name);
+async function attToggleAtt(arg) {
+  const name = typeof arg === 'string' ? arg : arg?.dataset?.emp;
+  if (!name) return;
+  const isOff = attAttOff.has(name);
+  if (isOff) {
+    attAttOff.delete(name);
+    toast(`✅ تم تفعيل الحضور لـ "${name}"`);
+  } else {
+    attAttOff.add(name);
+    toast(`⏸ تم إيقاف الحضور لـ "${name}"`);
+  }
   try {
     await sbSetMeta('attendanceAttOff', { names: [...attAttOff] });
     attRenderAdmin();
     attBuildNameDrop();
   } catch(e) { toast('❌ '+arErr(e), false); }
 }
-async function attToggleSalEmp(name) {
-  if (attSalOff.has(name)) attSalOff.delete(name);
-  else attSalOff.add(name);
+
+async function attToggleSalEmp(arg) {
+  const name = typeof arg === 'string' ? arg : arg?.dataset?.emp;
+  if (!name) return;
+  const isOff = attSalOff.has(name);
+  if (isOff) {
+    attSalOff.delete(name);
+    toast(`✅ تم تفعيل الرواتب لـ "${name}"`);
+  } else {
+    attSalOff.add(name);
+    toast(`⏸ تم إيقاف الرواتب لـ "${name}"`);
+  }
   try {
     await sbSetMeta('attendanceSalOff', { names: [...attSalOff] });
     attRenderAdmin();
     const eCoEl = document.getElementById('eCo');
     if (eCoEl && eCoEl.value === 'رواتب') updateInvField('رواتب');
+  } catch(e) { toast('❌ '+arErr(e), false); }
+}
+
+async function attActivateAllEmployees() {
+  attAttOff.clear();
+  try {
+    await sbSetMeta('attendanceAttOff', { names: [] });
+    toast('✅ تم تفعيل الحضور لجميع الموظفين');
+    attRenderAdmin();
+    attBuildNameDrop();
   } catch(e) { toast('❌ '+arErr(e), false); }
 }
 
