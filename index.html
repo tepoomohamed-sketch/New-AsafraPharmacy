@@ -2597,12 +2597,48 @@ function arErr(e) {
 }
 
 async function fetchEntries() {
-  const d6=new Date(); d6.setMonth(d6.getMonth()-6);
-  const since=d6.toISOString().slice(0,10);
-  const {data, error} = await sb.from('entries').select('*').gte('date', since).neq('deleted', true);
-  if (error) { console.error('fetchEntries:', error); return; }
-  entries = (data||[]).map(r=>({...r, posReviewed:r.pos_reviewed, posReviewedAt:r.pos_reviewed_at, posReviewedBy:r.pos_reviewed_by}));
-  entries.sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0));
+  const d6 = new Date(); d6.setMonth(d6.getMonth() - 6);
+  const since = d6.toISOString().slice(0, 10);
+  
+  let allData = [];
+  let from = 0;
+  const step = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await sb
+      .from('entries')
+      .select('*')
+      .gte('date', since)
+      .neq('deleted', true)
+      .order('date', { ascending: false })
+      .order('ts', { ascending: false })
+      .range(from, from + step - 1);
+
+    if (error) {
+      console.error('fetchEntries error:', error);
+      break;
+    }
+
+    if (data && data.length) {
+      allData.push(...data);
+      if (data.length < step) {
+        hasMore = false;
+      } else {
+        from += step;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+
+  entries = allData.map(r => ({
+    ...r,
+    posReviewed: r.pos_reviewed,
+    posReviewedAt: r.pos_reviewed_at,
+    posReviewedBy: r.pos_reviewed_by
+  }));
+  entries.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0));
   updToday();
   refreshActivePane();
   renderSalesTarget();
@@ -5000,14 +5036,24 @@ function saveBackupSettings() {
 }
 
 async function getBkpData() {
-  const [{data: ents}, {data: att}, {data: metas}] = await Promise.all([
-    sb.from('entries').select('*').order('ts'),
+  let allEnts = [];
+  let from = 0;
+  const step = 1000;
+  while (true) {
+    const { data, error } = await sb.from('entries').select('*').order('ts').range(from, from + step - 1);
+    if (error || !data || !data.length) break;
+    allEnts.push(...data);
+    if (data.length < step) break;
+    from += step;
+  }
+
+  const [{data: att}, {data: metas}] = await Promise.all([
     sb.from('attendance').select('*').order('ts'),
     sb.from('meta').select('*')
   ]);
   return {
     date: new Date().toISOString(),
-    entries: ents || [],
+    entries: allEnts,
     attendance: att || [],
     meta: metas || []
   };
