@@ -5299,6 +5299,73 @@ async function settleOnline(entryId) {
 // ═══════════════════════════════════════════
 let entryActions = [];      // آخر الحركات من entry_actions
 
+// ── تجميع الحركات المتتالية المتشابهة في حركة واحدة بإجمالي المبلغ ──
+function groupActionHistory(rawList) {
+  const grouped = [];
+  const TIME_WINDOW_MS = 3 * 60 * 1000; // 3 دقائق لتجميع الحركات المتتالية للمسؤول
+
+  for (let i = 0; i < rawList.length; i++) {
+    const act = rawList[i];
+    const actTime = act.done_at ? new Date(act.done_at).getTime() : 0;
+    
+    // حساب المبلغ والعناصر المرتبطة بالحركة
+    let actAmt = 0;
+    let actItems = [];
+    const snap = act.snapshot || {};
+
+    if (Array.isArray(snap)) {
+      actAmt = snap.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+      actItems = snap;
+    } else if (snap && typeof snap === 'object') {
+      actAmt = parseFloat(snap.amount || snap.totalAmount || snap.sum) || 0;
+      actItems = [{ company: snap.company, amount: actAmt, id: act.target_ids?.[0] }];
+    }
+
+    if (!actAmt && act.target_ids && act.target_ids.length) {
+      const found = act.target_ids.map(id => entries.find(e => e.id === id) || (typeof trashedEntries !== 'undefined' ? trashedEntries.find(e => e.id === id) : null)).filter(Boolean);
+      if (found.length) {
+        actAmt = found.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+        actItems = found;
+      }
+    }
+
+    const lastGroup = grouped.length ? grouped[grouped.length - 1] : null;
+    const canMerge = lastGroup &&
+      lastGroup.action === act.action &&
+      lastGroup.done_by === act.done_by &&
+      lastGroup.undone === act.undone &&
+      Math.abs(lastGroup._lastTime - actTime) <= TIME_WINDOW_MS;
+
+    if (canMerge) {
+      lastGroup.rawActionIds.push(act.id);
+      lastGroup.target_ids = [...new Set([...(lastGroup.target_ids || []), ...(act.target_ids || [])])];
+      lastGroup.totalAmount += actAmt;
+      lastGroup.items.push(...actItems);
+      lastGroup._lastTime = actTime;
+      lastGroup.count = (lastGroup.target_ids && lastGroup.target_ids.length) ? lastGroup.target_ids.length : lastGroup.items.length;
+    } else {
+      grouped.push({
+        id: act.id,
+        rawActionIds: [act.id],
+        action: act.action,
+        done_by: act.done_by,
+        done_at: act.done_at,
+        _lastTime: actTime,
+        undone: act.undone,
+        undone_by: act.undone_by || act.undoneBy,
+        undone_at: act.undone_at,
+        target_ids: [...(act.target_ids || [])],
+        totalAmount: actAmt,
+        items: [...actItems],
+        count: (act.target_ids && act.target_ids.length) ? act.target_ids.length : (actItems.length || 1),
+        snapshot: snap
+      });
+    }
+  }
+
+  return grouped;
+}
+
 // ── تسجيل حركة في السجل ──
 async function sbLogAction(action, targetIds, snapshot) {
   try {
@@ -5331,126 +5398,141 @@ async function fetchEntryActions(limit = 100) {
   } catch(e) { console.error('fetchEntryActions:', e); }
 }
 
-// ── تراجع عن حركة ──
-async function undoEntryAction(actId) {
-  const act = entryActions.find(a => a.id === actId);
-  if (!act) { toast('❌ الحركة غير موجودة', false); return; }
-  if (act.undone) { toast('⚠️ تم التراجع عن هذا الإجراء بالفعل', false); return; }
+// ── تراجع عن حركة أو مجموعة حركات مجمعة ──
+async function undoEntryAction(actIdOrIds) {
+  const idsList = Array.isArray(actIdOrIds) ? actIdOrIds : [actIdOrIds];
+  const acts = idsList.map(id => entryActions.find(a => a.id === id)).filter(Boolean);
+  if (!acts.length) { toast('❌ الحركة غير موجودة', false); return; }
 
+  const pendingActs = acts.filter(a => !a.undone);
+  if (!pendingActs.length) { toast('⚠️ تم التراجع عن هذا الإجراء بالفعل', false); return; }
+
+  const firstAct = pendingActs[0];
   const labels = { delete:'حذف', settle:'تسوية', unsettle:'إلغاء تسوية', mark_pos:'تعليم POS', unmark_pos:'إلغاء POS' };
-  if (!confirm(`تراجع عن "${labels[act.action]||act.action}"؟`)) return;
+  const actionLabel = labels[firstAct.action] || firstAct.action;
+
+  const allTargetIds = [...new Set(pendingActs.flatMap(a => a.target_ids || []))];
+  const countLabel = allTargetIds.length > 1 ? ` لـ ${allTargetIds.length} بنود` : '';
+
+  if (!confirm(`تراجع عن "${actionLabel}"${countLabel}؟`)) return;
 
   try {
-    const ids = act.target_ids; // array of entry IDs
-
-    if (act.action === 'delete') {
-      // ── تراجع الحذف = استعادة البنود ──
+    if (firstAct.action === 'delete') {
       const { error } = await sb.from('entries').update({
         deleted: false, deleted_at: null, deleted_by: null
-      }).in('id', ids);
+      }).in('id', allTargetIds);
       if (error) throw error;
-      // تحديث الرصيد لكل بند مستعاد
-      if (act.snapshot && Array.isArray(act.snapshot)) {
-        let delta = 0;
-        act.snapshot.forEach(e => {
-          delta += e.type === 'ايرادات' ? e.amount : -e.amount;
-        });
+
+      let totalDelta = 0;
+      pendingActs.forEach(act => {
+        if (act.snapshot && Array.isArray(act.snapshot)) {
+          act.snapshot.forEach(e => {
+            totalDelta += e.type === 'ايرادات' ? (e.amount || 0) : -(e.amount || 0);
+          });
+        }
+      });
+      if (totalDelta !== 0) {
         const meta = await sbGetMeta('balance');
-        await sbSetMeta('balance', { amount: (meta.amount||0) + delta });
+        await sbSetMeta('balance', { amount: (meta.amount || 0) + totalDelta });
       }
 
-    } else if (act.action === 'settle') {
-      // ── تراجع التسوية = حذف قيد الإيرادات + إزالة settled من الأصل ──
-      const snap = act.snapshot || {};
-      const origId    = snap.originalId;
-      const oldInvoice = snap.originalInvoice || '';
-      const settleEntryId = snap.settlementEntryId;
-      if (settleEntryId) {
-        // احسب أثر حذف قيد التسوية على الرصيد
-        const settleEntry = entries.find(e => e.id === settleEntryId);
-        const settleAmt = settleEntry ? settleEntry.amount : (snap.amount || 0);
-        const meta = await sbGetMeta('balance');
-        const prev = meta.amount || 0;
-        await sbSetMeta('balance', { amount: prev - settleAmt });
-        // حذف قيد التسوية (soft delete)
-        await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me?.name })
-          .eq('id', settleEntryId);
-      }
-      if (origId) {
-        // إزالة علامة settled من البند الأصلي
-        await sb.from('entries').update({ invoice: oldInvoice }).eq('id', origId);
-        const localE = entries.find(e => e.id === origId);
-        if (localE) localE.invoice = oldInvoice;
-      }
-      // حذف قيد التسوية من الذاكرة المحلية
-      if (settleEntryId) {
-        entries = entries.filter(e => e.id !== settleEntryId);
-      }
-
-    } else if (act.action === 'mark_pos') {
-      // ── تراجع تعليم POS = إزالة العلامة ──
+    } else if (firstAct.action === 'mark_pos') {
       const { error } = await sb.from('entries').update({
         pos_reviewed: false, pos_reviewed_by: null, pos_reviewed_at: null
-      }).in('id', ids);
+      }).in('id', allTargetIds);
       if (error) throw error;
-      ids.forEach(eid => {
+      allTargetIds.forEach(eid => {
         const e = entries.find(x => x.id === eid);
         if (e) { e.posReviewed = false; e.posReviewedBy = null; e.posReviewedAt = null; }
       });
 
-    } else if (act.action === 'unmark_pos') {
-      // ── تراجع إلغاء POS = إعادة العلامة ──
+    } else if (firstAct.action === 'unmark_pos') {
       const { error } = await sb.from('entries').update({
-        pos_reviewed: true, pos_reviewed_by: me?.name, pos_reviewed_at: Date.now()
-      }).in('id', ids);
+        pos_reviewed: true, pos_reviewed_by: me?.name || 'مدير', pos_reviewed_at: Date.now()
+      }).in('id', allTargetIds);
       if (error) throw error;
-      ids.forEach(eid => {
+      allTargetIds.forEach(eid => {
         const e = entries.find(x => x.id === eid);
-        if (e) { e.posReviewed = true; e.posReviewedBy = me?.name; e.posReviewedAt = Date.now(); }
+        if (e) { e.posReviewed = true; e.posReviewedBy = me?.name || 'مدير'; e.posReviewedAt = Date.now(); }
       });
 
-    } else if (act.action === 'unsettle') {
-      // ── تراجع إلغاء تسوية = إعادة التسوية ──
-      const snap = act.snapshot || {};
-      const origId = snap.originalId;
-      const settleEntryId = snap.settlementEntryId;
-      if (origId) {
-        await sb.from('entries').update({ invoice: 'settled:' + settleEntryId }).eq('id', origId);
-        const localE = entries.find(e => e.id === origId);
-        if (localE) localE.invoice = 'settled:' + settleEntryId;
-      }
-      if (settleEntryId) {
-        await sb.from('entries').update({ deleted: false, deleted_at: null, deleted_by: null }).eq('id', settleEntryId);
-        // أضف قيد التسوية للذاكرة لو مش موجود
-        if (!entries.find(e => e.id === settleEntryId) && snap.settlementEntry) {
-          entries.unshift(snap.settlementEntry);
+    } else if (firstAct.action === 'settle') {
+      for (const act of pendingActs) {
+        const snap = act.snapshot || {};
+        const origId = snap.originalId;
+        const oldInvoice = snap.originalInvoice || '';
+        const settleEntryId = snap.settlementEntryId;
+        if (settleEntryId) {
+          const settleEntry = entries.find(e => e.id === settleEntryId);
+          const settleAmt = settleEntry ? settleEntry.amount : (snap.amount || 0);
           const meta = await sbGetMeta('balance');
           const prev = meta.amount || 0;
-          await sbSetMeta('balance', { amount: prev + (snap.settlementEntry.amount||0) });
+          await sbSetMeta('balance', { amount: prev - settleAmt });
+          await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me?.name })
+            .eq('id', settleEntryId);
+          entries = entries.filter(e => e.id !== settleEntryId);
+        }
+        if (origId) {
+          await sb.from('entries').update({ invoice: oldInvoice }).eq('id', origId);
+          const localE = entries.find(e => e.id === origId);
+          if (localE) localE.invoice = oldInvoice;
+        }
+      }
+
+    } else if (firstAct.action === 'unsettle') {
+      for (const act of pendingActs) {
+        const snap = act.snapshot || {};
+        const origId = snap.originalId;
+        const settleEntryId = snap.settlementEntryId;
+        if (origId) {
+          await sb.from('entries').update({ invoice: 'settled:' + settleEntryId }).eq('id', origId);
+          const localE = entries.find(e => e.id === origId);
+          if (localE) localE.invoice = 'settled:' + settleEntryId;
+        }
+        if (settleEntryId) {
+          await sb.from('entries').update({ deleted: false, deleted_at: null, deleted_by: null }).eq('id', settleEntryId);
+          if (!entries.find(e => e.id === settleEntryId) && snap.settlementEntry) {
+            entries.unshift(snap.settlementEntry);
+            const meta = await sbGetMeta('balance');
+            const prev = meta.amount || 0;
+            await sbSetMeta('balance', { amount: prev + (snap.settlementEntry.amount || 0) });
+          }
         }
       }
     }
 
-    // ── حدّث حالة الحركة في Supabase ──
+    const nowIso = new Date().toISOString();
+    const actDbIds = pendingActs.map(a => a.id);
     await sb.from('entry_actions').update({
-      undone: true, undone_by: me?.name || me?.uid, undone_at: new Date().toISOString()
-    }).eq('id', actId);
+      undone: true, undone_by: me?.name || me?.uid || 'مدير', undone_at: nowIso
+    }).in('id', actDbIds);
 
-    // ── حدّث محلياً ──
-    act.undone = true;
-    act.undoneBy = me?.name || me?.uid;
-    act.undoneAt = new Date().toISOString();
+    pendingActs.forEach(act => {
+      act.undone = true;
+      act.undoneBy = me?.name || me?.uid || 'مدير';
+      act.undoneAt = nowIso;
+    });
 
-    toast('✅ تم التراجع بنجاح');
+    toast(`✅ تم التراجع عن ${pendingActs.length > 1 ? pendingActs.length + ' حركات' : 'الحركة'} بنجاح`);
     fetchEntries();
     renderActionHistory();
 
   } catch(e) {
-    toast('❌ فشل التراجع: ' + (e.message||arErr(e)), false);
+    toast('❌ فشل التراجع: ' + (e.message || arErr(e)), false);
   }
 }
 
-// ── عرض سجل الحركات في المودال ──
+async function undoGroupAction(btn) {
+  try {
+    const raw = btn.dataset.actids;
+    const ids = JSON.parse(raw);
+    await undoEntryAction(ids);
+  } catch(e) {
+    console.error('undoGroupAction error:', e);
+  }
+}
+
+// ── عرض سجل الحركات في المودال (مجمعة وواضحة) ──
 function renderActionHistory() {
   const el = document.getElementById('actHistBody');
   if (!el) return;
@@ -5467,6 +5549,9 @@ function renderActionHistory() {
     return;
   }
 
+  // تجميع الحركات المتتالية المتشابهة لتظهر كحركة واحدة بإجمالي المبلغ
+  const groupedList = groupActionHistory(list);
+
   const labels = { delete:'🗑 مسح', settle:'✅ تسوية', unsettle:'↩️ إلغاء تسوية', mark_pos:'🏷 تعليم POS', unmark_pos:'↩️ إلغاء POS' };
   const colors = { delete:'#fc8181', settle:'#68d391', unsettle:'#f6ad55', mark_pos:'#63b3ed', unmark_pos:'#f6ad55' };
 
@@ -5474,71 +5559,57 @@ function renderActionHistory() {
     <div style="display:flex;align-items:center;gap:10px;padding:7px 14px;font-size:.73rem;color:var(--text3);font-weight:700;border-bottom:1.5px solid var(--border);background:rgba(255,255,255,.03);position:sticky;top:0;z-index:2;backdrop-filter:blur(4px);">
       <span style="min-width:85px;">📅 الوقت</span>
       <span style="min-width:65px;">👤 المسؤول</span>
-      <span style="min-width:70px;">🏷️ الحركة</span>
+      <span style="min-width:75px;">🏷️ الحركة</span>
       <span style="flex:1;">📋 التفاصيل</span>
-      <span style="min-width:80px;text-align:center;">💰 المبلغ</span>
+      <span style="min-width:85px;text-align:center;">💰 إجمالي المبلغ</span>
       <span style="min-width:65px;text-align:center;">الإجراء</span>
     </div>`;
 
-  const rowsHtml = list.slice(0, 80).map(a => {
-    const lbl  = labels[a.action] || a.action;
-    const clr  = colors[a.action] || 'var(--text2)';
-    const time = a.done_at ? new Date(a.done_at) : null;
+  const rowsHtml = groupedList.slice(0, 80).map(g => {
+    const lbl  = labels[g.action] || g.action;
+    const clr  = colors[g.action] || 'var(--text2)';
+    const time = g.done_at ? new Date(g.done_at) : null;
     const timeStr = time ? time.toLocaleDateString('ar-EG',{day:'numeric',month:'short'}) + ' ' +
                           time.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '—';
-    const undone = a.undone;
-    const undoBy = a.undoneBy || a.undone_by || '';
-    const undoAt = a.undone_at ? new Date(a.undone_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
+    const undone = g.undone;
+    const undoBy = g.undone_by || g.undoneBy || '';
+    const undoAt = g.undone_at ? new Date(g.undone_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
 
-    // حساب المبلغ المرتبط بالحركة
-    let totalAmt = 0;
-    const snap = a.snapshot || {};
-    if (Array.isArray(snap)) {
-      totalAmt = snap.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-    } else if (snap && typeof snap === 'object') {
-      totalAmt = parseFloat(snap.amount || snap.totalAmount || snap.sum) || 0;
-    }
+    const companies = [...new Set(g.items.map(x => x.company).filter(Boolean))];
+    const compLabel = companies.length === 1 ? companies[0] : (companies.length > 1 ? `${companies.slice(0, 2).join('، ')}${companies.length > 2 ? ' ...' : ''}` : '');
 
-    if (!totalAmt && a.target_ids && a.target_ids.length) {
-      const found = a.target_ids.map(id => entries.find(e => e.id === id) || (typeof trashedEntries !== 'undefined' ? trashedEntries.find(e => e.id === id) : null)).filter(Boolean);
-      if (found.length) {
-        totalAmt = found.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-      }
-    }
-
-    // وصف مختصر
     let desc = '';
-    if (a.action === 'delete') {
-      if (Array.isArray(snap)) {
-        desc = snap.length > 1 ? `${snap.length} قيد` : (snap[0]?.company || 'قيد');
-      } else {
-        desc = snap.company || 'قيد محذوف';
-      }
-    } else if (a.action === 'settle' || a.action === 'unsettle') {
-      desc = snap.company || 'تسوية ذمم';
-    } else if (a.action === 'mark_pos' || a.action === 'unmark_pos') {
-      const cnt = (a.target_ids||[]).length;
-      desc = cnt > 1 ? `${cnt} قيد` : (snap.company || 'POS');
+    if (g.action === 'delete') {
+      desc = g.count > 1 ? `حذف ${g.count} بنود ${compLabel ? `(${compLabel})` : ''}` : (compLabel || 'قيد محذوف');
+    } else if (g.action === 'mark_pos' || g.action === 'unmark_pos') {
+      desc = g.count > 1 ? `${g.count} بنود ${compLabel ? `(${compLabel})` : ''}` : (compLabel || 'POS');
+    } else if (g.action === 'settle' || g.action === 'unsettle') {
+      desc = compLabel || 'تسوية ذمم';
     }
 
-    const amtBadge = totalAmt > 0
-      ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:3px 9px;border-radius:6px;font-size:.78rem;font-weight:800;background:rgba(214,158,46,.15);border:1px solid rgba(214,158,46,.35);color:#f6ad55;white-space:nowrap;min-width:80px;" title="المبلغ: ${fmt(totalAmt)} ج">
-           ${fmt(totalAmt)} ج
+    const amtBadge = g.totalAmount > 0
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:3px 9px;border-radius:6px;font-size:.78rem;font-weight:800;background:rgba(214,158,46,.15);border:1px solid rgba(214,158,46,.35);color:#f6ad55;white-space:nowrap;min-width:85px;" title="إجمالي المبلغ: ${fmt(g.totalAmount)} جنيه">
+           ${fmt(g.totalAmount)} ج
          </span>`
-      : `<span style="font-size:.75rem;color:var(--text3);white-space:nowrap;min-width:80px;text-align:center;">—</span>`;
+      : `<span style="font-size:.75rem;color:var(--text3);white-space:nowrap;min-width:85px;text-align:center;">—</span>`;
+
+    const actIdsJson = esc(JSON.stringify(g.rawActionIds));
 
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
               border-bottom:1px solid var(--border);${undone?'opacity:.45;':''}">
       <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:85px;">${timeStr}</span>
-      <span style="font-size:.78rem;color:var(--text3);white-space:nowrap;min-width:65px;">${a.done_by||''}</span>
-      <span style="font-size:.82rem;font-weight:700;color:${clr};white-space:nowrap;min-width:70px;">${lbl}</span>
+      <span style="font-size:.78rem;color:var(--text3);white-space:nowrap;min-width:65px;">${g.done_by||''}</span>
+      <span style="font-size:.82rem;font-weight:700;color:${clr};white-space:nowrap;min-width:75px;">${lbl}</span>
       <span style="font-size:.78rem;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-        ${undone?'text-decoration:line-through;':''}">${esc(desc)}</span>
+        ${undone?'text-decoration:line-through;':''}">
+        ${esc(desc)}
+        ${g.count > 1 ? `<span style="font-size:.72rem;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:8px;margin-right:4px;">${g.count} بنود</span>` : ''}
+      </span>
       ${amtBadge}
       <span style="min-width:65px;display:flex;justify-content:center;">
         ${undone
           ? `<span style="font-size:.7rem;color:#f6ad55;white-space:nowrap;">↩️ رجع${undoBy?' — '+undoBy:''} ${undoAt}</span>`
-          : `<button onclick="undoEntryAction('${a.id}')"
+          : `<button data-actids="${actIdsJson}" onclick="undoGroupAction(this)"
               style="padding:4px 10px;background:rgba(246,173,85,.15);border:1px solid rgba(246,173,85,.35);
                      color:#f6ad55;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;">
               ↩️ تراجع</button>`}
