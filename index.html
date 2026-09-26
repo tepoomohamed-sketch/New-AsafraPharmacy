@@ -2863,11 +2863,11 @@ function coSelectChanged() {
   }
 }
 
-// OLD AUTOCOMPLETE FUNCTIONS - NO LONGER NEEDED
-// function filterCoDrop() { }
-// function selectCo() { }
-// function hideCoDrop() { }
-// function coDropKeyNav() { }
+// AUTOCOMPLETE BACKWARD COMPATIBILITY
+function filterCoDrop() { }
+function selectCo() { }
+function hideCoDrop() { const el = document.getElementById('coDropList'); if (el) el.style.display = 'none'; }
+function coDropKeyNav() { }
 
 function updateInvField(company) {
   const txtInv = document.getElementById('eInv');
@@ -2929,7 +2929,8 @@ async function doSave() {
     await sbSetMeta('balance', { amount: newB });
 
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
-    ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ document.getElementById(id).value=''; }); hideCoDrop();
+    ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
+    if (typeof hideCoDrop === 'function') hideCoDrop();
     const _sel=document.getElementById('eInvSel'); if(_sel) { _sel.value=''; _sel.style.display='none'; }
     const _inv=document.getElementById('eInv'); if(_inv) _inv.style.display='';
     const _lbl=document.getElementById('eInvLbl'); if(_lbl) _lbl.textContent='🔢 رقم الفاتورة';
