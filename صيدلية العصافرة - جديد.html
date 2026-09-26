@@ -159,6 +159,10 @@
   .tb-a.on{background:#0e7490;color:white;border-color:#0e7490;box-shadow:0 4px 15px rgba(6,182,212,.35);}
   .tb-d{background:rgba(183,148,244,.1);color:#b794f4;border-color:rgba(183,148,244,.3);}
   .tb-d.on{background:#6b46c1;color:white;border-color:#6b46c1;box-shadow:0 4px 15px rgba(107,70,193,.35);}
+  @keyframes shakeInput{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
+  .shake-alert{animation:shakeInput .4s ease-in-out!important;}
+  .notes-req-active{border-color:rgba(239,68,68,.7)!important;box-shadow:0 0 0 2.5px rgba(239,68,68,.25)!important;background:rgba(239,68,68,.04)!important;}
+  .notes-req-ok{border-color:rgba(72,187,120,.7)!important;box-shadow:0 0 0 2.5px rgba(72,187,120,.2)!important;background:rgba(72,187,120,.04)!important;}
   .tbl-w{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;min-width:600px;}
   thead th{background:rgba(26,23,48,.9);padding:11px 12px;text-align:right;font-weight:800;color:var(--text2);font-size:.79rem;border-bottom:1px solid rgba(124,58,237,.2);white-space:nowrap;}
@@ -946,7 +950,14 @@ function ensureXLSX() {
             <select id="eInvSel" style="display:none;"><option value="">اختر الموظف...</option></select>
           </div>
           <div class="fg"><label id="eAmtLbl">💵 المبلغ (جنيه)</label><input type="number" id="eAmt" placeholder="0" min="0" step="0.01" onkeydown="if(event.key==='Enter')doSave()"/></div>
-          <div class="fg fg-full"><label for="eNotes">📝 ملاحظات</label><input type="text" id="eNotes" placeholder="عجز 50 ج عند محمد | زيادة 40 ج | بعد مرتجع..."/></div>
+          <div class="fg fg-full">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+              <label for="eNotes" id="eNotesLbl" style="margin-bottom:0;">📝 ملاحظات</label>
+              <span id="eNotesAlertBadge" style="display:none;align-items:center;gap:5px;background:rgba(239,68,68,0.15);color:#fc8181;border:1px solid rgba(239,68,68,0.4);padding:3px 12px;border-radius:20px;font-size:0.78rem;font-weight:800;transition:all .25s ease;">⚠️ اسم المرسل إجباري لحفظ الذمم</span>
+            </div>
+            <input type="text" id="eNotes" placeholder="عجز 50 ج عند محمد | زيادة 40 ج | بعد مرتجع..." oninput="checkNotesSenderValidation()"/>
+            <div id="eNotesHintMsg" style="display:none;font-size:0.8rem;color:#fc8181;margin-top:6px;font-weight:700;">⚠️ تنبيه: يرجى كتابة اسم الشخص الراسل للمبلغ (مثال: محول من أحمد محمد / رقم المحفظة) لإتمام الحفظ.</div>
+          </div>
         </div>
         <button class="btn btn-primary" id="saveBtn" onclick="doSave()" style="margin-top:12px;">💾 حفظ القيد</button>
       </div>
@@ -2824,6 +2835,57 @@ function pickType(t, el) {
   const cL={ايرادات:'🏷 البند',مصاريف:'🏷 بند المصروف',طلبيات:'🏷 اسم المورد',ارباح:'🏷 نوع السحب','اصول ثابتة':'🏷 نوع الأصل / الجهاز','ذمم اونلاين':'🏷 وسيلة الدفع الأونلاين'};
   document.getElementById('eAmtLbl').textContent = aL[t]||'💵 المبلغ';
   document.getElementById('eCoLbl').textContent  = cL[t]||'🏷 البند';
+
+  // ── تحديث ملاحظات الذمم أونلاين وتنبيه اسم المرسل ──
+  const notesInp = document.getElementById('eNotes');
+  if (t === 'ذمم اونلاين') {
+    if (notesInp) notesInp.placeholder = '👤 اكتب اسم المرسل هنا إجباري (مثال: محول من أحمد محمد / رقم المحفظة)...';
+    checkNotesSenderValidation();
+  } else {
+    if (notesInp) {
+      notesInp.placeholder = 'عجز 50 ج عند محمد | زيادة 40 ج | بعد مرتجع...';
+      notesInp.classList.remove('notes-req-active', 'notes-req-ok', 'shake-alert');
+    }
+    const badge = document.getElementById('eNotesAlertBadge');
+    if (badge) badge.style.display = 'none';
+    const hint = document.getElementById('eNotesHintMsg');
+    if (hint) hint.style.display = 'none';
+  }
+}
+
+function checkNotesSenderValidation() {
+  const badge = document.getElementById('eNotesAlertBadge');
+  const hint  = document.getElementById('eNotesHintMsg');
+  const inp   = document.getElementById('eNotes');
+  if (!badge || !inp) return;
+
+  if (curType === 'ذمم اونلاين') {
+    const val = inp.value.trim();
+    if (!val) {
+      badge.style.display = 'inline-flex';
+      badge.style.background = 'rgba(239, 68, 68, 0.16)';
+      badge.style.color = '#fc8181';
+      badge.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+      badge.textContent = '⚠️ اسم المرسل إجباري لحفظ الذمم';
+      if (hint) hint.style.display = 'block';
+      inp.classList.remove('notes-req-ok');
+      inp.classList.add('notes-req-active');
+    } else {
+      badge.style.display = 'inline-flex';
+      badge.style.background = 'rgba(72, 187, 120, 0.16)';
+      badge.style.color = '#68d391';
+      badge.style.borderColor = 'rgba(72, 187, 120, 0.45)';
+      const shortVal = val.length > 22 ? val.slice(0, 22) + '...' : val;
+      badge.textContent = '✅ اسم المرسل: ' + shortVal;
+      if (hint) hint.style.display = 'none';
+      inp.classList.remove('notes-req-active');
+      inp.classList.add('notes-req-ok');
+    }
+  } else {
+    badge.style.display = 'none';
+    if (hint) hint.style.display = 'none';
+    inp.classList.remove('notes-req-active', 'notes-req-ok', 'shake-alert');
+  }
 }
 
 let _allCos = [];  // current type's full options list
@@ -2907,6 +2969,20 @@ async function doSave() {
   if (!co)   { toast('⚠️ اختر البند أو الشركة',false); return; }
   if (amt<=0){ toast('⚠️ أدخل مبلغاً أكبر من صفر',false); return; }
 
+  // ── التحقق الإجباري من اسم المرسل في الذمم الأونلاين ──
+  if (curType === 'ذمم اونلاين' && !notes) {
+    toast('⚠️ يرجى كتابة اسم المرسل في خانة الملاحظات لحفظ الذمم الأونلاين!', false);
+    const nEl = document.getElementById('eNotes');
+    if (nEl) {
+      nEl.focus();
+      nEl.classList.remove('shake-alert');
+      void nEl.offsetWidth; // trigger reflow
+      nEl.classList.add('shake-alert');
+      checkNotesSenderValidation();
+    }
+    return;
+  }
+
   const btn = document.getElementById('saveBtn');
   btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true;
 
@@ -2931,6 +3007,7 @@ async function doSave() {
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
     if (typeof hideCoDrop === 'function') hideCoDrop();
+    checkNotesSenderValidation();
     const _sel=document.getElementById('eInvSel'); if(_sel) { _sel.value=''; _sel.style.display='none'; }
     const _inv=document.getElementById('eInv'); if(_inv) _inv.style.display='';
     const _lbl=document.getElementById('eInvLbl'); if(_lbl) _lbl.textContent='🔢 رقم الفاتورة';
@@ -2973,6 +3050,33 @@ function editTypeChange() {
   const prev= sel.value;
   sel.innerHTML = '<option value="">اختر...</option>';
   all.forEach(c=>{ const o=document.createElement('option'); o.value=o.textContent=c; if(c===prev) o.selected=true; sel.appendChild(o); });
+  checkEditNotesValidation();
+}
+
+function checkEditNotesValidation() {
+  const t = document.getElementById('editType')?.value;
+  const b = document.getElementById('editNotesAlertBadge');
+  const n = document.getElementById('editNotes');
+  if (!b || !n) return;
+  if (t === 'ذمم اونلاين') {
+    b.style.display = 'inline';
+    n.placeholder = '👤 اسم المرسل إجباري (مثال: محول من أحمد محمد / رقم المحفظة)...';
+    if (!n.value.trim()) {
+      b.textContent = '⚠️ اسم المرسل إجباري للذمم';
+      b.style.color = '#fc8181';
+      n.classList.add('notes-req-active');
+      n.classList.remove('notes-req-ok');
+    } else {
+      b.textContent = '✅ اسم المرسل محدد';
+      b.style.color = '#68d391';
+      n.classList.remove('notes-req-active');
+      n.classList.add('notes-req-ok');
+    }
+  } else {
+    b.style.display = 'none';
+    n.placeholder = 'اختياري...';
+    n.classList.remove('notes-req-active', 'notes-req-ok', 'shake-alert');
+  }
 }
 
 function closeEdit() {
@@ -2995,6 +3099,12 @@ async function saveEdit() {
   if (!date) { showErr('أدخل التاريخ'); return; }
   if (!co)   { showErr('اختر البند أو الشركة'); return; }
   if (amt<=0){ showErr('أدخل مبلغاً أكبر من صفر'); return; }
+  if (type === 'ذمم اونلاين' && !notes) {
+    showErr('⚠️ يرجى كتابة اسم المرسل في الملاحظات (إجباري في الذمم الأونلاين)');
+    const nEl = document.getElementById('editNotes');
+    if (nEl) { nEl.focus(); nEl.classList.add('shake-alert'); setTimeout(()=>nEl.classList.remove('shake-alert'), 500); }
+    return;
+  }
 
   const btn = document.getElementById('editSaveBtn');
   btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true;
@@ -12295,13 +12405,21 @@ document.addEventListener('keydown', e => {
           <option value="مصاريف">مصاريف</option>
           <option value="طلبيات">طلبيات</option>
           <option value="ارباح">ارباح</option>
+          <option value="اصول ثابتة">أصول ثابتة</option>
+          <option value="ذمم اونلاين">ذمم أونلاين</option>
         </select>
       </div>
     </div>
     <div class="fg"><label for="editCo">🏷 البند / الشركة</label><select id="editCo"></select></div>
     <div class="fg"><label for="editInv">🔢 رقم الفاتورة</label><input type="text" id="editInv" placeholder="اختياري"/></div>
     <div class="fg"><label for="editAmt">💰 المبلغ (جنيه)</label><input type="number" id="editAmt" step="0.01" min="0" placeholder="0.00"/></div>
-    <div class="fg"><label for="editNotes">📝 ملاحظات</label><textarea id="editNotes" rows="2" placeholder="اختياري..."></textarea></div>
+    <div class="fg">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label for="editNotes" id="editNotesLbl" style="margin-bottom:0;">📝 ملاحظات</label>
+        <span id="editNotesAlertBadge" style="display:none;font-size:0.75rem;color:#fc8181;font-weight:700;">⚠️ اسم المرسل إجباري للذمم</span>
+      </div>
+      <textarea id="editNotes" rows="2" placeholder="اختياري..." oninput="checkEditNotesValidation()"></textarea>
+    </div>
     <div class="err" id="editErr"></div>
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-primary" id="editSaveBtn" onclick="saveEdit()" style="flex:1;">💾 حفظ التعديل</button>
