@@ -3085,7 +3085,8 @@ async function markAllPosReviewed() {
       e.posReviewedAt = now;
     });
     // سجل الحركة
-    sbLogAction('mark_pos', ids, { count: ids.length });
+    const totalPosAmt = toMark.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    sbLogAction('mark_pos', ids, { count: ids.length, amount: totalPosAmt });
     renderAll();
     toast(`✅ تم تعليم ${ids.length} قيد كـ مراجعة POS`);
   } catch(err) {
@@ -3285,6 +3286,7 @@ async function bulkMarkPos(mark) {
   const checked = [...document.querySelectorAll('.all-entry-chk:checked')];
   if (!checked.length) return;
   const ids = checked.map(c => c.dataset.id);
+  const totalAmt = checked.reduce((s, c) => s + (parseFloat(c.dataset.amt) || 0), 0);
   const actionLabel = mark ? 'تعليم كـ مراجعة POS' : 'إلغاء مراجعة POS';
   if (!confirm(`${actionLabel} لـ ${ids.length} قيد محدد؟`)) return;
 
@@ -3311,7 +3313,7 @@ async function bulkMarkPos(mark) {
       }
     });
 
-    sbLogAction(mark ? 'mark_pos' : 'unmark_pos', ids, { count: ids.length, bulk: true });
+    sbLogAction(mark ? 'mark_pos' : 'unmark_pos', ids, { count: ids.length, bulk: true, amount: totalAmt });
     renderAll();
     toast(mark ? `✅ تم تعليم ${ids.length} قيد كـ مراجعة POS` : `↩️ تم إلغاء مراجعة POS لـ ${ids.length} قيد`);
   } catch (err) {
@@ -5468,7 +5470,17 @@ function renderActionHistory() {
   const labels = { delete:'🗑 مسح', settle:'✅ تسوية', unsettle:'↩️ إلغاء تسوية', mark_pos:'🏷 تعليم POS', unmark_pos:'↩️ إلغاء POS' };
   const colors = { delete:'#fc8181', settle:'#68d391', unsettle:'#f6ad55', mark_pos:'#63b3ed', unmark_pos:'#f6ad55' };
 
-  el.innerHTML = list.slice(0, 80).map(a => {
+  const headerHtml = `
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 14px;font-size:.73rem;color:var(--text3);font-weight:700;border-bottom:1.5px solid var(--border);background:rgba(255,255,255,.03);position:sticky;top:0;z-index:2;backdrop-filter:blur(4px);">
+      <span style="min-width:85px;">📅 الوقت</span>
+      <span style="min-width:65px;">👤 المسؤول</span>
+      <span style="min-width:70px;">🏷️ الحركة</span>
+      <span style="flex:1;">📋 التفاصيل</span>
+      <span style="min-width:80px;text-align:center;">💰 المبلغ</span>
+      <span style="min-width:65px;text-align:center;">الإجراء</span>
+    </div>`;
+
+  const rowsHtml = list.slice(0, 80).map(a => {
     const lbl  = labels[a.action] || a.action;
     const clr  = colors[a.action] || 'var(--text2)';
     const time = a.done_at ? new Date(a.done_at) : null;
@@ -5478,39 +5490,63 @@ function renderActionHistory() {
     const undoBy = a.undoneBy || a.undone_by || '';
     const undoAt = a.undone_at ? new Date(a.undone_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
 
-    // وصف مختصر
-    let desc = '';
+    // حساب المبلغ المرتبط بالحركة
+    let totalAmt = 0;
     const snap = a.snapshot || {};
-    if (a.action === 'delete' && Array.isArray(snap)) {
-      desc = snap.map(e => `${e.company||'?'} ${fmt(e.amount||0)}ج`).join('، ');
-      if (snap.length > 1) desc = `${snap.length} قيد`;
-    } else if (a.action === 'settle') {
-      desc = `${snap.company||'?'} — ${fmt(snap.amount||0)}ج`;
-    } else if (a.action === 'unsettle') {
-      desc = `${snap.company||'?'} — ${fmt(snap.amount||0)}ج`;
-    } else if (a.action === 'mark_pos') {
-      const cnt = (a.target_ids||[]).length;
-      desc = cnt > 1 ? `${cnt} قيد` : (snap.company || '');
-    } else if (a.action === 'unmark_pos') {
-      const cnt = (a.target_ids||[]).length;
-      desc = cnt > 1 ? `${cnt} قيد` : (snap.company || '');
+    if (Array.isArray(snap)) {
+      totalAmt = snap.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    } else if (snap && typeof snap === 'object') {
+      totalAmt = parseFloat(snap.amount || snap.totalAmount || snap.sum) || 0;
     }
 
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+    if (!totalAmt && a.target_ids && a.target_ids.length) {
+      const found = a.target_ids.map(id => entries.find(e => e.id === id) || (typeof trashedEntries !== 'undefined' ? trashedEntries.find(e => e.id === id) : null)).filter(Boolean);
+      if (found.length) {
+        totalAmt = found.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+      }
+    }
+
+    // وصف مختصر
+    let desc = '';
+    if (a.action === 'delete') {
+      if (Array.isArray(snap)) {
+        desc = snap.length > 1 ? `${snap.length} قيد` : (snap[0]?.company || 'قيد');
+      } else {
+        desc = snap.company || 'قيد محذوف';
+      }
+    } else if (a.action === 'settle' || a.action === 'unsettle') {
+      desc = snap.company || 'تسوية ذمم';
+    } else if (a.action === 'mark_pos' || a.action === 'unmark_pos') {
+      const cnt = (a.target_ids||[]).length;
+      desc = cnt > 1 ? `${cnt} قيد` : (snap.company || 'POS');
+    }
+
+    const amtBadge = totalAmt > 0
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:3px 9px;border-radius:6px;font-size:.78rem;font-weight:800;background:rgba(214,158,46,.15);border:1px solid rgba(214,158,46,.35);color:#f6ad55;white-space:nowrap;min-width:80px;" title="المبلغ: ${fmt(totalAmt)} ج">
+           ${fmt(totalAmt)} ج
+         </span>`
+      : `<span style="font-size:.75rem;color:var(--text3);white-space:nowrap;min-width:80px;text-align:center;">—</span>`;
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
               border-bottom:1px solid var(--border);${undone?'opacity:.45;':''}">
-      <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:90px;">${timeStr}</span>
-      <span style="font-size:.78rem;color:var(--text3);white-space:nowrap;">${a.done_by||''}</span>
-      <span style="font-size:.82rem;font-weight:700;color:${clr};white-space:nowrap;">${lbl}</span>
+      <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:85px;">${timeStr}</span>
+      <span style="font-size:.78rem;color:var(--text3);white-space:nowrap;min-width:65px;">${a.done_by||''}</span>
+      <span style="font-size:.82rem;font-weight:700;color:${clr};white-space:nowrap;min-width:70px;">${lbl}</span>
       <span style="font-size:.78rem;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
         ${undone?'text-decoration:line-through;':''}">${esc(desc)}</span>
-      ${undone
-        ? `<span style="font-size:.7rem;color:#f6ad55;white-space:nowrap;">↩️ رجع${undoBy?' — '+undoBy:''} ${undoAt}</span>`
-        : `<button onclick="undoEntryAction('${a.id}')"
-            style="padding:4px 10px;background:rgba(246,173,85,.15);border:1px solid rgba(246,173,85,.35);
-                   color:#f6ad55;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;">
-            ↩️ تراجع</button>`}
+      ${amtBadge}
+      <span style="min-width:65px;display:flex;justify-content:center;">
+        ${undone
+          ? `<span style="font-size:.7rem;color:#f6ad55;white-space:nowrap;">↩️ رجع${undoBy?' — '+undoBy:''} ${undoAt}</span>`
+          : `<button onclick="undoEntryAction('${a.id}')"
+              style="padding:4px 10px;background:rgba(246,173,85,.15);border:1px solid rgba(246,173,85,.35);
+                     color:#f6ad55;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;">
+              ↩️ تراجع</button>`}
+      </span>
     </div>`;
   }).join('');
+
+  el.innerHTML = headerHtml + rowsHtml;
 }
 
 // ── فتح مودال الهيستوري ──
@@ -12315,7 +12351,7 @@ document.addEventListener('keydown', e => {
 
 <!-- ── Action History Modal ── -->
 <div id="actHistModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="modal-box" style="max-width:680px;max-height:85vh;display:flex;flex-direction:column;">
+  <div class="modal-box" style="max-width:780px;max-height:85vh;display:flex;flex-direction:column;">
     <div style="font-weight:900;font-size:1.05rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
       📜 سجل حركات المدير
       <span style="font-size:.72rem;color:var(--text3);font-weight:400;">(يمكنك التراجع عن أي حركة)</span>
