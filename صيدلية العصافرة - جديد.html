@@ -122,8 +122,84 @@
   ::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:6px;}
   ::-webkit-scrollbar-thumb:hover{background:rgba(124,58,237,.65);}
   .pane{display:none;}
-  .pane.on{display:block;animation:warmPaneIn .28s cubic-bezier(0.16,1,0.3,1);}
-  @keyframes warmPaneIn{0%{opacity:0;transform:translateY(6px);}100%{opacity:1;transform:translateY(0);}}
+  .pane.on{display:block;animation:warmPaneIn .32s cubic-bezier(0.16,1,0.3,1);}
+  @keyframes warmPaneIn{0%{opacity:0;transform:scale(0.985) translateY(8px);}100%{opacity:1;transform:scale(1) translateY(0);}}
+
+  /* ══ Motion & Stagger Keyframes ══ */
+  @keyframes slideInRightSpring {
+    0%   { opacity: 0; transform: translate3d(50px, 0, 0) scale(0.97); }
+    70%  { opacity: 1; transform: translate3d(-5px, 0, 0) scale(1.006); }
+    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  @keyframes slideInLeftSpring {
+    0%   { opacity: 0; transform: translate3d(-50px, 0, 0) scale(0.97); }
+    70%  { opacity: 1; transform: translate3d(5px, 0, 0) scale(1.006); }
+    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  @keyframes popInBounce {
+    0%   { opacity: 0; transform: scale(0.82) translateY(16px); }
+    65%  { opacity: 1; transform: scale(1.04) translateY(-3px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes acrobaticFlip {
+    0%   { transform: scale(1) rotate(0deg); }
+    25%  { transform: scale(1.35) rotate(-18deg) translateY(-5px); }
+    50%  { transform: scale(0.9) rotate(16deg); }
+    75%  { transform: scale(1.12) rotate(-6deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  @keyframes floatAmbient {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50%      { transform: translateY(-5px) rotate(0.6deg); }
+  }
+  @keyframes auraGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(124, 58, 237, 0.25), inset 0 0 8px rgba(124, 58, 237, 0.15); }
+    50%      { box-shadow: 0 0 26px rgba(147, 51, 234, 0.5), inset 0 0 14px rgba(147, 51, 234, 0.25); }
+  }
+
+  .motion-slide-right { animation: slideInRightSpring 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
+  .motion-slide-left  { animation: slideInLeftSpring 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
+  .motion-pop         { animation: popInBounce 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; will-change: transform, opacity; }
+
+  .tab-acrobatic { display: inline-block; animation: acrobaticFlip 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+  .btn-acrobatic { animation: acrobaticFlip 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+
+  .bal-box    { animation: floatAmbient 4s ease-in-out infinite, auraGlow 3s infinite ease-in-out !important; will-change: transform; }
+  .target-box { animation: floatAmbient 4.6s ease-in-out infinite alternate !important; will-change: transform; }
+
+  /* ══ Flying Particles ══ */
+  .flying-particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 999999;
+    user-select: none;
+    font-size: 1.65rem;
+    line-height: 1;
+    transition: none;
+    will-change: transform, opacity;
+  }
+
+  /* ══ Micro-interactions & Physics ══ */
+  .card {
+    transition: transform .26s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .26s ease, border-color .26s ease !important;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(124, 58, 237, 0.2), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+  }
+  .type-btn {
+    transition: transform .22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .22s ease, border-color .2s ease !important;
+  }
+  .type-btn:hover {
+    transform: translateY(-4px) scale(1.03) !important;
+    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.28) !important;
+  }
+  .tab {
+    transition: transform .2s cubic-bezier(0.2,0.8,0.2,1), color .2s, border-color .2s, background .2s !important;
+  }
+  .tab:hover {
+    transform: translateY(-2px);
+  }
   button:active,.btn:active,.type-btn:active,.ent-chip:active{transform:scale(.96)!important;transition:transform .08s ease!important;}
   .tab{position:relative;padding:13px 20px;cursor:pointer;font-weight:700;color:var(--text3);border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:color .2s cubic-bezier(0.16,1,0.3,1),background .2s,border-color .2s,transform .15s;white-space:nowrap;font-size:.9rem;border-radius:9px 9px 0 0;user-select:none;}
   .tab:hover:not(.on){color:#e2e8f0;background:rgba(124,58,237,.09);}
@@ -2370,6 +2446,7 @@ async function auditAndSyncBalance(applyFix = false) {
         renderAuditResult(rpcRes);
         if (applyFix) {
           toast('✅ تم تصحيح ومطابقة رصيد الخزينة بنجاح');
+          fireFlyingParticles(document.getElementById('btnFixBal'), ['⚡', '💰', '✨', '🎉'], 22);
           listenBalance();
         }
         if (btn) btn.disabled = false;
@@ -2904,16 +2981,103 @@ function bnSwitch(name, liEl) {
   swTab(name, null); // top tabs are hidden on mobile, pass null
 }
 
+// ═══════════════════════════════════════════
+//  MOTION & FLYING PARTICLES ENGINE 🚀✨
+// ═══════════════════════════════════════════
+function fireFlyingParticles(originEl, icons = ['💵', '💊', '✨', '🎉', '⚡', '🚀'], count = 18) {
+  try {
+    let startX, startY;
+    if (originEl && originEl.getBoundingClientRect) {
+      const r = originEl.getBoundingClientRect();
+      startX = r.left + r.width / 2;
+      startY = r.top + r.height / 2;
+    } else {
+      startX = window.innerWidth / 2;
+      startY = window.innerHeight / 2;
+    }
+
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'flying-particle';
+      p.textContent = icons[Math.floor(Math.random() * icons.length)];
+      document.body.appendChild(p);
+
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.7;
+      const dist = 60 + Math.random() * 140;
+      const destX = startX + Math.cos(angle) * dist;
+      const destY = startY + Math.sin(angle) * dist - (30 + Math.random() * 80);
+      const rot = (Math.random() - 0.5) * 600;
+      const scale = 0.7 + Math.random() * 0.9;
+      const duration = 650 + Math.random() * 450;
+
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.transform = 'translate(-50%, -50%) scale(0.2)';
+      p.style.opacity = '1';
+
+      const startTime = performance.now();
+      function step(now) {
+        const elapsed = now - startTime;
+        const prog = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - prog, 2.5);
+        const curX = startX + (destX - startX) * ease;
+        const curY = startY + (destY - startY) * ease + Math.pow(prog, 2) * 85;
+        const curScale = (1 - prog * 0.25) * scale;
+        const curOp = prog > 0.55 ? 1 - (prog - 0.55) / 0.45 : 1;
+
+        p.style.left = curX + 'px';
+        p.style.top = curY + 'px';
+        p.style.transform = `translate(-50%, -50%) scale(${curScale}) rotate(${rot * ease}deg)`;
+        p.style.opacity = curOp;
+
+        if (prog < 1) {
+          requestAnimationFrame(step);
+        } else {
+          p.remove();
+        }
+      }
+      requestAnimationFrame(step);
+    }
+  } catch(e) { console.warn('Particle error', e); }
+}
+
 function swTab(name, el) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
-  if (el) el.classList.add('on');
+  if (el) {
+    el.classList.add('on');
+    // شقلبظة التاب وقفزة بهلوانية
+    el.classList.remove('tab-acrobatic');
+    void el.offsetWidth;
+    el.classList.add('tab-acrobatic');
+    fireFlyingParticles(el, ['✨', '💫', '⚡', '🌟'], 5);
+  }
   // Sync bottom nav active state when top tab clicked
   document.querySelectorAll('#bottomNav li').forEach(l=>l.classList.remove('bn-on'));
   const bnLi = document.querySelector(`#bottomNav li[data-tab="${name}"]`);
   if (bnLi) bnLi.classList.add('bn-on');
   const pane = document.getElementById('pane-'+name);
-  if (pane) pane.classList.add('on');
+  if (pane) {
+    pane.classList.add('on');
+    // حركة دخول العناصر والبطاقات من اليمين واليسار بالتتابع
+    const items = pane.querySelectorAll('.card, .set-sec, .pd-card, .table-wrap, .fg-row');
+    items.forEach((c, idx) => {
+      c.classList.remove('motion-slide-right', 'motion-slide-left');
+      void c.offsetWidth;
+      if (idx % 2 === 0) {
+        c.classList.add('motion-slide-right');
+      } else {
+        c.classList.add('motion-slide-left');
+      }
+      c.style.animationDelay = (idx * 0.05) + 's';
+    });
+    setTimeout(() => {
+      items.forEach(c => {
+        c.classList.remove('motion-slide-right', 'motion-slide-left');
+        c.style.animationDelay = '';
+      });
+    }, 600);
+  }
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
   if (name==='sum')   renderSum();
@@ -2923,9 +3087,9 @@ function swTab(name, el) {
   if (name==='monthcmp')  { initMonthCmp(); }
   if (name==='custfollow'){ custSubSwitch('follow'); initCustFollow(); }
   if (name==='custdir')    { custSubSwitch('dir');   initCustDir(); }
-if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
+  if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
   if (name==='trash') { fetchTrash(); }
-  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; }
+  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; }
   // لما ترجع لتبويب القيد الجديد، حدّث درب ليست الموظفين
   if (name==='add') {
     const eCoEl = document.getElementById('eCo');
@@ -2939,7 +3103,13 @@ if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); el
 function pickType(t, el) {
   curType = t;
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('on'));
-  if (el) el.classList.add('on');
+  if (el) {
+    el.classList.add('on');
+    el.classList.remove('btn-acrobatic');
+    void el.offsetWidth;
+    el.classList.add('btn-acrobatic');
+    fireFlyingParticles(el, ['✨', '💫', '🎯'], 4);
+  }
   
   // ── مسح البند لو مش من قائمة التاب الجديد ──
   const inp = document.getElementById('eCo');
@@ -3187,6 +3357,7 @@ async function doSave() {
     if (insErr) throw insErr;
 
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
+    fireFlyingParticles(document.getElementById('btnSave') || document.querySelector('.btn-primary'), ['💵', '💊', '✨', '🎉', '⚡', '🚀'], 24);
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
     if (typeof hideCoDrop === 'function') hideCoDrop();
     checkNotesSenderValidation();
@@ -3847,6 +4018,7 @@ async function restoreEntry(id) {
     if (error) throw error;
     await sbUpdateBalance(delta);
     toast('✅ تم استعادة القيد بنجاح');
+    fireFlyingParticles(null, ['🚀', '✨', '♻️', '💫', '🎉'], 20);
     // refresh both lists
     fetchTrash();
     fetchEntries();
@@ -7086,6 +7258,7 @@ async function attRecord() {
     };
     const { error: insErr } = await sb.from('attendance').insert(rec);
     if (insErr) throw new Error(insErr.message || JSON.stringify(insErr));
+    fireFlyingParticles(btn, ['⏱️', '✅', '✨', '👏', '🌟'], 20);
 
     const lastEl=document.getElementById('attLastRec');
     if (lastEl) lastEl.textContent=`✅ آخر تسجيل: ${type} لـ "${name}" الساعة ${time}`;
