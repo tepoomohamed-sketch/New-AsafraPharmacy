@@ -2132,6 +2132,17 @@ function ensureXLSX() {
         <p style="margin-top:6px;font-size:.8rem;color:#718096;">عدد القيود المحفوظة: <strong id="entCnt">0</strong></p>
       </div>
 
+      <!-- تدقيق ومطابقة رصيد الخزينة -->
+      <div class="set-sec" style="border:1.5px solid #b794f4;">
+        <div class="set-t" style="color:#b794f4;">🔍 تدقيق ومطابقة رصيد الخزينة مع القيود الفعلية</div>
+        <p style="font-size:.83rem;color:var(--text3);margin-bottom:11px;">يقوم بفحص ومطابقة رصيد الخزينة المسجل مع مجموع كافة القيود المالية الفعلية النشطة بدقة لحل أي فروقات ناتجة عن التزامن.</p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-primary" id="btnAuditBal" onclick="auditAndSyncBalance(false)">🔍 فحص ومطابقة الرصيد</button>
+          <button class="btn btn-sm btn-green" id="btnFixBal" onclick="auditAndSyncBalance(true)" style="display:none;">⚡ تصحيح رصيد الخزينة الآن</button>
+        </div>
+        <div id="auditBalResult" style="margin-top:10px;font-size:.83rem;line-height:1.6;display:none;"></div>
+      </div>
+
       <div class="set-sec" style="border:1.5px solid #fed7d7;">
         <div class="set-t" style="color:#c53030;">🗑 تصفير كل البيانات</div>
         <p style="font-size:.83rem;color:#718096;margin-bottom:11px;">يحذف جميع الحركات ويصفّر الرصيد تماماً — لا يمكن التراجع.</p>
@@ -2317,6 +2328,122 @@ async function sbSetMeta(key, value) {
   const {error} = await sb.from('meta').upsert({key, value}, {onConflict:'key'});
   // [v12] كان الفشل يمر بصمت تام، فيبقى الرصيد خاطئاً دون أن يعلم أحد.
   if (error) { console.error('sbSetMeta:', key, error); throw error; }
+}
+
+// ── تحديث الرصيد الآمن مع حماية من التضارب (Atomic Balance Update) ──
+async function sbUpdateBalance(delta) {
+  if (!delta || delta === 0) {
+    const m = await sbGetMeta('balance');
+    return Number(m.amount) || 0;
+  }
+  try {
+    // 1. محاولة استخدام الدالة الذرية في PostgreSQL (أعلى درجات الأمان لمنع السباق)
+    const { data, error } = await sb.rpc('update_balance_atomic', { delta_amt: delta });
+    if (!error && data !== null && data !== undefined) {
+      return Number(data);
+    }
+  } catch(rpcErr) {
+    // تجاوز للـ fallback التوافقي المباشر إذا لم تكن الدالة منشأة بالسيرفر بعد
+  }
+
+  // 2. الـ Fallback التوافقي المباشر
+  const metaV = await sbGetMeta('balance');
+  const prev = Number(metaV.amount) || 0;
+  const newB = prev + delta;
+  await sbSetMeta('balance', { amount: newB });
+  return newB;
+}
+
+// ── أداة تدقيق وتصحيح الرصيد الذاتي (Balance Self-Audit & Healing) ──
+async function auditAndSyncBalance(applyFix = false) {
+  const btn = document.getElementById('btnAuditBal');
+  const fixBtn = document.getElementById('btnFixBal');
+  const resEl = document.getElementById('auditBalResult');
+  if (!resEl) return;
+
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<span style="color:#a0aec0;">⏳ جاري فحص ومطابقة كافة القيود المالية النشطة...</span>';
+  if (btn) btn.disabled = true;
+
+  try {
+    // 1. تجربة استدعاء دالة PostgreSQL الذرية إن وُجدت
+    try {
+      const { data: rpcRes, error: rpcErr } = await sb.rpc('audit_reconcile_balance', { apply_fix: applyFix });
+      if (!rpcErr && rpcRes) {
+        renderAuditResult(rpcRes);
+        if (applyFix) {
+          toast('✅ تم تصحيح ومطابقة رصيد الخزينة بنجاح');
+          listenBalance();
+        }
+        if (btn) btn.disabled = false;
+        return;
+      }
+    } catch(e) {}
+
+    // 2. Fallback: التدقيق المباشر من القيود النشطة في قاعدة البيانات
+    let from = 0;
+    const step = 1000;
+    let allActive = [];
+    while (true) {
+      const { data, error } = await sb.from('entries')
+        .select('type,amount')
+        .neq('deleted', true)
+        .range(from, from + step - 1);
+      if (error || !data || !data.length) break;
+      allActive.push(...data);
+      if (data.length < step) break;
+      from += step;
+    }
+
+    let totIn = 0, totOut = 0;
+    allActive.forEach(e => {
+      const a = Number(e.amount) || 0;
+      if (e.type === 'ايرادات') totIn += a;
+      else if (['مصاريف','طلبيات','ارباح','اصول ثابتة'].includes(e.type)) totOut += a;
+    });
+
+    const calcBal = totIn - totOut;
+    const metaBal = await sbGetMeta('balance');
+    const recBal = Number(metaBal.amount) || 0;
+    const diff = recBal - calcBal;
+
+    if (applyFix && Math.abs(diff) > 0.001) {
+      await sbSetMeta('balance', { amount: calcBal });
+      toast('✅ تم تصحيح ومطابقة رصيد الخزينة بنجاح');
+      listenBalance();
+      renderAuditResult({ active_count: allActive.length, calculated_balance: calcBal, recorded_balance: calcBal, difference: 0, is_synced: true });
+    } else {
+      renderAuditResult({ active_count: allActive.length, calculated_balance: calcBal, recorded_balance: recBal, difference: diff, is_synced: (Math.abs(diff) <= 0.001) });
+    }
+
+  } catch(err) {
+    resEl.innerHTML = `<span style="color:#fc8181;">❌ خطأ أثناء التدقيق: ${esc(err.message)}</span>`;
+  }
+  if (btn) btn.disabled = false;
+
+  function renderAuditResult(res) {
+    const isOk = res.is_synced || Math.abs(res.difference || 0) <= 0.001;
+    if (isOk) {
+      resEl.innerHTML = `
+        <div style="background:rgba(72,187,120,.12);border:1px solid rgba(72,187,120,.35);padding:10px 14px;border-radius:10px;color:#68d391;">
+          ✅ <b>الرصيد مطابق 100%!</b><br>
+          • عدد القيود النشطة: <b>${res.active_count}</b> قيد<br>
+          • الرصيد المحسوب: <b>${fmt(res.calculated_balance)} ج</b> | الرصيد المسجل: <b>${fmt(res.recorded_balance)} ج</b>
+        </div>
+      `;
+      if (fixBtn) fixBtn.style.display = 'none';
+    } else {
+      resEl.innerHTML = `
+        <div style="background:rgba(237,137,54,.12);border:1px solid rgba(237,137,54,.35);padding:10px 14px;border-radius:10px;color:#f6ad55;">
+          ⚠️ <b>يوجد فرق بين الرصيد المسجل ومجموع القيود الفعلية:</b><br>
+          • الرصيد المسجل في الخزينة: <b>${fmt(res.recorded_balance)} ج</b><br>
+          • المجموع الفعلي للقيود (${res.active_count} قيد): <b>${fmt(res.calculated_balance)} ج</b><br>
+          • الفارق: <b>${fmt(Math.abs(res.difference))} ج</b> (${res.difference > 0 ? 'المسجل أكبر' : 'المسجل أقل'})
+        </div>
+      `;
+      if (fixBtn) fixBtn.style.display = 'inline-block';
+    }
+  }
 }
 
 function loadLocalSettings() {
@@ -2524,8 +2651,8 @@ function listenBalance() {
   // Initial load — always fallback to last entry balance if meta is 0/null
   sbGetMeta('balance').then(async v => {
     let bal = v?.amount;
-    // لو الرصيد فاضي أو صفر — دايما ارجع لآخر قيد كـ fallback
-    if (bal === undefined || bal === null || bal === 0) {
+    // لو الرصيد فاضي أو غير معرف — دايما ارجع لآخر قيد كـ fallback (الصفر قيمة صحيحة)
+    if (bal === undefined || bal === null || isNaN(bal)) {
       const {data: lastE} = await sb.from('entries').select('balance').order('ts',{ascending:false}).limit(1);
       const entryBal = lastE?.[0]?.balance;
       if (entryBal !== undefined && entryBal !== null) {
@@ -2544,8 +2671,8 @@ function listenBalance() {
   sbChanBalance = sb.channel('balance-changes')
     .on('postgres_changes',{event:'*',schema:'public',table:'meta',filter:'key=eq.balance'}, async payload => {
       let bal = payload.new?.value?.amount;
-      // لو الـ payload جاب صفر أو null — تحقق من آخر قيد
-      if (bal === undefined || bal === null || bal === 0) {
+      // لو الـ payload جاب قيمة غير معرفة — تحقق من آخر قيد (الصفر قيمة صحيحة)
+      if (bal === undefined || bal === null || isNaN(bal)) {
         const {data: lastE} = await sb.from('entries').select('balance').order('ts',{ascending:false}).limit(1);
         const entryBal = lastE?.[0]?.balance;
         if (entryBal) bal = entryBal;
@@ -3052,9 +3179,7 @@ async function doSave() {
     const isIn = curType==='ايرادات';
     const delta = isIn ? amt : -amt;
 
-    const metaV = await sbGetMeta('balance');
-    const prev = metaV.amount || 0;
-    const newB = prev + delta;
+    const newB = await sbUpdateBalance(delta);
     const now = new Date();
     const timeStr = now.toTimeString().slice(0,5); // HH:MM
     const newId = crypto.randomUUID();
@@ -3063,7 +3188,6 @@ async function doSave() {
       uid: me.uid, uname: me.name, balance: newB, time: timeStr, ts: Date.now()
     });
     if (insErr) throw insErr;
-    await sbSetMeta('balance', { amount: newB });
 
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
@@ -3180,17 +3304,13 @@ async function saveEdit() {
     const newDelta = (type==='ايرادات')    ? amt    : -amt;
     const diff     = newDelta - oldDelta;
 
-    const [metaEdit, entryOld] = await Promise.all([
-      sbGetMeta('balance'),
-      sb.from('entries').select('balance').eq('id', id).maybeSingle()
-    ]);
-    const prevBal     = metaEdit.amount || 0;
-    const entryOldBal = entryOld.data?.balance ?? prevBal;
+    const entryOld = await sb.from('entries').select('balance').eq('id', id).maybeSingle();
+    const entryOldBal = entryOld.data?.balance || 0;
     const {error: updErr} = await sb.from('entries').update({
       date, type, company:co, invoice:inv, amount:amt, notes, balance: entryOldBal+diff
     }).eq('id', id);
     if (updErr) throw updErr;
-    await sbSetMeta('balance', { amount: prevBal+diff });
+    await sbUpdateBalance(diff);
     closeEdit();
     toast('✅ تم تعديل القيد');
   } catch(e) { eEl.textContent='❌ '+arErr(e); eEl.style.display='block'; }
@@ -3303,8 +3423,6 @@ async function delEntry(id, type, amount) {
   try {
     const isIn = type==='ايرادات';
     const delta = isIn ? -amount : amount;
-    const metaDel = await sbGetMeta('balance');
-    const prev = metaDel.amount || 0;
     // snapshot: بيانات القيد قبل الحذف
     const entry = entries.find(e => e.id === id);
     const snap = entry ? { id: entry.id, type: entry.type, company: entry.company, invoice: entry.invoice, amount: entry.amount, date: entry.date } : { type, amount };
@@ -3314,7 +3432,7 @@ async function delEntry(id, type, amount) {
       deleted_by: me.name || me.uid
     }).eq('id', id);
     if (delEntErr) throw delEntErr;
-    await sbSetMeta('balance', { amount: prev+delta });
+    await sbUpdateBalance(delta);
     // سجل الحركة
     sbLogAction('delete', [id], [snap]);
     toast('🗑 تم حذف القيد — يمكن استعادته من سجل الحركات');
@@ -3520,9 +3638,6 @@ async function bulkDelEntries() {
       if (entry) snapList.push({ id: entry.id, type: entry.type, company: entry.company, invoice: entry.invoice, amount: entry.amount, date: entry.date });
       else snapList.push({ id: c.dataset.id, type: typ, amount: amt });
     });
-    const meta = await sbGetMeta('balance');
-    const prev = meta.amount || 0;
-
     const {error} = await sb.from('entries').update({
       deleted: true,
       deleted_at: Date.now(),
@@ -3530,7 +3645,7 @@ async function bulkDelEntries() {
     }).in('id', ids);
     if (error) throw error;
 
-    await sbSetMeta('balance', { amount: prev + delta });
+    await sbUpdateBalance(delta);
     // سجل الحركة
     sbLogAction('delete', ids, snapList);
     toast(`🗑 تم حذف ${ids.length} قيد — يمكن استعادتهم من سجل الحركات`);
@@ -3727,15 +3842,13 @@ async function restoreEntry(id) {
   try {
     const isIn  = e.type === 'ايرادات';
     const delta = isIn ? e.amount : -e.amount;
-    const metaR = await sbGetMeta('balance');
-    const prev  = metaR.amount || 0;
     const {error} = await sb.from('entries').update({
       deleted: false,
       deleted_at: null,
       deleted_by: null
     }).eq('id', id);
     if (error) throw error;
-    await sbSetMeta('balance', { amount: prev + delta });
+    await sbUpdateBalance(delta);
     toast('✅ تم استعادة القيد بنجاح');
     // refresh both lists
     fetchTrash();
@@ -5425,9 +5538,7 @@ async function settleOnline(entryId) {
     const timeStr = now.toTimeString().slice(0,5);
     const today = todayStr();
     const newId = crypto.randomUUID();
-    const metaV = await sbGetMeta('balance');
-    const prev = metaV ? (metaV.amount || 0) : 0;
-    const newB = prev + orig.amount;
+    const newB = await sbUpdateBalance(orig.amount);
     const oldInvoice = orig.invoice || '';
     // 1. Create إيرادات settlement entry
     const {error: insErr} = await sb.from('entries').insert({
@@ -5441,8 +5552,6 @@ async function settleOnline(entryId) {
     // 2. Mark original as settled
     const {error: updErr} = await sb.from('entries').update({invoice: 'settled:'+newId}).eq('id', entryId);
     if (updErr) throw new Error(updErr.message);
-    // 3. Update meta balance
-    await sbSetMeta('balance', {amount: newB});
     // 4. Update local state
     const origIdx = entries.findIndex(e => e.id === entryId);
     if (origIdx >= 0) entries[origIdx].invoice = 'settled:' + newId;
@@ -5609,8 +5718,7 @@ async function undoEntryAction(actIdOrIds) {
         }
       });
       if (totalDelta !== 0) {
-        const meta = await sbGetMeta('balance');
-        await sbSetMeta('balance', { amount: (meta.amount || 0) + totalDelta });
+        await sbUpdateBalance(totalDelta);
       }
 
     } else if (firstAct.action === 'mark_pos') {
@@ -5642,9 +5750,7 @@ async function undoEntryAction(actIdOrIds) {
         if (settleEntryId) {
           const settleEntry = entries.find(e => e.id === settleEntryId);
           const settleAmt = settleEntry ? settleEntry.amount : (snap.amount || 0);
-          const meta = await sbGetMeta('balance');
-          const prev = meta.amount || 0;
-          await sbSetMeta('balance', { amount: prev - settleAmt });
+          await sbUpdateBalance(-settleAmt);
           await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me?.name })
             .eq('id', settleEntryId);
           entries = entries.filter(e => e.id !== settleEntryId);
@@ -5670,9 +5776,7 @@ async function undoEntryAction(actIdOrIds) {
           await sb.from('entries').update({ deleted: false, deleted_at: null, deleted_by: null }).eq('id', settleEntryId);
           if (!entries.find(e => e.id === settleEntryId) && snap.settlementEntry) {
             entries.unshift(snap.settlementEntry);
-            const meta = await sbGetMeta('balance');
-            const prev = meta.amount || 0;
-            await sbSetMeta('balance', { amount: prev + (snap.settlementEntry.amount || 0) });
+            await sbUpdateBalance(snap.settlementEntry?.amount || 0);
           }
         }
       }
@@ -6862,19 +6966,19 @@ function attCheckWarn(name) {
     wb.style.borderColor = '#fc8181';
     wb.style.background = 'rgba(229,62,62,.18)';
     wb.style.color = '#fc8181';
-    wb.innerHTML = `🚫 ممنوع تسجيل الحضور — <strong>${name}</strong> سجّل حضوراً الساعة <strong>${todayDouble.inTime||'—'}</strong> اليوم ولم يُسجِّل انصرافه بعد. سجّل الانصراف أولاً.`;
+    wb.innerHTML = `🚫 ممنوع تسجيل الحضور — <strong>${esc(name)}</strong> سجّل حضوراً الساعة <strong>${esc(todayDouble.inTime||'—')}</strong> اليوم ولم يُسجِّل انصرافه بعد. سجّل الانصراف أولاً.`;
   } else if (blocking) {
     wb.style.display = 'block';
     wb.style.borderColor = '#fc8181';
     wb.style.background = 'rgba(229,62,62,.15)';
     wb.style.color = '#fc8181';
-    wb.innerHTML = `🚫 محجوب — <strong>${name}</strong> لديه حضور مفتوح منذ <strong>${blocking.date}</strong> (${blocking.inTime||'—'}) لم يُسجَّل انصرافه. يجب التقفيل أولاً.`;
+    wb.innerHTML = `🚫 محجوب — <strong>${esc(name)}</strong> لديه حضور مفتوح منذ <strong>${esc(blocking.date)}</strong> (${esc(blocking.inTime||'—')}) لم يُسجَّل انصرافه. يجب التقفيل أولاً.`;
   } else if (evening) {
     wb.style.display = 'block';
     wb.style.borderColor = '#f6ad55';
     wb.style.background = 'rgba(214,158,46,.12)';
     wb.style.color = '#f6ad55';
-    wb.innerHTML = `⚠️ تنبيه — <strong>${name}</strong> لديه حضور أمس <strong>${evening.date}</strong> (${evening.inTime||'—'}) بدون انصراف. إذا كان شيفت مساء يمكن المتابعة.`;
+    wb.innerHTML = `⚠️ تنبيه — <strong>${esc(name)}</strong> لديه حضور أمس <strong>${esc(evening.date)}</strong> (${esc(evening.inTime||'—')}) بدون انصراف. إذا كان شيفت مساء يمكن المتابعة.`;
   } else {
     wb.style.display = 'none';
   }
@@ -6883,17 +6987,18 @@ function attCheckWarn(name) {
 let _attRecording   = false; // قفل لمنع race condition
 let _attServerTsDiff = null; // فارق التوقيت بين الجهاز والسيرفر (ms)
 
-// ── جلب وقت السيرفر ومقارنته بوقت الجهاز ──
+// ── جلب وقت السيرفر ومقارنته بوقت الجهاز (مؤمَّن ضد NaN) ──
 async function attSyncServerTime() {
   try {
     const before = Date.now();
     const { data, error } = await sb.rpc('get_server_time');
-    if (error || !data) return;
+    if (error || data === null || data === undefined) return;
     const after = Date.now();
-    const serverMs = new Date(data).getTime();
+    const serverMs = typeof data === 'number' ? data : (Number(data) || new Date(data).getTime());
+    if (isNaN(serverMs)) return;
     const clientMs = Math.round((before + after) / 2); // متوسط وقت الطلب
     _attServerTsDiff = serverMs - clientMs;
-  } catch(e) { /* تجاهل لو mpc غير متاح */ }
+  } catch(e) { /* تجاهل لو rpc غير متاح */ }
 }
 
 // ── التحقق من دقة وقت الجهاز ──
