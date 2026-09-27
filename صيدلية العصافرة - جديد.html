@@ -5754,71 +5754,92 @@ async function settleOnline(entryId) {
 // ═══════════════════════════════════════════
 let entryActions = [];      // آخر الحركات من entry_actions
 
-// ── تجميع الحركات المتتالية المتشابهة في حركة واحدة بإجمالي المبلغ ──
-function groupActionHistory(rawList) {
-  const grouped = [];
-  const TIME_WINDOW_MS = 3 * 60 * 1000; // 3 دقائق لتجميع الحركات المتتالية للمسؤول
+// ═══════════════════════════════════════════
+//  ACTION HISTORY (سجل حركات المدير) 📜
+// ═══════════════════════════════════════════
+// ── استخراج وتنسيق عناصر الحركة المنفردة (بدون دمج عشوائي) ──
+function parseActionRecord(act) {
+  let items = [];
+  const snap = act.snapshot;
+  let totalAmt = 0;
 
-  for (let i = 0; i < rawList.length; i++) {
-    const act = rawList[i];
-    const actTime = act.done_at ? new Date(act.done_at).getTime() : 0;
-    
-    // حساب المبلغ والعناصر المرتبطة بالحركة
-    let actAmt = 0;
-    let actItems = [];
-    const snap = act.snapshot || {};
-
-    if (Array.isArray(snap)) {
-      actAmt = snap.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-      actItems = snap;
-    } else if (snap && typeof snap === 'object') {
-      actAmt = parseFloat(snap.amount || snap.totalAmount || snap.sum) || 0;
-      actItems = [{ company: snap.company, amount: actAmt, id: act.target_ids?.[0] }];
-    }
-
-    if (!actAmt && act.target_ids && act.target_ids.length) {
-      const found = act.target_ids.map(id => entries.find(e => e.id === id) || (typeof trashedEntries !== 'undefined' ? trashedEntries.find(e => e.id === id) : null)).filter(Boolean);
-      if (found.length) {
-        actAmt = found.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-        actItems = found;
-      }
-    }
-
-    const lastGroup = grouped.length ? grouped[grouped.length - 1] : null;
-    const canMerge = lastGroup &&
-      lastGroup.action === act.action &&
-      lastGroup.done_by === act.done_by &&
-      lastGroup.undone === act.undone &&
-      Math.abs(lastGroup._lastTime - actTime) <= TIME_WINDOW_MS;
-
-    if (canMerge) {
-      lastGroup.rawActionIds.push(act.id);
-      lastGroup.target_ids = [...new Set([...(lastGroup.target_ids || []), ...(act.target_ids || [])])];
-      lastGroup.totalAmount += actAmt;
-      lastGroup.items.push(...actItems);
-      lastGroup._lastTime = actTime;
-      lastGroup.count = (lastGroup.target_ids && lastGroup.target_ids.length) ? lastGroup.target_ids.length : lastGroup.items.length;
+  if (Array.isArray(snap)) {
+    items = snap.map(s => ({
+      id: s.id,
+      company: s.company || s.co || '—',
+      amount: parseFloat(s.amount) || 0,
+      date: s.date || '—',
+      invoice: s.invoice || s.inv || '',
+      notes: s.notes || '',
+      type: s.type || ''
+    }));
+    totalAmt = items.reduce((s, x) => s + x.amount, 0);
+  } else if (snap && typeof snap === 'object') {
+    if (Array.isArray(snap.items)) {
+      items = snap.items.map(s => ({
+        id: s.id,
+        company: s.company || s.co || '—',
+        amount: parseFloat(s.amount) || 0,
+        date: s.date || '—',
+        invoice: s.invoice || s.inv || '',
+        notes: s.notes || '',
+        type: s.type || ''
+      }));
+      totalAmt = items.reduce((s, x) => s + x.amount, 0);
     } else {
-      grouped.push({
-        id: act.id,
-        rawActionIds: [act.id],
-        action: act.action,
-        done_by: act.done_by,
-        done_at: act.done_at,
-        _lastTime: actTime,
-        undone: act.undone,
-        undone_by: act.undone_by || act.undoneBy,
-        undone_at: act.undone_at,
-        target_ids: [...(act.target_ids || [])],
-        totalAmount: actAmt,
-        items: [...actItems],
-        count: (act.target_ids && act.target_ids.length) ? act.target_ids.length : (actItems.length || 1),
-        snapshot: snap
-      });
+      totalAmt = parseFloat(snap.amount || snap.totalAmount || snap.sum) || 0;
+      if (snap.company || totalAmt > 0) {
+        items = [{
+          id: act.target_ids?.[0],
+          company: snap.company || '—',
+          amount: totalAmt,
+          date: snap.date || '—',
+          invoice: snap.invoice || '',
+          notes: snap.notes || '',
+          type: snap.type || ''
+        }];
+      }
     }
   }
 
-  return grouped;
+  // في حال لم يحتوي السناب شوت على التفاصيل الكاملة، يتم استرجاعها من القيود أو سلة المحذوفات
+  if ((!items.length || items.every(x => !x.amount && x.company === '—')) && act.target_ids && Array.isArray(act.target_ids)) {
+    const found = act.target_ids.map(id => {
+      const e = entries.find(x => x.id === id) || (typeof trashedEntries !== 'undefined' ? trashedEntries.find(x => x.id === id) : null);
+      if (e) {
+        return {
+          id: e.id,
+          company: e.company || '—',
+          amount: parseFloat(e.amount) || 0,
+          date: e.date || '—',
+          invoice: e.invoice || '',
+          notes: e.notes || '',
+          type: e.type || ''
+        };
+      }
+      return null;
+    }).filter(Boolean);
+    if (found.length) {
+      items = found;
+      if (!totalAmt) totalAmt = items.reduce((s, x) => s + x.amount, 0);
+    }
+  }
+
+  const count = (act.target_ids && act.target_ids.length) ? act.target_ids.length : (items.length || 1);
+
+  return {
+    id: act.id,
+    action: act.action,
+    done_by: act.done_by,
+    done_at: act.done_at,
+    undone: act.undone,
+    undone_by: act.undone_by || act.undoneBy,
+    undone_at: act.undone_at,
+    target_ids: act.target_ids || [],
+    items,
+    totalAmount: totalAmt,
+    count
+  };
 }
 
 // ── تسجيل حركة في السجل ──
@@ -5853,7 +5874,7 @@ async function fetchEntryActions(limit = 100) {
   } catch(e) { console.error('fetchEntryActions:', e); }
 }
 
-// ── تراجع عن حركة أو مجموعة حركات مجمعة ──
+// ── تراجع عن حركة ──
 async function undoEntryAction(actIdOrIds) {
   const idsList = Array.isArray(actIdOrIds) ? actIdOrIds : [actIdOrIds];
   const acts = idsList.map(id => entryActions.find(a => a.id === id)).filter(Boolean);
@@ -5914,15 +5935,17 @@ async function undoEntryAction(actIdOrIds) {
       for (const act of pendingActs) {
         const snap = act.snapshot || {};
         const origId = snap.originalId;
-        const oldInvoice = snap.originalInvoice || '';
         const settleEntryId = snap.settlementEntryId;
+        const oldInvoice = snap.originalInvoice !== undefined ? snap.originalInvoice : '';
         if (settleEntryId) {
-          const settleEntry = entries.find(e => e.id === settleEntryId);
-          const settleAmt = settleEntry ? settleEntry.amount : (snap.amount || 0);
-          await sbUpdateBalance(-settleAmt);
-          await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me?.name })
-            .eq('id', settleEntryId);
-          entries = entries.filter(e => e.id !== settleEntryId);
+          await sb.from('entries').update({ deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'تراجع تسوية' }).eq('id', settleEntryId);
+          const idx = entries.findIndex(e => e.id === settleEntryId);
+          if (idx !== -1) {
+            const [delE] = entries.splice(idx, 1);
+            delE.deleted = true;
+            if (typeof trashedEntries !== 'undefined') trashedEntries.unshift(delE);
+            await sbUpdateBalance(-(delE.amount || 0));
+          }
         }
         if (origId) {
           await sb.from('entries').update({ invoice: oldInvoice }).eq('id', origId);
@@ -5982,7 +6005,20 @@ async function undoGroupAction(btn) {
   }
 }
 
-// ── عرض سجل الحركات في المودال (مجمعة وواضحة) ──
+// ── فتح وإغلاق تفاصيل الحركة المنسدلة ──
+function toggleActionDetail(actId) {
+  const detailEl = document.getElementById('act-detail-' + actId);
+  const chevEl   = document.getElementById('act-chev-' + actId);
+  if (!detailEl) return;
+  const isHidden = detailEl.style.display === 'none' || !detailEl.style.display;
+  detailEl.style.display = isHidden ? 'block' : 'none';
+  if (chevEl) {
+    chevEl.textContent = isHidden ? '▲ إخفاء' : '▼ تفاصيل';
+    chevEl.style.color = isHidden ? '#c4b5fd' : '#a0aec0';
+  }
+}
+
+// ── عرض سجل الحركات في المودال (مرتبة بدقة بالبند المفرد وإمكانية فرد التفاصيل) ──
 function renderActionHistory() {
   const el = document.getElementById('actHistBody');
   if (!el) return;
@@ -5994,13 +6030,17 @@ function renderActionHistory() {
   if (fAction) list = list.filter(a => a.action === fAction);
   if (fDate)   list = list.filter(a => a.done_at && a.done_at.startsWith(fDate));
 
+  // فرز الحركات تنازلياً حسب الوقت بدقة (الأحدث أولاً)
+  list.sort((a, b) => {
+    const tA = a.done_at ? new Date(a.done_at).getTime() : 0;
+    const tB = b.done_at ? new Date(b.done_at).getTime() : 0;
+    return tB - tA;
+  });
+
   if (!list.length) {
     el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);">لا توجد حركات مسجلة</div>';
     return;
   }
-
-  // تجميع الحركات المتتالية المتشابهة لتظهر كحركة واحدة بإجمالي المبلغ
-  const groupedList = groupActionHistory(list);
 
   const labels = { delete:'🗑 مسح', settle:'✅ تسوية', unsettle:'↩️ إلغاء تسوية', mark_pos:'🏷 تعليم POS', unmark_pos:'↩️ إلغاء POS' };
   const colors = { delete:'#fc8181', settle:'#68d391', unsettle:'#f6ad55', mark_pos:'#63b3ed', unmark_pos:'#f6ad55' };
@@ -6010,22 +6050,25 @@ function renderActionHistory() {
       <span style="min-width:85px;">📅 الوقت</span>
       <span style="min-width:65px;">👤 المسؤول</span>
       <span style="min-width:75px;">🏷️ الحركة</span>
-      <span style="flex:1;">📋 التفاصيل</span>
+      <span style="flex:1;">📋 التفاصيل (اضغط للفرد)</span>
       <span style="min-width:85px;text-align:center;">💰 إجمالي المبلغ</span>
       <span style="min-width:65px;text-align:center;">الإجراء</span>
     </div>`;
 
-  const rowsHtml = groupedList.slice(0, 80).map(g => {
+  const rowsHtml = list.slice(0, 100).map(rawAct => {
+    const g = parseActionRecord(rawAct);
     const lbl  = labels[g.action] || g.action;
     const clr  = colors[g.action] || 'var(--text2)';
     const time = g.done_at ? new Date(g.done_at) : null;
-    const timeStr = time ? time.toLocaleDateString('ar-EG',{day:'numeric',month:'short'}) + ' ' +
-                          time.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '—';
+    const timeStr = time ? (
+      time.toLocaleDateString('ar-EG-u-nu-latn', {day:'numeric', month:'short'}) + ' ' +
+      time.toLocaleTimeString('ar-EG-u-nu-latn', {hour:'2-digit', minute:'2-digit', hour12:true})
+    ) : '—';
     const undone = g.undone;
-    const undoBy = g.undone_by || g.undoneBy || '';
-    const undoAt = g.undone_at ? new Date(g.undone_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
+    const undoBy = g.undone_by || '';
+    const undoAt = g.undone_at ? new Date(g.undone_at).toLocaleTimeString('ar-EG-u-nu-latn', {hour:'2-digit', minute:'2-digit', hour12:true}) : '';
 
-    const companies = [...new Set(g.items.map(x => x.company).filter(Boolean))];
+    const companies = [...new Set(g.items.map(x => x.company).filter(x => x && x !== '—'))];
     const compLabel = companies.length === 1 ? companies[0] : (companies.length > 1 ? `${companies.slice(0, 2).join('، ')}${companies.length > 2 ? ' ...' : ''}` : '');
 
     let desc = '';
@@ -6038,33 +6081,96 @@ function renderActionHistory() {
     }
 
     const amtBadge = g.totalAmount > 0
-      ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:3px 9px;border-radius:6px;font-size:.78rem;font-weight:800;background:rgba(214,158,46,.15);border:1px solid rgba(214,158,46,.35);color:#f6ad55;white-space:nowrap;min-width:85px;" title="إجمالي المبلغ: ${fmt(g.totalAmount)} جنيه">
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:3px 9px;border-radius:6px;font-size:.78rem;font-weight:800;background:rgba(214,158,46,.15);border:1px solid rgba(214,158,46,.35);color:#f6ad55;white-space:nowrap;min-width:85px;">
            ${fmt(g.totalAmount)} ج
          </span>`
       : `<span style="font-size:.75rem;color:var(--text3);white-space:nowrap;min-width:85px;text-align:center;">—</span>`;
 
-    const actIdsJson = esc(JSON.stringify(g.rawActionIds));
+    const detailId = `act-detail-${g.id}`;
+    const chevId   = `act-chev-${g.id}`;
 
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
-              border-bottom:1px solid var(--border);${undone?'opacity:.45;':''}">
-      <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:85px;">${timeStr}</span>
-      <span style="font-size:.78rem;color:var(--text3);white-space:nowrap;min-width:65px;">${g.done_by||''}</span>
-      <span style="font-size:.82rem;font-weight:700;color:${clr};white-space:nowrap;min-width:75px;">${lbl}</span>
-      <span style="font-size:.78rem;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-        ${undone?'text-decoration:line-through;':''}">
-        ${esc(desc)}
-        ${g.count > 1 ? `<span style="font-size:.72rem;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:8px;margin-right:4px;">${g.count} بنود</span>` : ''}
-      </span>
-      ${amtBadge}
-      <span style="min-width:65px;display:flex;justify-content:center;">
-        ${undone
-          ? `<span style="font-size:.7rem;color:#f6ad55;white-space:nowrap;">↩️ رجع${undoBy?' — '+undoBy:''} ${undoAt}</span>`
-          : `<button data-actids="${actIdsJson}" onclick="undoGroupAction(this)"
-              style="padding:4px 10px;background:rgba(246,173,85,.15);border:1px solid rgba(246,173,85,.35);
-                     color:#f6ad55;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;">
-              ↩️ تراجع</button>`}
-      </span>
-    </div>`;
+    // جدول تفاصيل البنود المفردة لكل بند ومبلغه بالتحديد
+    let itemsTableHtml = '';
+    if (g.items.length) {
+      itemsTableHtml = `
+        <div style="overflow-x:auto;margin-top:6px;">
+          <table style="width:100%;border-collapse:collapse;font-size:.78rem;background:rgba(0,0,0,.25);border-radius:8px;overflow:hidden;">
+            <thead>
+              <tr style="background:rgba(124,58,237,.18);color:var(--text2);font-size:.72rem;text-align:right;">
+                <th style="padding:6px 10px;width:32px;text-align:center;">#</th>
+                <th style="padding:6px 10px;">البند / الشركة</th>
+                <th style="padding:6px 10px;text-align:center;">المبلغ</th>
+                <th style="padding:6px 10px;text-align:center;">التاريخ</th>
+                <th style="padding:6px 10px;">الفاتورة / الملاحظات</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${g.items.map((it, idx) => `
+                <tr style="border-top:1px solid rgba(255,255,255,.05);">
+                  <td style="padding:6px 10px;text-align:center;color:var(--text3);font-size:.72rem;">${idx+1}</td>
+                  <td style="padding:6px 10px;font-weight:700;color:var(--text1);">${esc(it.company)}</td>
+                  <td style="padding:6px 10px;text-align:center;color:#68d391;font-weight:800;">${fmt(it.amount)} ج</td>
+                  <td style="padding:6px 10px;text-align:center;color:var(--text3);font-size:.72rem;">${esc(it.date||'—')}</td>
+                  <td style="padding:6px 10px;color:var(--text3);font-size:.72rem;">${esc(it.invoice ? 'فاتورة: '+it.invoice+' ' : '')}${esc(it.notes ? '— '+it.notes : '')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      itemsTableHtml = `<div style="font-size:.75rem;color:var(--text3);padding:6px 0;">لا تتوفر تفاصيل إضافية لهذه الحركة</div>`;
+    }
+
+    const hasDetails = g.items.length > 0;
+    const actIdsJson = esc(JSON.stringify([g.id]));
+
+    return `
+      <div style="border-bottom:1px solid var(--border);${undone?'opacity:.5;':''}">
+        <!-- سطر الحركة الرئيسي (قابل للضغط لعرض التفاصيل) -->
+        <div onclick="toggleActionDetail('${g.id}')"
+             style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:${hasDetails?'pointer':'default'};transition:background .15s ease;"
+             onmouseover="this.style.background='rgba(124,58,237,.07)'"
+             onmouseout="this.style.background='transparent'">
+          <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:85px;">${timeStr}</span>
+          <span style="font-size:.78rem;color:var(--text3);white-space:nowrap;min-width:65px;">${esc(g.done_by||'')}</span>
+          <span style="font-size:.82rem;font-weight:700;color:${clr};white-space:nowrap;min-width:75px;">${lbl}</span>
+          <span style="font-size:.78rem;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px;${undone?'text-decoration:line-through;':''}">
+            ${esc(desc)}
+            ${g.count > 1 ? `<span style="font-size:.72rem;background:rgba(124,58,237,.2);color:#c4b5fd;border:1px solid rgba(124,58,237,.3);padding:1px 7px;border-radius:10px;">${g.count} بنود</span>` : ''}
+            ${hasDetails ? `<span id="${chevId}" style="display:inline-block;font-size:.68rem;color:#a0aec0;transition:transform .2s ease;margin-right:auto;background:rgba(255,255,255,.05);padding:2px 7px;border-radius:6px;">▼ تفاصيل</span>` : ''}
+          </span>
+          ${amtBadge}
+          <span style="min-width:65px;display:flex;justify-content:center;" onclick="event.stopPropagation()">
+            ${undone
+              ? `<span style="font-size:.7rem;color:#f6ad55;white-space:nowrap;">↩️ تراجع${undoBy?' — '+undoBy:''} ${undoAt}</span>`
+              : `<button data-actids="${actIdsJson}" onclick="undoGroupAction(this)"
+                  style="padding:4px 10px;background:rgba(246,173,85,.15);border:1px solid rgba(246,173,85,.35);color:#f6ad55;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;">
+                  ↩️ تراجع
+                </button>`
+            }
+          </span>
+        </div>
+
+        <!-- القائمة المنسدلة للتفاصيل المفردة لكل بند من البنود -->
+        <div id="${detailId}" style="display:none;background:rgba(18,15,37,.7);border-top:1px dashed rgba(124,58,237,.3);padding:10px 14px 14px 14px;animation:warmPaneIn .25s ease;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px;">
+              📋 تفاصيل البنود المفردة (${g.items.length} بند):
+              <span style="color:#f6ad55;font-size:.76rem;background:rgba(214,158,46,.15);padding:2px 8px;border-radius:6px;border:1px solid rgba(214,158,46,.3);">
+                الإجمالي: ${fmt(g.totalAmount)} ج
+              </span>
+            </div>
+            ${!undone ? `
+              <button data-actids="${actIdsJson}" onclick="undoGroupAction(this)"
+                style="padding:3px 10px;background:rgba(246,173,85,.15);border:1px solid rgba(246,173,85,.35);color:#f6ad55;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:700;">
+                ↩️ تراجع عن هذه الحركة بالكامل
+              </button>` : ''}
+          </div>
+          ${itemsTableHtml}
+        </div>
+      </div>
+    `;
   }).join('');
 
   el.innerHTML = headerHtml + rowsHtml;
@@ -6073,11 +6179,15 @@ function renderActionHistory() {
 // ── فتح مودال الهيستوري ──
 async function openActionHistory() {
   if (!me || me.role !== 'admin') { toast('⚠️ للأدمن فقط', false); return; }
-  await fetchEntryActions(200);
+  await Promise.all([
+    fetchEntryActions(200),
+    typeof fetchTrash === 'function' ? fetchTrash() : Promise.resolve()
+  ]);
   const m = document.getElementById('actHistModal');
   if (m) m.classList.add('on');
   renderActionHistory();
 }
+
 
 function toast(msg, ok=true) {
   document.querySelectorAll('.toast').forEach(t=>t.remove());
