@@ -164,7 +164,17 @@
   .tab-acrobatic { display: inline-block; animation: acrobaticFlip 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
   .btn-acrobatic { animation: acrobaticFlip 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
 
-    .online-box {
+      .today-online-box {
+    background: rgba(49, 151, 149, 0.16) !important;
+    border-color: rgba(78, 205, 196, 0.38) !important;
+    animation: floatAmbient 4.8s ease-in-out infinite alternate !important;
+  }
+  .today-online-box:hover {
+    box-shadow: 0 8px 24px rgba(49, 151, 149, 0.28) !important;
+    border-color: rgba(78, 205, 196, 0.65) !important;
+  }
+
+  .online-box {
     background: rgba(49, 130, 206, 0.16);
     border: 1px solid rgba(99, 179, 237, 0.35);
     border-radius: 14px;
@@ -1001,8 +1011,14 @@ function ensureXLSX() {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:11px;">
-                <!-- ── صندوق ذمم أونلاين بجانب الكاش ── -->
-        <div class="online-box" id="onlineDebtsBox" onclick="swTab('all');setTimeout(()=>{const f=document.getElementById('fType');if(f){f.value='ذمم اونلاين';renderAll();}},50);" title="اضغط لعرض كافة ذمم الأونلاين والتسوية">
+                <!-- ── صندوق ذمم أونلاين اليوم ── -->
+        <div class="online-box today-online-box" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم (متاح للموظفين)">
+          <div class="online-lbl" style="color:#81e6d9;">⚡ أونلاين اليوم</div>
+          <div class="online-val" id="hOnlineToday">0 ج</div>
+        </div>
+
+        <!-- ── صندوق ذمم أونلاين المعلقة (تراكمي) ── -->
+        <div class="online-box" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة (متاح للموظفين)">
           <div class="online-lbl">⏳ ذمم أونلاين</div>
           <div class="online-val" id="hOnlineDebts">0 ج</div>
         </div>
@@ -4411,52 +4427,220 @@ function renderMy() {
 //  TODAY BAR
 // ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
-//  ONLINE DEBTS HEADER WIDGET ⏳
+//  ONLINE DEBTS HEADER WIDGETS & MODAL ⏳⚡
 // ═══════════════════════════════════════════
-function updateOnlineDebtsHeader() {
-  const el = document.getElementById('hOnlineDebts');
-  if (!el) return;
+let currentOdTab = 'pending'; // 'pending' | 'today' | 'all'
 
-  const activeDebts = entries.filter(e => e.type === 'ذمم اونلاين' && !isSettled(e) && !e.deleted);
-  
+function openOnlineDebtsModal(initialTab = 'pending') {
+  currentOdTab = initialTab;
+  const modal = document.getElementById('onlineDebtsModal');
+  if (modal) modal.classList.add('on');
+  setOdFilterTab(initialTab);
+}
+
+function closeOnlineDebtsModal() {
+  const modal = document.getElementById('onlineDebtsModal');
+  if (modal) modal.classList.remove('on');
+}
+
+function setOdFilterTab(tabName) {
+  currentOdTab = tabName;
+  ['pending', 'today', 'all'].forEach(t => {
+    const btn = document.getElementById('odTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) {
+      if (t === tabName) {
+        btn.style.background = 'var(--acc)';
+        btn.style.color = '#fff';
+        btn.style.fontWeight = '800';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text3)';
+        btn.style.fontWeight = '500';
+      }
+    }
+  });
+  renderOnlineDebtsModalList();
+}
+
+function renderOnlineDebtsModalList() {
+  const container = document.getElementById('odModalBody');
+  if (!container) return;
+
+  const coFilter = document.getElementById('odCompanyFilter')?.value || '';
+  const searchQ = (document.getElementById('odSearchInp')?.value || '').trim().toLowerCase();
+  const td = todayStr();
+
+  let list = entries.filter(e => e.type === 'ذمم اونلاين' && !e.deleted);
+
+  // Tab filter
+  if (currentOdTab === 'pending') {
+    list = list.filter(e => !isSettled(e));
+  } else if (currentOdTab === 'today') {
+    list = list.filter(e => e.date === td);
+  }
+
+  // Company filter
+  if (coFilter) {
+    list = list.filter(e => (e.company || '').includes(coFilter));
+  }
+
+  // Text search
+  if (searchQ) {
+    list = list.filter(e =>
+      (e.company || '').toLowerCase().includes(searchQ) ||
+      (e.notes || '').toLowerCase().includes(searchQ) ||
+      (e.uname || '').toLowerCase().includes(searchQ) ||
+      String(e.amount).includes(searchQ) ||
+      (e.date || '').includes(searchQ)
+    );
+  }
+
+  // Sort descending by date & time
+  list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts || 0) - (a.ts || 0)));
+
+  const totAmt = list.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const badge = document.getElementById('odModalTotalBadge');
+  if (badge) badge.textContent = `${list.length} حركة — إجمالي: ${fmt(totAmt)} ج`;
+
+  const summary = document.getElementById('odModalSummary');
+  if (summary) {
+    const pAmt = entries.filter(e => e.type === 'ذمم اونلاين' && !isSettled(e) && !e.deleted).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    summary.innerHTML = `إجمالي المعلق التراكمي: <strong style="color:#f6ad55;">${fmt(pAmt)} ج</strong>`;
+  }
+
+  if (!list.length) {
+    container.innerHTML = '<div style="text-align:center;padding:35px;color:var(--text3);font-size:.85rem;">لا توجد حركات أونلاين مطابقة لهذا الفلتر</div>';
+    return;
+  }
+
+  const isAdmin = me && me.role === 'admin';
+  const headerHtml = `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;font-size:.72rem;color:var(--text3);font-weight:700;border-bottom:1.5px solid var(--border);background:rgba(255,255,255,.03);position:sticky;top:0;z-index:2;backdrop-filter:blur(4px);">
+      <span style="min-width:85px;">📅 التاريخ والوقت</span>
+      <span style="min-width:95px;">🏢 البند</span>
+      <span style="min-width:75px;text-align:center;">💵 المبلغ</span>
+      <span style="min-width:75px;">👤 المسجل</span>
+      <span style="flex:1;">📝 اسم المرسل / الملاحظات</span>
+      <span style="min-width:70px;text-align:center;">الحالة</span>
+      ${isAdmin ? '<span style="min-width:65px;text-align:center;">الإجراء</span>' : ''}
+    </div>`;
+
+  const rowsHtml = list.map(e => {
+    const settled = isSettled(e);
+    const isInsta = (e.company || '').includes('انستا');
+    const badgeColor = isInsta ? '#63b3ed' : '#48bb78';
+    const badgeBg = isInsta ? 'rgba(99,179,237,.15)' : 'rgba(72,187,120,.15)';
+    const badgeBorder = isInsta ? 'rgba(99,179,237,.35)' : 'rgba(72,187,120,.35)';
+    const timeDisplay = e.time || (e.ts ? new Date(e.ts).toLocaleTimeString('ar-EG-u-nu-latn', {hour:'2-digit', minute:'2-digit'}) : '—');
+
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.78rem;${settled ? 'opacity:.6;' : ''}">
+        <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:85px;">
+          ${esc(e.date || '—')} <span style="font-size:.65rem;color:var(--text3);">${timeDisplay}</span>
+        </span>
+        <span style="min-width:95px;white-space:nowrap;">
+          <span style="color:${badgeColor};background:${badgeBg};border:1px solid ${badgeBorder};padding:2px 7px;border-radius:6px;font-size:.72rem;font-weight:700;">
+            ${esc(e.company || 'ذمم أونلاين')}
+          </span>
+        </span>
+        <span style="min-width:75px;text-align:center;font-weight:900;color:#68d391;font-size:.84rem;white-space:nowrap;">
+          ${fmt(e.amount)} ج
+        </span>
+        <span style="font-size:.75rem;color:var(--text2);min-width:75px;white-space:nowrap;">
+          ${esc(e.uname || '—')}
+        </span>
+        <span style="flex:1;color:var(--text1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(e.notes || '')}">
+          ${esc(e.notes || '—')}
+        </span>
+        <span style="min-width:70px;text-align:center;white-space:nowrap;">
+          ${settled
+            ? '<span style="font-size:.68rem;color:#68d391;background:rgba(104,211,145,.15);padding:2px 6px;border-radius:5px;">✅ مسوى</span>'
+            : '<span style="font-size:.68rem;color:#f6ad55;background:rgba(246,173,85,.15);padding:2px 6px;border-radius:5px;">⏳ معلق</span>'}
+        </span>
+        ${isAdmin ? `
+          <span style="min-width:65px;text-align:center;">
+            ${!settled ? `
+              <button onclick="settleOnline('${e.id}');setTimeout(renderOnlineDebtsModalList,300);" class="btn-settle" style="padding:3px 8px;font-size:.7rem;">
+                🔄 تسوية
+              </button>` : '—'}
+          </span>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = headerHtml + rowsHtml;
+}
+
+function updateOnlineDebtsHeader() {
+  const elTotal = document.getElementById('hOnlineDebts');
+  const elToday = document.getElementById('hOnlineToday');
+
+  const td = todayStr();
+  const nonDeleted = entries.filter(e => e.type === 'ذمم اونلاين' && !e.deleted);
+
+  // 1. حساب المعلق التراكمي (غير المسوى)
+  const activeDebts = nonDeleted.filter(e => !isSettled(e));
   let instaAmt = 0;
   let walletAmt = 0;
-
   activeDebts.forEach(e => {
     const co = (e.company || '').trim();
     const amt = parseFloat(e.amount) || 0;
-    if (co.includes('انستا')) {
-      instaAmt += amt;
-    } else {
-      walletAmt += amt;
-    }
+    if (co.includes('انستا')) instaAmt += amt;
+    else walletAmt += amt;
   });
 
-  // 1. لو الاثنين صفر -> يكتب 0
-  if (instaAmt === 0 && walletAmt === 0) {
-    el.innerHTML = '<span style="font-size:1.25rem;font-weight:900;color:#cbd5e0;">0</span> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span>';
-    return;
+  // 2. حساب حركات اليوم فقط
+  const todayDebts = nonDeleted.filter(e => e.date === td);
+  let instaToday = 0;
+  let walletToday = 0;
+  todayDebts.forEach(e => {
+    const co = (e.company || '').trim();
+    const amt = parseFloat(e.amount) || 0;
+    if (co.includes('انستا')) instaToday += amt;
+    else walletToday += amt;
+  });
+
+  // ── تحديث صندوق المعلق التراكمي (Box 1) ──
+  if (elTotal) {
+    if (instaAmt === 0 && walletAmt === 0) {
+      elTotal.innerHTML = '<span style="font-size:1.25rem;font-weight:900;color:#cbd5e0;">0</span> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span>';
+    } else if (instaAmt > 0 && walletAmt === 0) {
+      elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+    } else if (walletAmt > 0 && instaAmt === 0) {
+      elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+    } else {
+      elTotal.innerHTML = `
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
+          <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaAmt)} ج</span>
+          <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletAmt)} ج</span>
+        </div>
+      `;
+    }
   }
 
-  // 2. لو انستا فقط أكبر من صفر ومحفظة صيدلية صفر -> تتكتب انستا فقط
-  if (instaAmt > 0 && walletAmt === 0) {
-    el.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
-    return;
+  // ── تحديث صندوق أونلاين اليوم (Box 2) ──
+  if (elToday) {
+    if (instaToday === 0 && walletToday === 0) {
+      elToday.innerHTML = '<span style="font-size:1.25rem;font-weight:900;color:#cbd5e0;">0</span> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span>';
+    } else if (instaToday > 0 && walletToday === 0) {
+      elToday.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaToday)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+    } else if (walletToday > 0 && instaToday === 0) {
+      elToday.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#4fd1c5;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletToday)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+    } else {
+      elToday.innerHTML = `
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
+          <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaToday)} ج</span>
+          <span style="color:#4fd1c5;background:rgba(79,209,197,.18);border:1px solid rgba(79,209,197,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletToday)} ج</span>
+        </div>
+      `;
+    }
   }
 
-  // 3. لو محفظة صيدلية فقط أكبر من صفر وانستا صفر -> تتكتب محفظة صيدلية فقط
-  if (walletAmt > 0 && instaAmt === 0) {
-    el.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
-    return;
+  // لو مودال حركات الأونلاين مفتوح، حدّثه أيضاً
+  const odModal = document.getElementById('onlineDebtsModal');
+  if (odModal && odModal.classList.contains('on')) {
+    renderOnlineDebtsModalList();
   }
-
-  // 4. لو الاثنين أكبر من صفر -> يتكتبوا الاثنين معاً
-  el.innerHTML = `
-    <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
-      <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaAmt)} ج</span>
-      <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletAmt)} ج</span>
-    </div>
-  `;
 }
 
 function updToday() {
@@ -13110,6 +13294,49 @@ document.addEventListener('keydown', e => {
     <!-- إغلاق -->
     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
       <button onclick="document.getElementById('actHistModal').classList.remove('on')" class="btn btn-ghost">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Online Debts / Wallet Modal (متاح للموظفين والمدير بالكامل) ── -->
+<div id="onlineDebtsModal" class="modal-overlay" onclick="if(event.target===this)closeOnlineDebtsModal()">
+  <div class="modal-box" style="max-width:820px;max-height:88vh;display:flex;flex-direction:column;">
+    <div style="font-weight:900;font-size:1.05rem;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        📱 حركات المحفظة وانستا (ذمم أونلاين)
+        <span id="odModalTotalBadge" style="font-size:.76rem;background:rgba(99,179,237,.18);color:#63b3ed;padding:2px 10px;border-radius:20px;border:1px solid rgba(99,179,237,.35);"></span>
+      </div>
+      <button onclick="closeOnlineDebtsModal()" style="background:none;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+
+    <!-- فلاتر المودال -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:rgba(255,255,255,.03);padding:8px 12px;border-radius:10px;border:1px solid var(--border);">
+      <div style="display:flex;gap:4px;background:var(--bg1);padding:3px;border-radius:8px;border:1px solid var(--border);">
+        <button id="odTabPending" class="btn btn-xs" onclick="setOdFilterTab('pending')" style="padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer;">⏳ المعلق فقط</button>
+        <button id="odTabToday" class="btn btn-xs" onclick="setOdFilterTab('today')" style="padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer;">⚡ حركات اليوم</button>
+        <button id="odTabAll" class="btn btn-xs" onclick="setOdFilterTab('all')" style="padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer;">📋 كل السجلات</button>
+      </div>
+
+      <select id="odCompanyFilter" onchange="renderOnlineDebtsModalList()"
+        style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:.78rem;">
+        <option value="">جميع المحافظ</option>
+        <option value="محفظة">محفظة الصيدلية</option>
+        <option value="انستا">انستا باي</option>
+      </select>
+
+      <input type="text" id="odSearchInp" oninput="renderOnlineDebtsModalList()" placeholder="🔍 ابحث بالاسم أو المبلغ أو الملاحظات..."
+        style="flex:1;min-width:180px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:.78rem;outline:none;"/>
+    </div>
+
+    <!-- جدول الحركات -->
+    <div id="odModalBody" style="flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--bg2);">
+      <!-- يتم تعبئته ديناميكياً -->
+    </div>
+
+    <!-- الفوتر مع إجمالي المعلق وإغلاق -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:8px;border-top:1px solid var(--border);">
+      <div id="odModalSummary" style="font-size:.8rem;color:var(--text2);font-weight:700;"></div>
+      <button onclick="closeOnlineDebtsModal()" class="btn btn-ghost" style="padding:5px 16px;">إغلاق</button>
     </div>
   </div>
 </div>
