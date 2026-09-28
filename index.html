@@ -191,6 +191,204 @@
     box-shadow: 0 8px 24px rgba(49, 130, 206, 0.28);
     border-color: rgba(99, 179, 237, 0.6);
   }
+
+  /* ══ TOP MONTHLY SALES TREND CARD (جراف مبيعات الشهر الاحترافي) ══ */
+  .top-sales-card {
+    background: linear-gradient(180deg, rgba(20, 27, 45, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border-bottom: 1.5px solid rgba(99, 179, 237, 0.22);
+    padding: 10px 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    position: relative;
+    z-index: 10;
+    transition: all .35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  body.light-mode .top-sales-card {
+    background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+    border-bottom: 1.5px solid rgba(49, 130, 206, 0.22);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  }
+  .top-sales-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .top-sales-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .top-sales-title {
+    font-size: .88rem;
+    font-weight: 900;
+    color: var(--text1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .ts-month-badge {
+    font-size: .72rem;
+    font-weight: 800;
+    background: rgba(99, 179, 237, 0.16);
+    color: #63b3ed;
+    border: 1px solid rgba(99, 179, 237, 0.35);
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .ts-kpi-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .ts-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-size: .74rem;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    transition: all .2s ease;
+  }
+  body.light-mode .ts-chip {
+    background: #fff;
+    border-color: #cbd5e0;
+  }
+  .ts-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  }
+  .ts-chip-lbl {
+    color: var(--text3);
+    font-size: .68rem;
+    font-weight: 600;
+  }
+  .ts-chip-tot strong { color: #63b3ed; font-size: .84rem; font-weight: 900; }
+  .ts-chip-avg strong { color: #f6ad55; font-size: .84rem; font-weight: 900; }
+  .ts-chip-peak strong { color: #48bb78; font-size: .84rem; font-weight: 900; }
+  .ts-chip-low strong { color: #fc8181; font-size: .84rem; font-weight: 900; }
+  .ts-chip-today strong { color: #81e6d9; font-size: .84rem; font-weight: 900; }
+  .ts-trend-badge {
+    font-size: .68rem;
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-weight: 800;
+    margin-right: 2px;
+  }
+  .ts-trend-up {
+    background: rgba(72, 187, 120, 0.2);
+    color: #48bb78;
+    border: 1px solid rgba(72, 187, 120, 0.35);
+  }
+  .ts-trend-down {
+    background: rgba(245, 101, 101, 0.2);
+    color: #fc8181;
+    border: 1px solid rgba(245, 101, 101, 0.35);
+  }
+  .top-sales-ctrls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ts-type-toggle {
+    display: flex;
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .ts-ctrl-btn {
+    background: transparent;
+    border: none;
+    color: var(--text3);
+    font-size: .73rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ts-ctrl-btn:hover {
+    color: var(--text1);
+  }
+  .ts-ctrl-btn.ts-active {
+    background: var(--acc);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+  }
+  .ts-collapse-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 8px;
+    padding: 4px 11px;
+  }
+  .ts-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text1);
+  }
+  .top-sales-body {
+    margin-top: 10px;
+    overflow: hidden;
+    transition: max-height .35s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease, margin .35s ease;
+    max-height: 290px;
+    opacity: 1;
+  }
+  .top-sales-card.ts-collapsed .top-sales-body {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    pointer-events: none;
+  }
+  .top-sales-canvas-wrap {
+    position: relative;
+    height: 180px;
+    width: 100%;
+  }
+  .top-sales-legend-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    font-size: .7rem;
+    color: var(--text3);
+    font-weight: 600;
+  }
+  .ts-leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .ts-leg-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .ts-leg-line {
+    width: 18px;
+    height: 0;
+    display: inline-block;
+  }
+  @media (max-width: 768px) {
+    .top-sales-card { padding: 8px 12px; }
+    .top-sales-canvas-wrap { height: 140px; }
+    .ts-kpi-row { gap: 5px; }
+    .ts-chip { font-size: .68rem; padding: 2px 6px; }
+  }
   .online-lbl {
     font-size: .68rem;
     color: #90cdf4;
@@ -1043,6 +1241,64 @@ function ensureXLSX() {
     <div class="ti"><span class="ti-l">مصاريف اليوم:</span><span class="ti-v c-r" id="tExp">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
     <div class="ti"><span class="ti-l">طلبيات اليوم:</span><span class="ti-v c-b" id="tOrd">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
     <div class="ti"><span class="ti-l">صافي اليوم:</span><span class="ti-v c-o" id="tNet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
+  </div>
+
+  <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
+  <div id="topSalesTrendCard" class="top-sales-card">
+    <div class="top-sales-hdr">
+      <div class="top-sales-title-wrap">
+        <div class="top-sales-title">
+          <span style="font-size:1.15rem;">📈</span>
+          <span>حركة مبيعات الشهر</span>
+          <span class="ts-month-badge" id="tsMonthBadge">—</span>
+        </div>
+        <div class="ts-kpi-row" id="tsKpiRow">
+          <div class="ts-chip ts-chip-tot" title="إجمالي مبيعات الشهر الفعلية (بدون الإيداعات)">
+            <span class="ts-chip-lbl">الإجمالي:</span>
+            <strong id="tsTotalAmt">0 ج</strong>
+          </div>
+          <div class="ts-chip ts-chip-avg" title="متوسط مبيعات اليوم الواحد المحقق خلال الشهر">
+            <span class="ts-chip-lbl">المتوسط اليومي:</span>
+            <strong id="tsAvgAmt">0 ج</strong>
+          </div>
+          <div class="ts-chip ts-chip-peak" title="أعلى مبيعات محققة في يوم خلال الشهر">
+            <span class="ts-chip-lbl">🚀 أعلى يوم:</span>
+            <strong id="tsPeakDay">—</strong>
+          </div>
+          <div class="ts-chip ts-chip-low" title="أدنى مبيعات محققة في يوم خلال الشهر">
+            <span class="ts-chip-lbl">🔻 أقل يوم:</span>
+            <strong id="tsLowDay">—</strong>
+          </div>
+          <div class="ts-chip ts-chip-today" title="مبيعات اليوم الحالي ومقارنته بمتوسط الشهر">
+            <span class="ts-chip-lbl">⚡ اليوم:</span>
+            <strong id="tsTodayAmt">0 ج</strong>
+            <span id="tsTodayTrendBadge" class="ts-trend-badge">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="top-sales-ctrls">
+        <div class="ts-type-toggle">
+          <button id="tsBtnLine" class="ts-ctrl-btn ts-active" onclick="setTopSalesChartType('line')" title="عرض رسم بياني انسيابي">📈 منحنى</button>
+          <button id="tsBtnBar" class="ts-ctrl-btn" onclick="setTopSalesChartType('bar')" title="عرض رسم بياني بالأعمدة">📊 أعمدة</button>
+        </div>
+        <button id="tsBtnCollapse" class="ts-ctrl-btn ts-collapse-btn" onclick="toggleTopSalesCard()" title="طي أو إظهار الجراف">
+          <span id="tsCollapseIcon">🔼</span> <span id="tsCollapseText">طي</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chart Body Container (Collapsible) -->
+    <div id="topSalesChartBody" class="top-sales-body">
+      <div class="top-sales-canvas-wrap">
+        <canvas id="topMonthlySalesChart"></canvas>
+      </div>
+      <div class="top-sales-legend-sub">
+        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#06b6d4;"></span> مبيعات الأيام</span>
+        <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
+        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
+        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
+      </div>
+    </div>
   </div>
 
   <!-- Tabs -->
@@ -3024,6 +3280,8 @@ function buildApp() {
   show('scApp');
   loadSalesTarget();
   updateOnlineDebtsHeader();
+  initTopSalesCardState();
+  renderTopMonthlySalesChart();
   setTimeout(initBackupSystem, 500);
 }
 
@@ -4656,6 +4914,373 @@ function updToday() {
   document.getElementById('tExp').textContent=fmt(x);
   document.getElementById('tOrd').textContent=fmt(o);
   document.getElementById('tNet').textContent=fmt(r-x-o-p-a-dh);
+  renderTopMonthlySalesChart();
+}
+
+// ═══════════════════════════════════════════
+//  TOP MONTHLY SALES TREND GRAPH ENGINE 📈✨
+// ═══════════════════════════════════════════
+let topSalesChart = null;
+let topSalesChartType = 'line';
+
+function setTopSalesChartType(type) {
+  topSalesChartType = type;
+  try { localStorage.setItem('asafra_top_sales_type', type); } catch(e){}
+  const btnL = document.getElementById('tsBtnLine');
+  const btnB = document.getElementById('tsBtnBar');
+  if (btnL) btnL.classList.toggle('ts-active', type === 'line');
+  if (btnB) btnB.classList.toggle('ts-active', type === 'bar');
+  renderTopMonthlySalesChart();
+}
+
+function toggleTopSalesCard() {
+  const card = document.getElementById('topSalesTrendCard');
+  if (!card) return;
+  const isCollapsed = card.classList.toggle('ts-collapsed');
+  try { localStorage.setItem('asafra_top_sales_collapsed', isCollapsed ? '1' : '0'); } catch(e){}
+  const icon = document.getElementById('tsCollapseIcon');
+  const txt = document.getElementById('tsCollapseText');
+  if (icon) icon.textContent = isCollapsed ? '🔽' : '🔼';
+  if (txt) txt.textContent = isCollapsed ? 'إظهار الجراف' : 'طي';
+  if (!isCollapsed && topSalesChart) {
+    setTimeout(() => { try { topSalesChart.resize(); } catch(e){} }, 360);
+  }
+}
+
+function initTopSalesCardState() {
+  try {
+    const isCollapsed = localStorage.getItem('asafra_top_sales_collapsed') === '1';
+    if (isCollapsed) {
+      const card = document.getElementById('topSalesTrendCard');
+      if (card) card.classList.add('ts-collapsed');
+      const icon = document.getElementById('tsCollapseIcon');
+      const txt = document.getElementById('tsCollapseText');
+      if (icon) icon.textContent = '🔽';
+      if (txt) txt.textContent = 'إظهار الجراف';
+    }
+    const savedType = localStorage.getItem('asafra_top_sales_type') || 'line';
+    topSalesChartType = savedType;
+    const btnL = document.getElementById('tsBtnLine');
+    const btnB = document.getElementById('tsBtnBar');
+    if (btnL) btnL.classList.toggle('ts-active', savedType === 'line');
+    if (btnB) btnB.classList.toggle('ts-active', savedType === 'bar');
+  } catch(e){}
+}
+
+function renderTopMonthlySalesChart() {
+  const canvas = document.getElementById('topMonthlySalesChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const today = todayStr();
+  const currentMonth = today.slice(0, 7); // 'YYYY-MM'
+  const [curYear, curMo] = currentMonth.split('-');
+  const monthNameAr = (typeof MONTHS !== 'undefined' && MONTHS[+curMo - 1])
+    ? MONTHS[+curMo - 1] + ' ' + curYear
+    : currentMonth;
+
+  const monthBadge = document.getElementById('tsMonthBadge');
+  if (monthBadge) monthBadge.textContent = monthNameAr;
+
+  const todayDayNum = parseInt(today.slice(8, 10), 10) || 1;
+
+  // استخراج فواتير وإيرادات المبيعات الفعلية للشهر الحالي واستبعاد الإيداعات
+  const monthEntries = entries.filter(e => {
+    if (e.deleted || e.type !== 'ايرادات') return false;
+    if (!e.date || !e.date.startsWith(currentMonth)) return false;
+    const co = (e.company || '').trim();
+    if (co.includes('ايداع') || co.includes('بداية العهدة') || co.includes('رصيد افتتاحي')) return false;
+    return true;
+  });
+
+  const daysData = [];
+  const daysLabels = [];
+  const daysFullDates = [];
+  const dayBreakdown = {};
+
+  for (let d = 1; d <= todayDayNum; d++) {
+    const dayStr = String(d).padStart(2, '0');
+    const fullDate = `${currentMonth}-${dayStr}`;
+    daysLabels.push(String(d));
+    daysFullDates.push(fullDate);
+
+    const dayEntries = monthEntries.filter(e => e.date === fullDate);
+    const daySum = dayEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    daysData.push(daySum);
+
+    const shifts = {};
+    dayEntries.forEach(e => {
+      const co = e.company || 'مبيعات';
+      shifts[co] = (shifts[co] || 0) + (parseFloat(e.amount) || 0);
+    });
+    dayBreakdown[fullDate] = shifts;
+  }
+
+  const totalMonthSales = daysData.reduce((s, v) => s + v, 0);
+  const activeDaysCount = daysData.filter(v => v > 0).length || 1;
+  const avgDaily = totalMonthSales / activeDaysCount;
+
+  let peakVal = -1, peakDay = 0, peakDate = '';
+  let lowVal = Infinity, lowDay = 0, lowDate = '';
+
+  daysData.forEach((val, idx) => {
+    if (val > peakVal) {
+      peakVal = val;
+      peakDay = idx + 1;
+      peakDate = daysFullDates[idx];
+    }
+    if (val > 0 && val < lowVal) {
+      lowVal = val;
+      lowDay = idx + 1;
+      lowDate = daysFullDates[idx];
+    }
+  });
+
+  if (lowVal === Infinity) { lowVal = 0; lowDay = todayDayNum; lowDate = today; }
+
+  const todaySales = daysData[todayDayNum - 1] || 0;
+
+  // تحديث الشارات والمؤشرات
+  const elTot = document.getElementById('tsTotalAmt');
+  if (elTot) elTot.textContent = fmt(totalMonthSales) + ' ج';
+
+  const elAvg = document.getElementById('tsAvgAmt');
+  if (elAvg) elAvg.textContent = fmt(Math.round(avgDaily)) + ' ج';
+
+  const elAvgSub = document.getElementById('tsAvgSubLbl');
+  if (elAvgSub) elAvgSub.textContent = fmt(Math.round(avgDaily)) + ' ج';
+
+  const elPeak = document.getElementById('tsPeakDay');
+  if (elPeak) elPeak.textContent = peakVal > 0 ? `${fmt(peakVal)} ج (${peakDay})` : '—';
+
+  const elLow = document.getElementById('tsLowDay');
+  if (elLow) elLow.textContent = lowVal > 0 ? `${fmt(lowVal)} ج (${lowDay})` : '—';
+
+  const elToday = document.getElementById('tsTodayAmt');
+  if (elToday) elToday.textContent = fmt(todaySales) + ' ج';
+
+  const elTodayTrend = document.getElementById('tsTodayTrendBadge');
+  if (elTodayTrend) {
+    if (todaySales > 0 && avgDaily > 0) {
+      const diffPct = ((todaySales - avgDaily) / avgDaily * 100).toFixed(0);
+      if (todaySales >= avgDaily) {
+        elTodayTrend.className = 'ts-trend-badge ts-trend-up';
+        elTodayTrend.textContent = `+${diffPct}% 🟢 صعود`;
+      } else {
+        elTodayTrend.className = 'ts-trend-badge ts-trend-down';
+        elTodayTrend.textContent = `${diffPct}% 🔻 هبوط`;
+      }
+    } else {
+      elTodayTrend.textContent = '—';
+      elTodayTrend.className = 'ts-trend-badge';
+    }
+  }
+
+  // رسم الجراف بواسطة Chart.js
+  const ctx = canvas.getContext('2d');
+  if (topSalesChart) {
+    try { topSalesChart.destroy(); } catch(e){}
+  }
+
+  const isDark = !document.body.classList.contains('light-mode');
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+  const tickColor = isDark ? '#a0aec0' : '#4a5568';
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0, isDark ? 'rgba(6, 182, 212, 0.38)' : 'rgba(49, 130, 206, 0.35)');
+  grad.addColorStop(0.65, isDark ? 'rgba(6, 182, 212, 0.10)' : 'rgba(49, 130, 206, 0.08)');
+  grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
+  const ptBgColors = [];
+  const ptBorderColors = [];
+  const ptRadii = [];
+  const ptHoverRadii = [];
+
+  daysData.forEach((val, idx) => {
+    const day = idx + 1;
+    if (val === peakVal && peakVal > 0) {
+      ptBgColors.push('#10b981'); // أخضر زمردي لأعلى نقطة
+      ptBorderColors.push('#ffffff');
+      ptRadii.push(6);
+      ptHoverRadii.push(8.5);
+    } else if (val === lowVal && lowVal > 0) {
+      ptBgColors.push('#f43f5e'); // أحمر وردي لأدنى نقطة
+      ptBorderColors.push('#ffffff');
+      ptRadii.push(6);
+      ptHoverRadii.push(8.5);
+    } else if (day === todayDayNum) {
+      ptBgColors.push('#06b6d4'); // تيل لليوم
+      ptBorderColors.push('#ffffff');
+      ptRadii.push(5);
+      ptHoverRadii.push(7.5);
+    } else {
+      ptBgColors.push(isDark ? '#38b2ac' : '#3182ce');
+      ptBorderColors.push(isDark ? '#0f172a' : '#ffffff');
+      ptRadii.push(3);
+      ptHoverRadii.push(5.5);
+    }
+  });
+
+  const isBar = topSalesChartType === 'bar';
+  const datasets = [];
+
+  if (isBar) {
+    datasets.push({
+      type: 'bar',
+      label: 'مبيعات اليوم',
+      data: daysData,
+      backgroundColor: daysData.map((val, idx) => {
+        if (val === peakVal && peakVal > 0) return 'rgba(16, 185, 129, 0.85)';
+        if (val === lowVal && lowVal > 0) return 'rgba(244, 63, 94, 0.85)';
+        if (idx + 1 === todayDayNum) return 'rgba(6, 182, 212, 0.9)';
+        return isDark ? 'rgba(56, 178, 172, 0.7)' : 'rgba(49, 130, 206, 0.75)';
+      }),
+      borderColor: isDark ? 'rgba(255,255,255,.1)' : 'transparent',
+      borderWidth: 1,
+      borderRadius: 5,
+      order: 2
+    });
+  } else {
+    datasets.push({
+      type: 'line',
+      label: 'مبيعات اليوم',
+      data: daysData,
+      borderColor: '#06b6d4',
+      borderWidth: 2.8,
+      backgroundColor: grad,
+      fill: true,
+      tension: 0.38,
+      pointBackgroundColor: ptBgColors,
+      pointBorderColor: ptBorderColors,
+      pointBorderWidth: 2,
+      pointRadius: ptRadii,
+      pointHoverRadius: ptHoverRadii,
+      order: 2
+    });
+  }
+
+  // خط متوسط الشهر الأفقي المتقطع
+  datasets.push({
+    type: 'line',
+    label: `متوسط مبيعات الشهر (${fmt(Math.round(avgDaily))} ج)`,
+    data: daysLabels.map(() => Math.round(avgDaily)),
+    borderColor: 'rgba(246, 173, 85, 0.85)',
+    borderWidth: 2,
+    borderDash: [6, 5],
+    pointRadius: 0,
+    pointHoverRadius: 0,
+    fill: false,
+    order: 1
+  });
+
+  const AR_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+  topSalesChart = new Chart(ctx, {
+    data: {
+      labels: daysLabels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+          titleColor: isDark ? '#f8fafc' : '#1a202c',
+          bodyColor: isDark ? '#e2e8f0' : '#2d3748',
+          borderColor: isDark ? 'rgba(99, 179, 237, 0.35)' : 'rgba(49, 130, 206, 0.35)',
+          borderWidth: 1.5,
+          padding: 10,
+          cornerRadius: 10,
+          displayColors: false,
+          callbacks: {
+            title: function(items) {
+              if (!items.length) return '';
+              const idx = items[0].dataIndex;
+              const dateStr = daysFullDates[idx];
+              const dObj = new Date(dateStr);
+              const dayName = isNaN(dObj.getDay()) ? '' : AR_DAYS[dObj.getDay()];
+              const isToday = (idx + 1 === todayDayNum);
+              return `${dayName} — ${idx + 1} ${monthNameAr} ${isToday ? '⚡ (اليوم)' : ''}`;
+            },
+            label: function(item) {
+              if (item.datasetIndex === 1) {
+                return `📊 متوسط الشهر: ${fmt(Math.round(avgDaily))} ج`;
+              }
+              const val = item.raw || 0;
+              const isPeak = (val === peakVal && peakVal > 0);
+              const isLow = (val === lowVal && lowVal > 0);
+              let status = '';
+              if (isPeak) status = ' 🚀 (أعلى مبيعات)';
+              else if (isLow) status = ' 🔻 (أدنى مبيعات)';
+
+              return `💵 المبيعات: ${fmt(val)} ج${status}`;
+            },
+            afterLabel: function(item) {
+              if (item.datasetIndex === 1) return '';
+              const val = item.raw || 0;
+              const idx = item.dataIndex;
+              const dateStr = daysFullDates[idx];
+              const lines = [];
+
+              if (avgDaily > 0) {
+                const diff = val - avgDaily;
+                const pct = (diff / avgDaily * 100).toFixed(0);
+                if (diff >= 0) {
+                  lines.push(`📈 الفرق عن المتوسط: +${fmt(Math.round(diff))} ج (+${pct}%) صعود 🟢`);
+                } else {
+                  lines.push(`📉 الفرق عن المتوسط: ${fmt(Math.round(diff))} ج (${pct}%) هبوط 🔴`);
+                }
+              }
+
+              const shifts = dayBreakdown[dateStr] || {};
+              const shiftKeys = Object.keys(shifts);
+              if (shiftKeys.length > 0) {
+                const shiftTxt = shiftKeys.map(k => `${k}: ${fmt(shifts[k])} ج`).join(' | ');
+                lines.push(`📝 تفصيل: ${shiftTxt}`);
+              }
+
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: gridColor,
+            drawTicks: false
+          },
+          ticks: {
+            color: tickColor,
+            font: { size: 10, weight: '700' },
+            callback: function(val, index) {
+              return index + 1;
+            }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: gridColor
+          },
+          ticks: {
+            color: tickColor,
+            font: { size: 9 },
+            callback: function(v) {
+              return v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -12753,6 +13378,7 @@ function toggleTheme(){
   var isLight=document.body.classList.toggle('light-mode');
   localStorage.setItem('asafra_new_theme',isLight?'light':'dark');
   document.getElementById('themeToggle').textContent=isLight?'☀️':'🌙';
+  renderTopMonthlySalesChart();
 }
 (function(){
   var saved=localStorage.getItem('asafra_new_theme');
