@@ -164,6 +164,36 @@
   .tab-acrobatic { display: inline-block; animation: acrobaticFlip 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
   .btn-acrobatic { animation: acrobaticFlip 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
 
+    .online-box {
+    background: rgba(49, 130, 206, 0.16);
+    border: 1px solid rgba(99, 179, 237, 0.35);
+    border-radius: 14px;
+    padding: 7px 16px;
+    text-align: center;
+    min-width: 135px;
+    cursor: pointer;
+    transition: all .25s ease;
+    animation: floatAmbient 4.4s ease-in-out infinite alternate !important;
+    will-change: transform;
+  }
+  .online-box:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(49, 130, 206, 0.28);
+    border-color: rgba(99, 179, 237, 0.6);
+  }
+  .online-lbl {
+    font-size: .68rem;
+    color: #90cdf4;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .online-val {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.25;
+  }
+
   .bal-box    { animation: floatAmbient 4s ease-in-out infinite, auraGlow 3s infinite ease-in-out !important; will-change: transform; }
   .target-box { animation: floatAmbient 4.6s ease-in-out infinite alternate !important; will-change: transform; }
 
@@ -971,6 +1001,11 @@ function ensureXLSX() {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:11px;">
+                <!-- ── صندوق ذمم أونلاين بجانب الكاش ── -->
+        <div class="online-box" id="onlineDebtsBox" onclick="swTab('all');setTimeout(()=>{const f=document.getElementById('fType');if(f){f.value='ذمم اونلاين';renderAll();}},50);" title="اضغط لعرض كافة ذمم الأونلاين والتسوية">
+          <div class="online-lbl">⏳ ذمم أونلاين</div>
+          <div class="online-val" id="hOnlineDebts">0 ج</div>
+        </div>
         <div class="bal-box">
           <div class="bal-lbl">💼 العهدة الحالية</div>
           <div class="bal-amt" id="hBal">0</div>
@@ -2853,6 +2888,7 @@ async function fetchEntries() {
   }));
   entries.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0));
   updToday();
+  updateOnlineDebtsHeader();
   refreshActivePane();
   renderSalesTarget();
   renderMonthlyProgress();
@@ -2971,6 +3007,7 @@ function buildApp() {
   document.getElementById('pane-add').classList.add('on');
   show('scApp');
   loadSalesTarget();
+  updateOnlineDebtsHeader();
   setTimeout(initBackupSystem, 500);
 }
 
@@ -3357,6 +3394,7 @@ async function doSave() {
     if (insErr) throw insErr;
 
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
+    updateOnlineDebtsHeader();
     fireFlyingParticles(document.getElementById('btnSave') || document.querySelector('.btn-primary'), ['💵', '💊', '✨', '🎉', '⚡', '🚀'], 24);
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
     if (typeof hideCoDrop === 'function') hideCoDrop();
@@ -4372,6 +4410,55 @@ function renderMy() {
 // ═══════════════════════════════════════════
 //  TODAY BAR
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  ONLINE DEBTS HEADER WIDGET ⏳
+// ═══════════════════════════════════════════
+function updateOnlineDebtsHeader() {
+  const el = document.getElementById('hOnlineDebts');
+  if (!el) return;
+
+  const activeDebts = entries.filter(e => e.type === 'ذمم اونلاين' && !isSettled(e) && !e.deleted);
+  
+  let instaAmt = 0;
+  let walletAmt = 0;
+
+  activeDebts.forEach(e => {
+    const co = (e.company || '').trim();
+    const amt = parseFloat(e.amount) || 0;
+    if (co.includes('انستا')) {
+      instaAmt += amt;
+    } else {
+      walletAmt += amt;
+    }
+  });
+
+  // 1. لو الاثنين صفر -> يكتب 0
+  if (instaAmt === 0 && walletAmt === 0) {
+    el.innerHTML = '<span style="font-size:1.25rem;font-weight:900;color:#cbd5e0;">0</span> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span>';
+    return;
+  }
+
+  // 2. لو انستا فقط أكبر من صفر ومحفظة صيدلية صفر -> تتكتب انستا فقط
+  if (instaAmt > 0 && walletAmt === 0) {
+    el.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+    return;
+  }
+
+  // 3. لو محفظة صيدلية فقط أكبر من صفر وانستا صفر -> تتكتب محفظة صيدلية فقط
+  if (walletAmt > 0 && instaAmt === 0) {
+    el.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+    return;
+  }
+
+  // 4. لو الاثنين أكبر من صفر -> يتكتبوا الاثنين معاً
+  el.innerHTML = `
+    <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
+      <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaAmt)} ج</span>
+      <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletAmt)} ج</span>
+    </div>
+  `;
+}
+
 function updToday() {
   const td = todayStr();
   const ts = entries.filter(e=>e.date===td);
@@ -5724,6 +5811,7 @@ async function settleOnline(entryId) {
     // 4. Update local state
     const origIdx = entries.findIndex(e => e.id === entryId);
     if (origIdx >= 0) entries[origIdx].invoice = 'settled:' + newId;
+    updateOnlineDebtsHeader();
     entries.unshift({
       id: newId, date: today, type: 'ايرادات',
       company: 'تسوية ذمم أونلاين', invoice: '', amount: orig.amount,
