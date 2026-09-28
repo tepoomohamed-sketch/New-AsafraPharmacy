@@ -353,7 +353,7 @@
   }
   .top-sales-canvas-wrap {
     position: relative;
-    height: 180px;
+    height: 195px;
     width: 100%;
   }
   .top-sales-legend-sub {
@@ -385,7 +385,7 @@
   }
   @media (max-width: 768px) {
     .top-sales-card { padding: 8px 12px; }
-    .top-sales-canvas-wrap { height: 140px; }
+    .top-sales-canvas-wrap { height: 155px; }
     .ts-kpi-row { gap: 5px; }
     .ts-chip { font-size: .68rem; padding: 2px 6px; }
   }
@@ -1297,6 +1297,7 @@ function ensureXLSX() {
         <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
         <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
         <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
+        <span class="ts-leg-item"><span style="background:rgba(99,179,237,.25);border:1px solid rgba(99,179,237,.6);color:#90cdf4;padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:800;">2 ش</span> عدد الشيفتات فوق كل يوم</span>
       </div>
     </div>
   </div>
@@ -4995,6 +4996,7 @@ function renderTopMonthlySalesChart() {
   const daysData = [];
   const daysLabels = [];
   const daysFullDates = [];
+  const dayShiftCounts = [];
   const dayBreakdown = {};
 
   for (let d = 1; d <= todayDayNum; d++) {
@@ -5006,6 +5008,9 @@ function renderTopMonthlySalesChart() {
     const dayEntries = monthEntries.filter(e => e.date === fullDate);
     const daySum = dayEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
     daysData.push(daySum);
+
+    // عدد الشيفتات المسجلة لهذا اليوم
+    dayShiftCounts.push(dayEntries.length);
 
     const shifts = {};
     dayEntries.forEach(e => {
@@ -5085,7 +5090,7 @@ function renderTopMonthlySalesChart() {
   const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
   const tickColor = isDark ? '#a0aec0' : '#4a5568';
 
-  const grad = ctx.createLinearGradient(0, 0, 0, 180);
+  const grad = ctx.createLinearGradient(0, 0, 0, 195);
   grad.addColorStop(0, isDark ? 'rgba(6, 182, 212, 0.38)' : 'rgba(49, 130, 206, 0.35)');
   grad.addColorStop(0.65, isDark ? 'rgba(6, 182, 212, 0.10)' : 'rgba(49, 130, 206, 0.08)');
   grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
@@ -5174,11 +5179,76 @@ function renderTopMonthlySalesChart() {
 
   const AR_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
+  // بلجن رسم عدد الشيفتات فوق كل يوم على الجراف ⚡
+  const shiftCountPlugin = {
+    id: 'topShiftCountLabels',
+    afterDatasetsDraw(chart) {
+      const ctx2 = chart.ctx;
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data) return;
+
+      const isMobile = chart.width < 620;
+      ctx2.save();
+      ctx2.textAlign = 'center';
+      ctx2.textBaseline = 'middle';
+      ctx2.font = isMobile ? 'bold 8px Cairo, sans-serif' : 'bold 9px Cairo, sans-serif';
+
+      meta.data.forEach((element, index) => {
+        const count = dayShiftCounts[index] || 0;
+        if (count === 0) return;
+
+        const x = element.x;
+        let y = element.y - (isMobile ? 12 : 14);
+        if (y < 12) y = element.y + 14;
+
+        const labelText = isMobile ? `${count}` : `${count} ش`;
+        const textMetrics = ctx2.measureText(labelText);
+        const paddingX = isMobile ? 3 : 5;
+        const rectW = Math.max(textMetrics.width + paddingX * 2, isMobile ? 13 : 20);
+        const rectH = isMobile ? 12 : 13.5;
+        const rectX = x - rectW / 2;
+        const rectY = y - rectH / 2;
+
+        let bg = isDark ? 'rgba(49, 130, 206, 0.28)' : 'rgba(49, 130, 206, 0.15)';
+        let border = isDark ? 'rgba(99, 179, 237, 0.65)' : 'rgba(49, 130, 206, 0.55)';
+        let textColor = isDark ? '#bee3f8' : '#2b6cb0';
+
+        if (count === 1) {
+          bg = isDark ? 'rgba(239, 68, 68, 0.28)' : 'rgba(239, 68, 68, 0.16)';
+          border = isDark ? 'rgba(252, 129, 129, 0.75)' : 'rgba(229, 62, 62, 0.65)';
+          textColor = isDark ? '#feb2b2' : '#c53030';
+        } else if (count >= 3) {
+          bg = isDark ? 'rgba(16, 185, 129, 0.28)' : 'rgba(16, 185, 129, 0.16)';
+          border = isDark ? 'rgba(52, 211, 153, 0.75)' : 'rgba(5, 150, 105, 0.65)';
+          textColor = isDark ? '#a7f3d0' : '#065f46';
+        }
+
+        ctx2.fillStyle = bg;
+        ctx2.strokeStyle = border;
+        ctx2.lineWidth = 1;
+        ctx2.beginPath();
+        if (ctx2.roundRect) {
+          ctx2.roundRect(rectX, rectY, rectW, rectH, 3.5);
+        } else {
+          ctx2.rect(rectX, rectY, rectW, rectH);
+        }
+        ctx2.fill();
+        ctx2.stroke();
+
+        ctx2.fillStyle = textColor;
+        ctx2.fillText(labelText, x, y);
+      });
+
+      ctx2.restore();
+    }
+  };
+
   topSalesChart = new Chart(ctx, {
     data: {
       labels: daysLabels,
       datasets: datasets
     },
+    plugins: [shiftCountPlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -5214,13 +5284,19 @@ function renderTopMonthlySalesChart() {
                 return `📊 متوسط الشهر: ${fmt(Math.round(avgDaily))} ج`;
               }
               const val = item.raw || 0;
+              const idx = item.dataIndex;
+              const shiftCnt = dayShiftCounts[idx] || 0;
               const isPeak = (val === peakVal && peakVal > 0);
               const isLow = (val === lowVal && lowVal > 0);
               let status = '';
               if (isPeak) status = ' 🚀 (أعلى مبيعات)';
               else if (isLow) status = ' 🔻 (أدنى مبيعات)';
 
-              return `💵 المبيعات: ${fmt(val)} ج${status}`;
+              const shiftWord = shiftCnt === 1 ? 'شيفت واحد' : (shiftCnt === 2 ? 'شيفتين' : `${shiftCnt} شيفتات`);
+              return [
+                `💵 المبيعات: ${fmt(val)} ج${status}`,
+                `⏱ عدد الشيفتات: ${shiftWord} (${shiftCnt} ش)`
+              ];
             },
             afterLabel: function(item) {
               if (item.datasetIndex === 1) return '';
@@ -5267,6 +5343,7 @@ function renderTopMonthlySalesChart() {
         },
         y: {
           beginAtZero: true,
+          suggestedMax: peakVal > 0 ? Math.round(peakVal * 1.18) : undefined,
           grid: {
             color: gridColor
           },
