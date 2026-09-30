@@ -192,6 +192,33 @@
     border-color: rgba(99, 179, 237, 0.6);
   }
 
+  /* ══ زر تصفية ذمم المحفظة للعهدة ══ */
+  .btn-wallet-transfer {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: linear-gradient(135deg, rgba(72,187,120,0.22) 0%, rgba(56,161,105,0.38) 100%);
+    border: 1.5px solid rgba(72,187,120,0.65);
+    border-radius: 12px;
+    padding: 6px 13px;
+    color: #fff;
+    cursor: pointer;
+    transition: all .25s ease;
+    box-shadow: 0 4px 14px rgba(72,187,120,0.25);
+    animation: pulseWallet 2.8s infinite;
+    white-space: nowrap;
+  }
+  .btn-wallet-transfer:hover {
+    transform: translateY(-2px) scale(1.03);
+    background: linear-gradient(135deg, rgba(72,187,120,0.38) 0%, rgba(56,161,105,0.6) 100%);
+    border-color: #68d391;
+    box-shadow: 0 6px 18px rgba(72,187,120,0.45);
+  }
+  @keyframes pulseWallet {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(72,187,120,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(72,187,120,0); }
+  }
+
   /* ══ TOP MONTHLY SALES TREND CARD (جراف مبيعات الشهر الاحترافي) ══ */
   .top-sales-card {
     background: linear-gradient(180deg, rgba(20, 27, 45, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
@@ -1224,6 +1251,15 @@ function ensureXLSX() {
           <div class="online-lbl">⏳ ذمم أونلاين</div>
           <div class="online-val" id="hOnlineDebts">0 ج</div>
         </div>
+
+        <!-- ── زر تصفية ذمم المحفظة للعهدة ── -->
+        <button id="btnSettleWallet" onclick="settleAllWalletDebts()" class="btn-wallet-transfer" style="display:none;" title="تصفية كل ذمم المحفظة ونقلها إلى العهدة">
+          <span style="font-size:1.1rem;">📥</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
+            <span style="font-size:.68rem;color:rgba(255,255,255,.8);font-weight:700;">تصفية المحفظة</span>
+            <span style="font-size:.84rem;font-weight:900;color:#68d391;" id="btnSettleWalletAmt">0 ج للعهدة</span>
+          </div>
+        </button>
         <div class="bal-box">
           <div class="bal-lbl">💼 العهدة الحالية</div>
           <div class="bal-amt" id="hBal">0</div>
@@ -4880,14 +4916,39 @@ function updateOnlineDebtsHeader() {
     } else if (instaAmt > 0 && walletAmt === 0) {
       elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
     } else if (walletAmt > 0 && instaAmt === 0) {
-      elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+      elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;display:inline-flex;align-items:center;gap:6px;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span> <button onclick="event.stopPropagation();settleAllWalletDebts();" title="تصفية ذمم المحفظة وإضافتها للعهدة" style="background:#48bb78;border:none;color:#fff;border-radius:5px;padding:2px 6px;font-size:.68rem;font-weight:900;cursor:pointer;">📥 للعهدة</button></span>`;
     } else {
       elTotal.innerHTML = `
         <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
           <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaAmt)} ج</span>
-          <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletAmt)} ج</span>
+          <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">
+            محفظة: ${fmt(walletAmt)} ج
+            <button onclick="event.stopPropagation();settleAllWalletDebts();" title="تصفية ذمم المحفظة وإضافتها للعهدة" style="background:#48bb78;border:none;color:#fff;border-radius:4px;padding:1px 5px;font-size:.65rem;font-weight:900;cursor:pointer;">📥 للعهدة</button>
+          </span>
         </div>
       `;
+    }
+  }
+
+  // ── تحديث أزرار تصفية المحفظة للعهدة ──
+  const btnWallet = document.getElementById('btnSettleWallet');
+  const btnWalletAmt = document.getElementById('btnSettleWalletAmt');
+  if (btnWallet) {
+    if (walletAmt > 0) {
+      btnWallet.style.display = 'inline-flex';
+      if (btnWalletAmt) btnWalletAmt.textContent = `${fmt(walletAmt)} ج للعهدة`;
+    } else {
+      btnWallet.style.display = 'none';
+    }
+  }
+
+  const modalWalletBtn = document.getElementById('odModalSettleWalletBtn');
+  if (modalWalletBtn) {
+    if (walletAmt > 0) {
+      modalWalletBtn.style.display = 'inline-flex';
+      modalWalletBtn.textContent = `📥 تصفية ذمم المحفظة للعهدة (${fmt(walletAmt)} ج)`;
+    } else {
+      modalWalletBtn.style.display = 'none';
     }
   }
 
@@ -6684,6 +6745,104 @@ function todayStr(){
 function bCls(t){ return {ايرادات:'br',مصاريف:'be',طلبيات:'bo',ارباح:'bp','اصول ثابتة':'ba','ذمم اونلاين':'bd',خصومات:'b-disc'}[t]||''; }
 function isSettled(e){ return e.type==='ذمم اونلاين' && e.invoice && e.invoice.startsWith('settled:'); }
 function pendingOnlineAmt(){ return entries.filter(e=>e.type==='ذمم اونلاين'&&!isSettled(e)).reduce((s,e)=>s+e.amount,0); }
+
+async function settleAllWalletDebts() {
+  const walletDebts = entries.filter(e =>
+    !e.deleted &&
+    e.type === 'ذمم اونلاين' &&
+    !isSettled(e) &&
+    ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا'))
+  );
+
+  if (!walletDebts.length) {
+    toast('ℹ️ لا توجد ذمم معلقة في محفظة الصيدلية لتصفيتها', false);
+    return;
+  }
+
+  const totalAmt = walletDebts.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  if (totalAmt <= 0) {
+    toast('⚠️ إجمالي مبالغ المحفظة صفر', false);
+    return;
+  }
+
+  const msg = `تأكيد تصفية كافة ذمم المحفظة وإضافتها إلى العهدة الحالية؟\n\n` +
+    `• عدد حركات المحفظة: ${walletDebts.length} حركة\n` +
+    `• إجمالي المبلغ: ${fmt(totalAmt)} ج\n\n` +
+    `سيتم تصفية كل ذمم المحفظة لتصبح (0 ج)، وإضافة ${fmt(totalAmt)} ج إلى العهدة الحالية (الدرج) وتسجيل قيد إيرادات رسمي فوراً.`;
+  if (!confirm(msg)) return;
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(totalAmt);
+    const walletIds = walletDebts.map(e => e.id);
+
+    const notes = `تصفية وتسوية ذمم المحفظة بالكامل (${walletDebts.length} حركة)`;
+
+    // 1. إنشاء قيد إيرادات رسمي بالتحويل للعهدة
+    const { error: insErr } = await sb.from('entries').insert({
+      id: newId,
+      date: today,
+      type: 'ايرادات',
+      company: 'تسوية ذمم محفظة الصيدلية',
+      invoice: '',
+      amount: totalAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+    if (insErr) throw new Error(insErr.message);
+
+    // 2. تحديث جميع قيود المحفظة في Supabase لتصبح مسواة
+    const { error: updErr } = await sb.from('entries')
+      .update({ invoice: 'settled:' + newId })
+      .in('id', walletIds);
+    if (updErr) throw new Error(updErr.message);
+
+    // 3. تحديث الذاكرة المحلية
+    walletDebts.forEach(e => {
+      e.invoice = 'settled:' + newId;
+    });
+
+    entries.unshift({
+      id: newId,
+      date: today,
+      type: 'ايرادات',
+      company: 'تسوية ذمم محفظة الصيدلية',
+      invoice: '',
+      amount: totalAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+
+    // 4. تسجيل في سجل الحركات
+    sbLogAction('settle_wallet_all', walletIds, {
+      count: walletDebts.length,
+      totalAmount: totalAmt,
+      settlementEntryId: newId,
+      company: 'تسوية ذمم محفظة الصيدلية'
+    });
+
+    // 5. تحديث الشاشات والقيم
+    updateOnlineDebtsHeader();
+    renderAll();
+    renderSum();
+    updToday();
+
+    toast(`✅ تم تصفية ذمم المحفظة (${walletDebts.length} حركة) وإضافة ${fmt(totalAmt)} ج للعهدة`);
+  } catch(e) {
+    toast('❌ خطأ في تصفية المحفظة: ' + arErr(e), false);
+  }
+}
 
 async function settleOnline(entryId) {
   const orig = entries.find(e => e.id === entryId);
@@ -14487,7 +14646,12 @@ document.addEventListener('keydown', e => {
         📱 حركات المحفظة وانستا (ذمم أونلاين)
         <span id="odModalTotalBadge" style="font-size:.76rem;background:rgba(99,179,237,.18);color:#63b3ed;padding:2px 10px;border-radius:20px;border:1px solid rgba(99,179,237,.35);"></span>
       </div>
-      <button onclick="closeOnlineDebtsModal()" style="background:none;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;">✕</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="settleAllWalletDebts()" class="btn btn-sm btn-green" id="odModalSettleWalletBtn" style="font-weight:800;font-size:.78rem;display:none;padding:4px 12px;border-radius:8px;box-shadow:0 3px 10px rgba(72,187,120,.3);cursor:pointer;">
+          📥 تصفية ذمم المحفظة للعهدة
+        </button>
+        <button onclick="closeOnlineDebtsModal()" style="background:none;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;">✕</button>
+      </div>
     </div>
 
     <!-- فلاتر المودال -->
