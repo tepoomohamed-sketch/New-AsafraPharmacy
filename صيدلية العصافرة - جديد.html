@@ -2960,6 +2960,8 @@ function loadLocalSettings() {
     if (s.name)   pharmName = s.name;
     if (s.custom) customCos = s.custom;
     if (s.hidden) hiddenCOS = s.hidden;
+    const savedPin = localStorage.getItem('asafra_wallet_pin');
+    if (savedPin) walletSettlePin = String(savedPin);
   } catch {}
 }
 
@@ -3108,6 +3110,7 @@ async function onAuth(user) {
     if (me.role==='admin') { listenPOS(); loadBalances(); }
     loadAndListenCustomItems(); // مزامنة البنود المخصصة عبر الأجهزة
     loadAttMeta(); // تحميل أسماء الموظفين مبكراً لقائمة الرواتب
+    loadAndListenWalletPin(); // تحميل ومزامنة الرقم السري لتصفية المحفظة
     // attendance: lazy load — يُحمَّل فقط عند فتح تبويب الحضور
   } catch(e) {
     console.error('onAuth error:', e);
@@ -3154,10 +3157,42 @@ async function delUser(uid, name) {
 // ═══════════════════════════════════════════
 //  REALTIME
 // ═══════════════════════════════════════════
-// تحميل الرقم السري لتصفية المحفظة والذمم
-sbGetMeta('walletSettlePin').then(v => {
-  if (v && v.pin) walletSettlePin = String(v.pin);
-}).catch(()=>{});
+// تحميل ومزامنة الرقم السري لتصفية المحفظة والذمم
+async function loadAndListenWalletPin() {
+  try {
+    const v = await sbGetMeta('walletSettlePin');
+    if (v && v.pin) {
+      walletSettlePin = String(v.pin);
+      try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
+      const pinInp = document.getElementById('walletPinSettingsInp');
+      if (pinInp) pinInp.value = walletSettlePin;
+    }
+  } catch(e) {
+    console.warn('loadAndListenWalletPin:', e);
+  }
+
+  // مزامنة فورية Realtime عبر جميع الأجهزة
+  if (sb && sb.channel) {
+    try {
+      sb.channel('meta-wallet-pin-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'meta', filter: 'key=eq.walletSettlePin' },
+          (payload) => {
+            try {
+              const raw = payload?.new?.value;
+              const p = raw?.pin || (typeof raw === 'string' ? JSON.parse(raw)?.pin : null);
+              if (p) {
+                walletSettlePin = String(p);
+                try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
+                const pinInp = document.getElementById('walletPinSettingsInp');
+                if (pinInp) pinInp.value = walletSettlePin;
+              }
+            } catch(e){}
+          }
+        )
+        .subscribe();
+    } catch(e){}
+  }
+}
 
 function listenBalance() {
   if (sbChanBalance) { sb.removeChannel(sbChanBalance); sbChanBalance=null; }
@@ -3532,7 +3567,7 @@ function swTab(name, el) {
   if (name==='custdir')    { custSubSwitch('dir');   initCustDir(); }
   if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
   if (name==='trash') { fetchTrash(); }
-  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp) pinInp.value=walletSettlePin; }
+  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); try{localStorage.setItem('asafra_wallet_pin',walletSettlePin);}catch(e){} pinInp.value=walletSettlePin; } }).catch(()=>{}); } }
   // لما ترجع لتبويب القيد الجديد، حدّث درب ليست الموظفين
   if (name==='add') {
     const eCoEl = document.getElementById('eCo');
@@ -6904,9 +6939,10 @@ async function saveWalletPinFromSettings() {
     return;
   }
   walletSettlePin = val;
+  try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
   try {
     await sbSetMeta('walletSettlePin', { pin: walletSettlePin });
-    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة بنجاح`);
+    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة (${walletSettlePin}) بنجاح`);
   } catch(e) {
     toast('❌ فشل حفظ الرقم السري: ' + (e.message || e), false);
   }
