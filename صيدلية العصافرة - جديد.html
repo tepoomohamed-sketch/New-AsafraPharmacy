@@ -490,6 +490,10 @@
   .bp{background:rgba(246,173,85,.15);color:#f6ad55;}
   .ba{background:rgba(129,230,217,.15);color:#81e6d9;}
   .bd{background:rgba(183,148,244,.15);color:#b794f4;}
+  .b-disc{background:rgba(239,68,68,.18);color:#fc8181;border:1px solid rgba(239,68,68,.35);}
+  .tb-disc{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.35);color:#fc8181;}
+  .tb-disc:hover{border-color:rgba(239,68,68,.7);box-shadow:0 4px 14px rgba(239,68,68,.25);}
+  .tb-disc.on{background:#e53e3e !important;color:#fff !important;box-shadow:0 4px 16px rgba(229,62,62,.45);}
   .btn-settle{background:rgba(107,70,193,.2);border:1px solid rgba(183,148,244,.4);color:#b794f4;cursor:pointer;font-size:.76rem;padding:3px 9px;border-radius:7px;transition:all .15s;white-space:nowrap;}
   .btn-settle:hover{background:#6b46c1;color:white;}
   .settled-badge{font-size:.72rem;color:#68d391;background:rgba(104,211,145,.12);padding:2px 8px;border-radius:10px;}
@@ -1319,6 +1323,7 @@ function ensureXLSX() {
           <div class="type-btn tb-p"    onclick="pickType('ارباح',this)">💰 سحوبات المالك</div>
           <div class="type-btn tb-a"    onclick="pickType('اصول ثابتة',this)">🏗 أصول ثابتة</div>
           <div class="type-btn tb-d"    onclick="pickType('ذمم اونلاين',this)">⏳ ذمم أونلاين</div>
+          <div class="type-btn tb-disc" onclick="pickType('خصومات',this)">✂️ خصومات</div>
         </div>
         <div class="fg-row">
           <div class="fg"><label for="eDate">📅 التاريخ</label><input type="date" id="eDate" onkeydown="handleEntryKeyNav(event,'eDate')"/></div>
@@ -1367,7 +1372,7 @@ function ensureXLSX() {
           <input type="date" class="fel" id="fTo"   style="max-width:142px;" onchange="clearEntChips();pgAll=1;renderAll();"/>
           <select class="fel" id="fType" style="max-width:128px;" onchange="pgAll=1;rebuildCoFilter();renderAll();">
             <option value="">كل الأنواع</option>
-            <option value="ايرادات">ايرادات</option><option value="مصاريف">مصاريف</option><option value="طلبيات">طلبيات</option><option value="ارباح">سحوبات المالك</option><option value="اصول ثابتة">أصول ثابتة</option><option value="ذمم اونلاين">ذمم أونلاين</option>
+            <option value="ايرادات">ايرادات</option><option value="مصاريف">مصاريف</option><option value="طلبيات">طلبيات</option><option value="ارباح">سحوبات المالك</option><option value="اصول ثابتة">أصول ثابتة</option><option value="ذمم اونلاين">ذمم أونلاين</option><option value="خصومات">خصومات</option>
           </select>
           <select class="fel" id="fCo" style="max-width:185px;"><option value="">كل البنود / الشركات</option></select>
           <select class="fel" id="fInvoice" style="max-width:155px;display:none;" onchange="pgAll=1;renderAll();">
@@ -1427,7 +1432,7 @@ function ensureXLSX() {
           <input type="date" class="fel" id="mTo"   style="max-width:142px;"/>
           <select class="fel" id="mType" style="max-width:128px;">
             <option value="">كل الأنواع</option>
-            <option value="ايرادات">ايرادات</option><option value="مصاريف">مصاريف</option><option value="طلبيات">طلبيات</option><option value="ارباح">سحوبات المالك</option><option value="اصول ثابتة">أصول ثابتة</option><option value="ذمم اونلاين">ذمم أونلاين</option>
+            <option value="ايرادات">ايرادات</option><option value="مصاريف">مصاريف</option><option value="طلبيات">طلبيات</option><option value="ارباح">سحوبات المالك</option><option value="اصول ثابتة">أصول ثابتة</option><option value="ذمم اونلاين">ذمم أونلاين</option><option value="خصومات">خصومات</option>
           </select>
         </div>
         <div class="tbl-w"><div id="myHolder"></div></div>
@@ -2553,7 +2558,8 @@ const COS = {
   مصاريف:['رواتب','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
   ارباح:['أرباح الشهر','توزيع أرباح'],
   'اصول ثابتة':['معدات طبية','ثلاجات أدوية','كمبيوترات وسيستم','كاميرات مراقبة','أثاث وديكور','سيارة / عجلة توصيل','برامج وتراخيص','شاشات وأجهزة'],
-  'ذمم اونلاين':['انستا باي','محفظة الصيدلية']
+  'ذمم اونلاين':['انستا باي','محفظة الصيدلية'],
+  خصومات:['خصم جزاء','خصم غياب','خصم تأخير','خصم تلفيات / عجز','خصم سلفة سابقة','خصم متنوع']
 };
 const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const PAGE = 25;
@@ -2568,8 +2574,8 @@ let me = null;           // { uid, name, email, role }
 let entries = [];        // active entries (deleted=false)
 let trashedEntries = []; // soft-deleted entries
 let users = {};          // uid → profile
-let customCos = {ايرادات:[],مصاريف:[],طلبيات:[],ارباح:[],'اصول ثابتة':[],'ذمم اونلاين':[]};
-let hiddenCOS  = {ايرادات:[],مصاريف:[],طلبيات:[],ارباح:[],'اصول ثابتة':[],'ذمم اونلاين':[]};
+let customCos = {ايرادات:[],مصاريف:[],طلبيات:[],ارباح:[],'اصول ثابتة':[],'ذمم اونلاين':[],خصومات:[]};
+let hiddenCOS  = {ايرادات:[],مصاريف:[],طلبيات:[],ارباح:[],'اصول ثابتة':[],'ذمم اونلاين':[],خصومات:[]};
 let balOpeningMonthly = {}; // { "2026-07": 50000 } — رصيد أول المدة الشهري
 let balClosingDaily   = {}; // { "2026-07-25": 35000 } — رصيد الاختتام اليومي (من سيستم الصيدلية)
 let crFrom = '', crTo = '';  // Period Report date range
@@ -3437,10 +3443,14 @@ function pickType(t, el) {
   rebuildCoDrop();
   populateCompanyDropdown();
   
-  const aL={ايرادات:'💵 المبلغ / الإيراد (جنيه)',مصاريف:'💸 المبلغ المصروف (جنيه)',طلبيات:'🏭 المبلغ للمورد (جنيه)',ارباح:'💰 مبلغ السحب (جنيه)','اصول ثابتة':'🏗 قيمة الأصل (جنيه)','ذمم اونلاين':'⏳ المبلغ المحوَّل أونلاين (جنيه)'};
-  const cL={ايرادات:'🏷 البند',مصاريف:'🏷 بند المصروف',طلبيات:'🏷 اسم المورد',ارباح:'🏷 نوع السحب','اصول ثابتة':'🏷 نوع الأصل / الجهاز','ذمم اونلاين':'🏷 وسيلة الدفع الأونلاين'};
+  const aL={ايرادات:'💵 المبلغ / الإيراد (جنيه)',مصاريف:'💸 المبلغ المصروف (جنيه)',طلبيات:'🏭 المبلغ للمورد (جنيه)',ارباح:'💰 مبلغ السحب (جنيه)','اصول ثابتة':'🏗 قيمة الأصل (جنيه)','ذمم اونلاين':'⏳ المبلغ المحوَّل أونلاين (جنيه)',خصومات:'✂️ مبلغ الخصم (جنيه)'};
+  const cL={ايرادات:'🏷 البند',مصاريف:'🏷 بند المصروف',طلبيات:'🏷 اسم المورد',ارباح:'🏷 نوع السحب','اصول ثابتة':'🏷 نوع الأصل / الجهاز','ذمم اونلاين':'🏷 وسيلة الدفع الأونلاين',خصومات:'🏷 سبب الخصم'};
   document.getElementById('eAmtLbl').textContent = aL[t]||'💵 المبلغ';
   document.getElementById('eCoLbl').textContent  = cL[t]||'🏷 البند';
+
+  if (t === 'خصومات') {
+    updateInvField('خصومات');
+  }
 
   // ── تحديث ملاحظات الذمم أونلاين وتنبيه اسم المرسل ──
   const notesInp = document.getElementById('eNotes');
@@ -3604,14 +3614,14 @@ function updateInvField(company) {
   const lbl    = document.getElementById('eInvLbl');
   if (!txtInv || !selInv) return;
 
-  if (company === 'رواتب') {
+  if (company === 'رواتب' || curType === 'خصومات') {
     // populate employee dropdown from attendance list
     selInv.innerHTML = '<option value="">اختر الموظف...</option>';
     const names = attEmpNames.filter(isSalOn);
     names.forEach(n=>{ const o=document.createElement('option'); o.value=o.textContent=n; selInv.appendChild(o); });
     txtInv.style.display = 'none';
     selInv.style.display = '';
-    if (lbl) lbl.textContent = '👤 اسم الموظف';
+    if (lbl) lbl.textContent = curType === 'خصومات' ? '👤 الموظف المراد الخصم منه' : '👤 اسم الموظف';
   } else {
     txtInv.style.display = '';
     selInv.style.display = 'none';
@@ -3654,11 +3664,13 @@ async function doSave() {
   btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true;
 
   try {
-    // ايرادات = تضيف | مصاريف/طلبيات/ارباح/اصول ثابتة = تخصم
+    // ايرادات = تضيف | مصاريف/طلبيات/ارباح/اصول ثابتة = تخصم | خصومات = محايدة (لا تمس العهدة)
+    const isNeutral = curType === 'خصومات';
     const isIn = curType==='ايرادات';
-    const delta = isIn ? amt : -amt;
+    const delta = isNeutral ? 0 : (isIn ? amt : -amt);
 
-    const newB = await sbUpdateBalance(delta);
+    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const newB = isNeutral ? curB : await sbUpdateBalance(delta);
     const now = new Date();
     const timeStr = now.toTimeString().slice(0,5); // HH:MM
     const newId = crypto.randomUUID();
@@ -3902,8 +3914,9 @@ async function togglePosReview(id, currentVal) {
 async function delEntry(id, type, amount) {
   if (!confirm('حذف هذا القيد؟\n(يمكن استعادته من تاب المحذوفات أو سجل الحركات)')) return;
   try {
+    const isNeutral = type === 'خصومات';
     const isIn = type==='ايرادات';
-    const delta = isIn ? -amount : amount;
+    const delta = isNeutral ? 0 : (isIn ? -amount : amount);
     // snapshot: بيانات القيد قبل الحذف
     const entry = entries.find(e => e.id === id);
     const snap = entry ? { id: entry.id, type: entry.type, company: entry.company, invoice: entry.invoice, amount: entry.amount, date: entry.date } : { type, amount };
@@ -3913,7 +3926,7 @@ async function delEntry(id, type, amount) {
       deleted_by: me.name || me.uid
     }).eq('id', id);
     if (delEntErr) throw delEntErr;
-    await sbUpdateBalance(delta);
+    if (!isNeutral) await sbUpdateBalance(delta);
     // سجل الحركة
     sbLogAction('delete', [id], [snap]);
     toast('🗑 تم حذف القيد — يمكن استعادته من سجل الحركات');
@@ -4428,8 +4441,8 @@ function rebuildInvoiceFilter() {
   const sel   = document.getElementById('fInvoice');
   if (!sel) return;
 
-  // يظهر فقط لو البند = رواتب أو النوع = مصاريف + البند رواتب
-  const showIt = fCo === 'رواتب' || (fCo === '' && fType === 'مصاريف');
+  // يظهر لو البند = رواتب أو النوع = مصاريف أو النوع = خصومات
+  const showIt = fCo === 'رواتب' || (fCo === '' && fType === 'مصاريف') || fType === 'خصومات';
   sel.style.display = showIt ? '' : 'none';
 
   // اجمع أسماء الفاتورة من قيود رواتب
@@ -4583,7 +4596,7 @@ function renderAll() {
       <td><span class="badge ${bCls(e.type)}">${esc(e.type)}</span></td>
       <td><strong>${esc(e.company)||'—'}</strong>${reviewed?` <span class="pos-rev-badge">🏪 POS</span>`:''}</td>
       <td style="font-size:.77rem;color:#718096;">${esc(e.invoice)||'—'}</td>
-      <td class="${isIn?'a+':'a-'}">${isIn?'+':'-'}${fmt(e.amount)} ج</td>
+      <td class="${e.type==='خصومات'?'a-':(isIn?'a+':'a-')}">${e.type==='خصومات'?'✂️ -'+fmt(e.amount)+' ج (خصم)':(isIn?'+'+fmt(e.amount)+' ج':'-'+fmt(e.amount)+' ج')}</td>
       <td class="${balC}">${typeof e.balance==='number'?fmt(e.balance)+' ج':'—'}</td>
       <td><span class="emp-tag">👤 ${esc(e.uname)||'—'}</span></td>
       <td style="font-size:.77rem;color:#718096;max-width:150px;">${esc(e.notes)||'—'}</td>
@@ -6667,7 +6680,7 @@ function todayStr(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function bCls(t){ return {ايرادات:'br',مصاريف:'be',طلبيات:'bo',ارباح:'bp','اصول ثابتة':'ba','ذمم اونلاين':'bd'}[t]||''; }
+function bCls(t){ return {ايرادات:'br',مصاريف:'be',طلبيات:'bo',ارباح:'bp','اصول ثابتة':'ba','ذمم اونلاين':'bd',خصومات:'b-disc'}[t]||''; }
 function isSettled(e){ return e.type==='ذمم اونلاين' && e.invoice && e.invoice.startsWith('settled:'); }
 function pendingOnlineAmt(){ return entries.filter(e=>e.type==='ذمم اونلاين'&&!isSettled(e)).reduce((s,e)=>s+e.amount,0); }
 
@@ -8706,6 +8719,32 @@ function attRenderAdmin() {
     const exKey = `${attFilter.month}__${n}`;
     const extra = attExtraHours[exKey] || 0;
     const totalHrs = v.hours + extra;
+    const grossSalary = rate > 0 ? Math.round((totalHrs / 26) * rate) : 0;
+
+    const normN = normAr(n);
+    const isMatch = e => {
+      const inv = normAr(e.invoice);
+      const nts = normAr(e.notes);
+      return inv === normN || (!inv && nts.includes(normN));
+    };
+
+    const empWithdrawn = entries.filter(e =>
+      !e.deleted &&
+      e.type === 'مصاريف' &&
+      (e.company === 'رواتب' || (e.company || '').includes('رواتب')) &&
+      e.date && e.date.startsWith(attFilter.month) &&
+      isMatch(e)
+    ).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+    const empDeduct = entries.filter(e =>
+      !e.deleted &&
+      e.type === 'خصومات' &&
+      e.date && e.date.startsWith(attFilter.month) &&
+      isMatch(e)
+    ).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+    const empRemaining = grossSalary - empWithdrawn - empDeduct;
+
     return `<tr>
       <td><strong>${esc(n)}</strong></td>
       <td>${v.hours.toFixed(2)}</td>
@@ -8720,7 +8759,12 @@ function attRenderAdmin() {
       <td>${v.days.size}</td>
       <td>${v.errors>0?`<span style="color:#c53030;font-weight:700;">${v.errors}</span>`:0}</td>
       <td>${rate>0?fmt(rate)+' ج/س':'—'}</td>
-      <td style="font-weight:800;color:${rate>0?'#5b21b6':'#a0aec0'};">${rate>0?fmt(Math.round((totalHrs/26)*rate))+' ج':'—'}</td>
+      <td style="font-weight:800;color:${rate>0?'#5b21b6':'#a0aec0'};">${rate>0?fmt(grossSalary)+' ج':'—'}</td>
+      <td style="font-weight:700;color:#f6ad55;">${empWithdrawn>0?fmt(empWithdrawn)+' ج':'—'}</td>
+      <td style="font-weight:700;color:#fc8181;">${empDeduct>0?fmt(empDeduct)+' ج':'—'}</td>
+      <td style="font-weight:900;color:${empRemaining>0?'#48bb78':(empRemaining===0?'#63b3ed':'#fc8181')};">
+        ${rate>0 ? fmt(empRemaining)+' ج' : '—'}
+      </td>
     </tr>`;}).join('');
 
   // ⑦ Errors table rows
@@ -8791,7 +8835,7 @@ function attRenderAdmin() {
       </div>
       <div id="attSalBody">
         ${salRows
-          ? `<div class="tbl-w"><table><thead><tr><th>الاسم</th><th>ساعات فعلية</th><th>ساعات إضافية</th><th>الإجمالي</th><th>أيام</th><th>أخطاء</th><th>سعر الساعة</th><th>الراتب</th></tr></thead><tbody>${salRows}</tbody></table></div>`
+          ? `<div class="tbl-w"><table><thead><tr><th>الاسم</th><th>ساعات فعلية</th><th>ساعات إضافية</th><th>الإجمالي</th><th>أيام</th><th>أخطاء</th><th>سعر الساعة</th><th>الراتب المستحق</th><th>المسحوبات</th><th>الخصومات</th><th>صافي المتبقي</th></tr></thead><tbody>${salRows}</tbody></table></div>`
           : '<div class="nd" style="padding:12px;">لا توجد بيانات هذا الشهر</div>'}
       </div>
     </div>` : ''}
@@ -9220,6 +9264,15 @@ function attSetExtra(inp) {
   }
 }
 
+function normAr(s) {
+  if (!s) return '';
+  return String(s).trim()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .toLowerCase();
+}
+
 // ── تقرير موظف تفصيلي ──
 function attShowEmpReport() {
   const name = document.getElementById('attRepEmp')?.value;
@@ -9277,9 +9330,38 @@ function attShowEmpReport() {
     if (!maxDay || workMap[d] > workMap[maxDay]) maxDay = d;
   });
 
-  // ── الراتب ──
+  // ── الراتب والمسحوبات والخصومات ──
   const rate   = attRates[name] || 0;
   const salary = rate > 0 ? Math.round((totalHrs / 26) * rate) : null;
+
+  const normN = normAr(name);
+  const isMatchEmp = e => {
+    const inv = normAr(e.invoice);
+    const nts = normAr(e.notes);
+    return inv === normN || (!inv && nts.includes(normN));
+  };
+
+  // المسحوبات السابقة (مصاريف رواتب)
+  const salEntries = entries.filter(e =>
+    !e.deleted &&
+    e.type === 'مصاريف' &&
+    (e.company === 'رواتب' || (e.company || '').includes('رواتب')) &&
+    e.date && e.date.startsWith(month) &&
+    isMatchEmp(e)
+  ).sort((a,b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts||0)-(a.ts||0)));
+  const withdrawnAmt = salEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  // الخصومات المسجلة
+  const discEntries = entries.filter(e =>
+    !e.deleted &&
+    e.type === 'خصومات' &&
+    e.date && e.date.startsWith(month) &&
+    isMatchEmp(e)
+  ).sort((a,b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts||0)-(a.ts||0)));
+  const discAmt = discEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  // صافي الراتب المتبقي
+  const netRemaining = (salary != null ? salary : 0) - withdrawnAmt - discAmt;
 
   // ── تنسيق أيام الإجازة ──
   const fmtDay = ds => {
@@ -9330,15 +9412,245 @@ function attShowEmpReport() {
         <div class="at-kl">⬆️ أعلى يوم ساعات</div>
         <div class="at-kv" style="font-size:.95rem;">${maxDay} <span class="at-ku">(${workMap[maxDay].toFixed(1)}س)</span></div>
       </div>` : ''}
-      ${salary != null ? `<div class="at-kpi at-kpi-o" style="padding:12px 16px;">
+
+      ${salary != null ? `
+      <!-- 1. الراتب التقديري -->
+      <div class="at-kpi at-kpi-o" style="padding:12px 16px;">
         <div class="at-kl">💰 الراتب التقديري</div>
         <div class="at-kv">${fmt(salary)} <span class="at-ku">ج</span></div>
-      </div>` : ''}
+        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">إجمالي الساعات × سعر الساعة</div>
+      </div>
+
+      <!-- 2. المسحوبات السابقة -->
+      <div class="at-kpi" onclick="toggleAttDrawer('attSalWithdrawnDrawer')" style="padding:12px 16px;border-color:rgba(237,137,54,.55);cursor:pointer;background:rgba(237,137,54,.06);" title="اضغط لعرض تفاصيل المسحوبات">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="at-kl" style="color:#f6ad55;">💸 المسحوبات المستلمة</div>
+          <span style="font-size:.7rem;color:#f6ad55;background:rgba(237,137,54,.18);padding:1px 6px;border-radius:4px;">${salEntries.length} قيد</span>
+        </div>
+        <div class="at-kv" style="color:#f6ad55;">${fmt(withdrawnAmt)} <span class="at-ku">ج</span></div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">${salEntries.length ? 'اضغط لعرض التفاصيل 🔍' : 'لا توجد مسحوبات'}</div>
+      </div>
+
+      <!-- 3. الخصومات المسجلة -->
+      <div class="at-kpi" onclick="toggleAttDrawer('attSalDiscDrawer')" style="padding:12px 16px;border-color:rgba(252,129,129,.55);cursor:pointer;background:rgba(252,129,129,.06);" title="اضغط لعرض تفاصيل الخصومات أو إضافة خصم">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="at-kl" style="color:#fc8181;">✂️ الخصومات المسجلة</div>
+          <button onclick="event.stopPropagation();quickAddDeduction('${esc(name)}')" class="btn btn-xs" style="background:rgba(252,129,129,.2);border:1px solid rgba(252,129,129,.4);color:#fc8181;padding:1px 6px;font-size:.68rem;border-radius:5px;cursor:pointer;">➕ خصم</button>
+        </div>
+        <div class="at-kv" style="color:#fc8181;">${fmt(discAmt)} <span class="at-ku">ج</span></div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">${discEntries.length ? 'اضغط لعرض الأسباب 🔍' : 'لا توجد خصومات'}</div>
+      </div>
+
+      <!-- 4. صافي الراتب المتبقي -->
+      <div class="at-kpi" style="padding:12px 16px;${netRemaining > 0 ? 'border-color:rgba(72,187,120,.7);background:rgba(72,187,120,.12);' : (netRemaining === 0 ? 'border-color:rgba(99,179,237,.5);background:rgba(99,179,237,.08);' : 'border-color:rgba(252,129,129,.7);background:rgba(252,129,129,.12);')}">
+        <div class="at-kl" style="color:${netRemaining > 0 ? '#68d391' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};">
+          🏷️ صافي الراتب المتبقي
+        </div>
+        <div class="at-kv" style="color:${netRemaining > 0 ? '#48bb78' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};font-size:1.35rem;font-weight:900;">
+          ${fmt(Math.abs(netRemaining))} <span class="at-ku">ج</span>
+        </div>
+        <div style="font-size:.7rem;margin-top:2px;font-weight:700;color:${netRemaining > 0 ? '#68d391' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};">
+          ${netRemaining > 0 ? '✅ متبقي للصرف للموظف' : (netRemaining === 0 ? '🎉 تم تسوية الراتب بالكامل' : '⚠️ مسحوبات زائدة (عجز)')}
+        </div>
+      </div>
+      ` : ''}
     </div>
+
+    ${(salary != null && netRemaining > 0) ? `
+    <!-- شريط تسليم وصرف باقي الراتب -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:rgba(72,187,120,.09);border:1.5px solid rgba(72,187,120,.4);border-radius:12px;padding:12px 18px;margin-bottom:14px;">
+      <div>
+        <div style="font-weight:900;color:#68d391;font-size:.95rem;display:flex;align-items:center;gap:6px;">
+          <span>💵 تسليم وصرف باقي الراتب</span>
+          <span style="font-size:.76rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;">المتبقي: ${fmt(netRemaining)} ج</span>
+        </div>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
+          المعادلة: راتب ${fmt(salary)} ج − مسحوبات ${fmt(withdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${salary}, ${withdrawnAmt}, ${discAmt})"
+        style="padding:9px 22px;font-size:.92rem;font-weight:900;border-radius:10px;box-shadow:0 4px 14px rgba(72,187,120,.35);cursor:pointer;display:flex;align-items:center;gap:6px;">
+        <span>💸 صرف وتسليم ${fmt(netRemaining)} ج من العهدة</span>
+      </button>
+    </div>` : ((salary != null && (withdrawnAmt > 0 || discAmt > 0) && netRemaining === 0) ? `
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(99,179,237,.08);border:1px solid rgba(99,179,237,.3);border-radius:12px;padding:10px 16px;margin-bottom:14px;">
+      <span style="font-size:1.2rem;">✅</span>
+      <div style="font-size:.84rem;font-weight:700;color:#90cdf4;">تم تسوية وصرف كامل راتب شهر ${month} للموظف (${esc(name)}) بالكامل — لا توجد مبالغ متبقية للصرف.</div>
+    </div>` : '')}
+
+    <!-- تفاصيل المسحوبات -->
+    <div id="attSalWithdrawnDrawer" style="display:none;background:var(--bg2);border:1px solid rgba(237,137,54,.35);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="color:#f6ad55;font-size:.85rem;">📋 تفاصيل الرواتب المستلمة (${salEntries.length} قيد — إجمالي ${fmt(withdrawnAmt)} ج)</strong>
+        <button onclick="toggleAttDrawer('attSalWithdrawnDrawer')" style="background:none;border:none;color:var(--text3);cursor:pointer;">✕ إغلاق</button>
+      </div>
+      ${salEntries.length ? `
+      <div class="tbl-w"><table>
+        <thead><tr><th>التاريخ</th><th>الوقت</th><th>المبلغ</th><th>سجله</th><th>الملاحظات</th></tr></thead>
+        <tbody>
+          ${salEntries.map(e => `
+            <tr>
+              <td>${e.date}</td>
+              <td style="font-size:.78rem;color:var(--text3);">${e.time || '—'}</td>
+              <td style="color:#f6ad55;font-weight:900;">${fmt(e.amount)} ج</td>
+              <td>${esc(e.uname || '—')}</td>
+              <td>${esc(e.notes || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table></div>` : '<div style="color:var(--text3);font-size:.8rem;padding:8px;">لا توجد مسحوبات مسجلة</div>'}
+    </div>
+
+    <!-- تفاصيل الخصومات -->
+    <div id="attSalDiscDrawer" style="display:none;background:var(--bg2);border:1px solid rgba(252,129,129,.35);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="color:#fc8181;font-size:.85rem;">✂️ تفاصيل الخصومات المسجلة (${discEntries.length} قيد — إجمالي ${fmt(discAmt)} ج)</strong>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="quickAddDeduction('${esc(name)}')" class="btn btn-xs" style="background:rgba(252,129,129,.2);border:1px solid rgba(252,129,129,.5);color:#fc8181;padding:2px 8px;border-radius:5px;cursor:pointer;">➕ إضافة خصم</button>
+          <button onclick="toggleAttDrawer('attSalDiscDrawer')" style="background:none;border:none;color:var(--text3);cursor:pointer;">✕ إغلاق</button>
+        </div>
+      </div>
+      ${discEntries.length ? `
+      <div class="tbl-w"><table>
+        <thead><tr><th>التاريخ</th><th>الوقت</th><th>المبلغ</th><th>سبب الخصم</th><th>سجله</th></tr></thead>
+        <tbody>
+          ${discEntries.map(e => `
+            <tr>
+              <td>${e.date}</td>
+              <td style="font-size:.78rem;color:var(--text3);">${e.time || '—'}</td>
+              <td style="color:#fc8181;font-weight:900;">${fmt(e.amount)} ج</td>
+              <td>${esc(e.notes || e.company || 'خصم')}</td>
+              <td>${esc(e.uname || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table></div>` : '<div style="color:var(--text3);font-size:.8rem;padding:8px;">لا توجد خصومات مسجلة لهذا الشهر</div>'}
+    </div>
+
     ${offDays.length ? `<div style="margin-top:6px;">
       <div style="font-size:.82rem;color:var(--text3);margin-bottom:6px;">أيام الإجازة / الغياب:</div>
       <div>${offStr}</div>
     </div>` : ''}`;
+}
+
+function toggleAttDrawer(drawerId) {
+  const el = document.getElementById(drawerId);
+  if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+}
+
+async function quickAddDeduction(empName) {
+  const amtStr = prompt(`تسجيل خصم جديد للموظف (${empName}):\nأدخل مبلغ الخصم (جنيه):`);
+  if (!amtStr) return;
+  const amt = parseFloat(amtStr);
+  if (isNaN(amt) || amt <= 0) { toast('⚠️ مبلغ غير صحيح', false); return; }
+  const reason = prompt(`سبب الخصم (مثل: جزاء / غياب / تأخير / تلفيات):`) || 'خصم جزاء';
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+    const curB = typeof currentBal === 'number' ? currentBal : (entries[0]?.balance || 0);
+
+    const { error: insErr } = await sb.from('entries').insert({
+      id: newId,
+      date: today,
+      type: 'خصومات',
+      company: reason,
+      invoice: empName,
+      amount: amt,
+      notes: reason,
+      uid: me.uid,
+      uname: me.name,
+      balance: curB,
+      time: timeStr,
+      ts: Date.now()
+    });
+    if (insErr) throw insErr;
+
+    entries.unshift({
+      id: newId,
+      date: today,
+      type: 'خصومات',
+      company: reason,
+      invoice: empName,
+      amount: amt,
+      notes: reason,
+      uid: me.uid,
+      uname: me.name,
+      balance: curB,
+      time: timeStr,
+      ts: Date.now()
+    });
+
+    toast(`✅ تم تسجيل خصم ${fmt(amt)} ج على ${empName} (دون المساس بالعهدة)`);
+    attShowEmpReport();
+  } catch(e) {
+    toast('❌ فشل تسجيل الخصم: ' + arErr(e), false);
+  }
+}
+
+async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn, deduct) {
+  if (remAmt <= 0) {
+    toast('⚠️ لا يوجد مبلغ متبقي للصرف', false);
+    return;
+  }
+  const msg = `تأكيد صرف وتسليم باقي راتب شهر ${month} للموظف (${empName})؟\n\n` +
+    `• الراتب المستحق: ${fmt(grossSal)} ج\n` +
+    `• المسحوبات السابقة: ${fmt(withdrawn)} ج\n` +
+    `• الخصومات: ${fmt(deduct)} ج\n` +
+    `───────────────\n` +
+    `• المبلغ المطلوب صرفه من العهدة: ${fmt(remAmt)} ج\n\n` +
+    `سيتم خصم ${fmt(remAmt)} ج من العهدة الحالية وتسجيل قيد مصاريف بند رواتب فوراً.`;
+  if (!confirm(msg)) return;
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(-remAmt);
+
+    const notes = `تسليم باقي راتب شهر ${month} (راتب ${fmt(grossSal)} - مسحوبات ${fmt(withdrawn)} - خصم ${fmt(deduct)})`;
+
+    const { error: insErr } = await sb.from('entries').insert({
+      id: newId,
+      date: today,
+      type: 'مصاريف',
+      company: 'رواتب',
+      invoice: empName,
+      amount: remAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+    if (insErr) throw insErr;
+
+    entries.unshift({
+      id: newId,
+      date: today,
+      type: 'مصاريف',
+      company: 'رواتب',
+      invoice: empName,
+      amount: remAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+
+    updToday();
+    toast(`✅ تم صرف باقي الراتب بنجاح (${fmt(remAmt)} ج) وتحديث العهدة — ${empName}`);
+    fireFlyingParticles(document.querySelector('#attEmpReport') || document.body, ['💵', '✨', '🎉', '💰'], 25);
+    attShowEmpReport();
+  } catch (e) {
+    toast('❌ فشل صرف الراتب: ' + arErr(e), false);
+  }
 }
 
 async function attSaveRate(btn) {
