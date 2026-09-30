@@ -2524,6 +2524,25 @@ function ensureXLSX() {
     <!-- ── SETTINGS (admin) ── -->
     <div class="pane" id="pane-set">
 
+      <!-- ── الرقم السري لتصفية المحفظة والذمم (خاص بالإدارة) ── -->
+      <div class="set-sec" style="border:1.5px solid rgba(124,58,237,.35);background:rgba(124,58,237,.03);">
+        <div class="set-t">🔐 الرقم السري لتصفية المحفظة والذمم (خاص بالإدارة)</div>
+        <div style="font-size:.8rem;color:var(--text3);margin-bottom:12px;">
+          هذا الرقم السري مطلوب عند تصفية ذمم المحفظة أو ترحيل أي مبالغ إلى العهدة الحالية لمنع الموظفين من ترحيل أي مبالغ دون إذنك.
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+          <div class="fg" style="max-width:220px;margin-bottom:0;">
+            <label style="font-size:.8rem;color:var(--text3);font-weight:700;">الرقم السري للتصفية</label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+              <input type="password" class="fel" id="walletPinSettingsInp" placeholder="أدخل الرقم السري" style="width:100%;font-size:1.1rem;letter-spacing:3px;font-weight:900;text-align:center;"/>
+              <button type="button" onclick="togglePinSettingsVisibility()" class="btn btn-sm btn-ghost" style="padding:6px 10px;" title="إظهار / إخفاء">👁</button>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-green" onclick="saveWalletPinFromSettings()" style="height:38px;">💾 حفظ الرقم السري</button>
+        </div>
+        <div style="font-size:.74rem;color:var(--text3);margin-top:8px;">الرقم الافتراضي: 1234 — يُحفظ في السحابة ويتزامن مع جميع أجهزتك ولا يظهر للموظفين</div>
+      </div>
+
       <div class="set-sec">
         <div class="set-t">🏥 اسم الصيدلية</div>
         <div class="fg" style="max-width:300px;"><input type="text" id="sName" placeholder="صيدلية عصفرة"/></div>
@@ -3513,7 +3532,7 @@ function swTab(name, el) {
   if (name==='custdir')    { custSubSwitch('dir');   initCustDir(); }
   if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
   if (name==='trash') { fetchTrash(); }
-  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; }
+  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp) pinInp.value=walletSettlePin; }
   // لما ترجع لتبويب القيد الجديد، حدّث درب ليست الموظفين
   if (name==='add') {
     const eCoEl = document.getElementById('eCo');
@@ -6871,6 +6890,28 @@ function closeWalletPinModal() {
     _walletPinResolve(false);
     _walletPinResolve = null;
   }
+}
+
+async function saveWalletPinFromSettings() {
+  const inp = document.getElementById('walletPinSettingsInp');
+  const val = (inp?.value || '').trim();
+  if (!val || val.length < 3) {
+    toast('⚠️ يجب أن يتكون الرقم السري من 3 أرقام على الأقل', false);
+    return;
+  }
+  walletSettlePin = val;
+  try {
+    await sbSetMeta('walletSettlePin', { pin: walletSettlePin });
+    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة بنجاح`);
+  } catch(e) {
+    toast('❌ فشل حفظ الرقم السري: ' + (e.message || e), false);
+  }
+}
+
+function togglePinSettingsVisibility() {
+  const inp = document.getElementById('walletPinSettingsInp');
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
 async function changeWalletPinPrompt() {
@@ -14828,11 +14869,7 @@ document.addEventListener('keydown', e => {
       </button>
     </div>
 
-    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:10px;">
-      <button onclick="changeWalletPinPrompt()" style="background:none;border:none;color:var(--text3);font-size:.74rem;cursor:pointer;text-decoration:underline;">
-        ⚙️ تغيير الرقم السري (الافتراضي: 1234)
-      </button>
-    </div>
+
   </div>
 </div>
 
