@@ -2709,6 +2709,7 @@ let attEmpNames   = [];  // from meta/attendanceEmployees
 let attRates      = {};  // from meta/attendanceRates { name: hourlyRate }
 let attExtraHours = {};  // from meta/attendanceExtraHours { "YYYY-MM__name": extraHrs }
 let attIncentives = {};  // from meta/attendanceIncentives { "YYYY-MM__name": incAmt }
+let walletSettlePin = '1234'; // الرقم السري لتصفية المحفظة والذمم إلى العهدة
 let attAttOff     = new Set();  // موظفين مستبعَدين من الحضور
 let attSalOff     = new Set();  // موظفين مستبعَدين من الرواتب
 let attFilter     = { month: '', emp: '', dateFrom: '', dateTo: '' }; // attendance filter state
@@ -3134,6 +3135,11 @@ async function delUser(uid, name) {
 // ═══════════════════════════════════════════
 //  REALTIME
 // ═══════════════════════════════════════════
+// تحميل الرقم السري لتصفية المحفظة والذمم
+sbGetMeta('walletSettlePin').then(v => {
+  if (v && v.pin) walletSettlePin = String(v.pin);
+}).catch(()=>{});
+
 function listenBalance() {
   if (sbChanBalance) { sb.removeChannel(sbChanBalance); sbChanBalance=null; }
   // Initial load — always fallback to last entry balance if meta is 0/null
@@ -6806,6 +6812,90 @@ function bCls(t){ return {ايرادات:'br',مصاريف:'be',طلبيات:'bo
 function isSettled(e){ return e.type==='ذمم اونلاين' && e.invoice && e.invoice.startsWith('settled:'); }
 function pendingOnlineAmt(){ return entries.filter(e=>e.type==='ذمم اونلاين'&&!isSettled(e)).reduce((s,e)=>s+e.amount,0); }
 
+// ═══════════════════════════════════════════
+//  WALLET SETTLEMENT PIN PROTECTION 🔐
+// ═══════════════════════════════════════════
+let _walletPinResolve = null;
+
+function requestWalletPin(actionHtml) {
+  return new Promise(resolve => {
+    _walletPinResolve = resolve;
+    const modal = document.getElementById('walletPinModal');
+    const desc = document.getElementById('walletPinModalDesc');
+    const inp = document.getElementById('walletPinInp');
+    const err = document.getElementById('walletPinErr');
+
+    if (desc && actionHtml) desc.innerHTML = actionHtml;
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    if (inp) { inp.value = ''; }
+
+    if (modal) {
+      modal.classList.add('on');
+      setTimeout(() => { if (inp) inp.focus(); }, 150);
+    } else {
+      const p = prompt('🔐 أدخل الرقم السري لإتمام التصفية والترحيل للعهدة:');
+      resolve(p === walletSettlePin);
+    }
+  });
+}
+
+function confirmWalletPin() {
+  const inp = document.getElementById('walletPinInp');
+  const err = document.getElementById('walletPinErr');
+  const val = (inp?.value || '').trim();
+
+  if (val === walletSettlePin) {
+    const modal = document.getElementById('walletPinModal');
+    if (modal) modal.classList.remove('on');
+    if (_walletPinResolve) {
+      _walletPinResolve(true);
+      _walletPinResolve = null;
+    }
+  } else {
+    if (err) {
+      err.textContent = '❌ الرقم السري غير صحيح!';
+      err.style.display = 'block';
+    }
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+    }
+    toast('❌ الرقم السري غير صحيح', false);
+  }
+}
+
+function closeWalletPinModal() {
+  const modal = document.getElementById('walletPinModal');
+  if (modal) modal.classList.remove('on');
+  if (_walletPinResolve) {
+    _walletPinResolve(false);
+    _walletPinResolve = null;
+  }
+}
+
+async function changeWalletPinPrompt() {
+  const oldP = prompt('أدخل الرقم السري الحالي (الافتراضي: 1234):');
+  if (oldP === null) return;
+  if (oldP !== walletSettlePin) {
+    toast('❌ الرقم السري الحالي غير صحيح', false);
+    return;
+  }
+  const newP = prompt('أدخل الرقم السري الجديد:');
+  if (newP === null) return;
+  const trimmed = newP.trim();
+  if (trimmed.length < 3) {
+    toast('⚠️ يجب أن يتكون الرقم السري من 3 أرقام على الأقل', false);
+    return;
+  }
+  walletSettlePin = trimmed;
+  try {
+    await sbSetMeta('walletSettlePin', { pin: walletSettlePin });
+    toast('✅ تم تحديث وحفظ الرقم السري الجديد بنجاح');
+  } catch(e) {
+    toast('❌ فشل حفظ الرقم السري: ' + (e.message || e), false);
+  }
+}
+
 async function settleAllWalletDebts() {
   const walletDebts = entries.filter(e =>
     !e.deleted &&
@@ -6825,11 +6915,17 @@ async function settleAllWalletDebts() {
     return;
   }
 
-  const msg = `تأكيد تصفية كافة ذمم المحفظة وإضافتها إلى العهدة الحالية؟\n\n` +
-    `• عدد حركات المحفظة: ${walletDebts.length} حركة\n` +
-    `• إجمالي المبلغ: ${fmt(totalAmt)} ج\n\n` +
-    `سيتم تصفية كل ذمم المحفظة لتصبح (0 ج)، وإضافة ${fmt(totalAmt)} ج إلى العهدة الحالية (الدرج) وتسجيل قيد إيرادات رسمي فوراً.`;
-  if (!confirm(msg)) return;
+  // 🔐 طلب الرقم السري لحماية الترحيل
+  const pinOk = await requestWalletPin(`
+    تصفية <strong>${walletDebts.length}</strong> حركة بمحفظة الصيدلية<br/>
+    بإجمالي مبلغ <strong style="color:#68d391;font-size:1.15rem;">${fmt(totalAmt)} ج</strong> وترحيلها للعهدة.<br/>
+    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  `);
+
+  if (!pinOk) {
+    toast('❌ تم إلغاء التصفية — الرقم السري مطلوب للترحيل', false);
+    return;
+  }
 
   try {
     const today = todayStr();
@@ -6907,7 +7003,16 @@ async function settleAllWalletDebts() {
 async function settleOnline(entryId) {
   const orig = entries.find(e => e.id === entryId);
   if (!orig) return;
-  if (!confirm(`تسوية ${fmt(orig.amount)} ج (${orig.company}) ؟\nسيُضاف إيرادات تلقائياً بنفس المبلغ.`)) return;
+
+  // 🔐 طلب الرقم السري لحماية تسوية أي ذمة
+  const pinOk = await requestWalletPin(`
+    تسوية حركة ذمم أونلاين بقيمة <strong style="color:#68d391;font-size:1.1rem;">${fmt(orig.amount)} ج</strong> (${esc(orig.company)}) وترحيلها للعهدة.<br/>
+    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  `);
+  if (!pinOk) {
+    toast('❌ تم إلغاء التسوية — الرقم السري مطلوب', false);
+    return;
+  }
   try {
     const now = new Date();
     const timeStr = now.toTimeString().slice(0,5);
@@ -14694,6 +14799,39 @@ document.addEventListener('keydown', e => {
     <!-- إغلاق -->
     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
       <button onclick="document.getElementById('actHistModal').classList.remove('on')" class="btn btn-ghost">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── مودال الرقم السري لتصفية وترحيل المحفظة ── -->
+<div id="walletPinModal" class="modal-overlay" style="z-index:9999;" onclick="if(event.target===this)closeWalletPinModal()">
+  <div class="modal-box" style="max-width:390px;text-align:center;padding:26px 22px;border-radius:18px;background:var(--bg2);border:1.5px solid rgba(124,58,237,.45);box-shadow:0 14px 45px rgba(0,0,0,.65);">
+    <div style="font-size:2.5rem;margin-bottom:6px;">🔐</div>
+    <div style="font-weight:900;font-size:1.15rem;color:var(--text1);margin-bottom:6px;">تأكيد التصفية بالرقم السري</div>
+    <div id="walletPinModalDesc" style="font-size:.82rem;color:var(--text3);margin-bottom:18px;line-height:1.45;">
+      يرجى إدخال الرقم السري المعتمد لترحيل المبلغ إلى العهدة
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <input type="password" id="walletPinInp" maxlength="12" placeholder="••••"
+        style="width:170px;font-size:1.7rem;letter-spacing:7px;text-align:center;padding:8px 12px;border-radius:12px;border:2px solid rgba(124,58,237,.55);background:var(--bg1);color:var(--text1);outline:none;font-weight:900;"
+        onkeydown="if(event.key==='Enter')confirmWalletPin()"/>
+      <div id="walletPinErr" style="color:#fc8181;font-size:.78rem;font-weight:700;margin-top:6px;display:none;"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="confirmWalletPin()" class="btn btn-green" style="padding:9px 24px;font-weight:900;border-radius:10px;font-size:.9rem;box-shadow:0 4px 12px rgba(72,187,120,.35);cursor:pointer;">
+        ✅ تأكيد الترحيل
+      </button>
+      <button onclick="closeWalletPinModal()" class="btn btn-ghost" style="padding:9px 18px;border-radius:10px;font-size:.85rem;cursor:pointer;">
+        ✕ إلغاء
+      </button>
+    </div>
+
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:10px;">
+      <button onclick="changeWalletPinPrompt()" style="background:none;border:none;color:var(--text3);font-size:.74rem;cursor:pointer;text-decoration:underline;">
+        ⚙️ تغيير الرقم السري (الافتراضي: 1234)
+      </button>
     </div>
   </div>
 </div>
