@@ -2609,6 +2609,7 @@ let attRecords    = [];  // [v13] live من جدول attendance في Supabase
 let attEmpNames   = [];  // from meta/attendanceEmployees
 let attRates      = {};  // from meta/attendanceRates { name: hourlyRate }
 let attExtraHours = {};  // from meta/attendanceExtraHours { "YYYY-MM__name": extraHrs }
+let attIncentives = {};  // from meta/attendanceIncentives { "YYYY-MM__name": incAmt }
 let attAttOff     = new Set();  // موظفين مستبعَدين من الحضور
 let attSalOff     = new Set();  // موظفين مستبعَدين من الرواتب
 let attFilter     = { month: '', emp: '', dateFrom: '', dateTo: '' }; // attendance filter state
@@ -8135,16 +8136,18 @@ function listenAttMeta() {
 // ── Load employee names + rates from Supabase meta ──
 async function loadAttMeta() {
   try {
-    const [empV, rateV, extraV, attOffV, salOffV] = await Promise.all([
+    const [empV, rateV, extraV, attOffV, salOffV, incV] = await Promise.all([
       sbGetMeta('attendanceEmployees'),
       sbGetMeta('attendanceRates'),
       sbGetMeta('attendanceExtraHours'),
       sbGetMeta('attendanceAttOff'),
-      sbGetMeta('attendanceSalOff')
+      sbGetMeta('attendanceSalOff'),
+      sbGetMeta('attendanceIncentives')
     ]);
     attEmpNames   = empV.names || [];
     attRates      = rateV  || {};
     attExtraHours = extraV || {};
+    attIncentives = incV   || {};
     // [v13] قوائم الاستبعاد — لو مش موجودين = كلهم مفعّلين
     attAttOff = new Set(attOffV?.names || []);
     attSalOff = new Set(salOffV?.names || []);
@@ -8743,7 +8746,9 @@ function attRenderAdmin() {
       isMatch(e)
     ).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
-    const empRemaining = grossSalary - empWithdrawn - empDeduct;
+    const incKey = `${attFilter.month}__${n}`;
+    const empInc = parseFloat(attIncentives[incKey]) || 0;
+    const empRemaining = (grossSalary + empInc) - empWithdrawn - empDeduct;
 
     return `<tr>
       <td><strong>${esc(n)}</strong></td>
@@ -8760,10 +8765,11 @@ function attRenderAdmin() {
       <td>${v.errors>0?`<span style="color:#c53030;font-weight:700;">${v.errors}</span>`:0}</td>
       <td>${rate>0?fmt(rate)+' ج/س':'—'}</td>
       <td style="font-weight:800;color:${rate>0?'#5b21b6':'#a0aec0'};">${rate>0?fmt(grossSalary)+' ج':'—'}</td>
+      <td style="font-weight:700;color:#48bb78;">${empInc>0?fmt(empInc)+' ج':'—'}</td>
       <td style="font-weight:700;color:#f6ad55;">${empWithdrawn>0?fmt(empWithdrawn)+' ج':'—'}</td>
       <td style="font-weight:700;color:#fc8181;">${empDeduct>0?fmt(empDeduct)+' ج':'—'}</td>
       <td style="font-weight:900;color:${empRemaining>0?'#48bb78':(empRemaining===0?'#63b3ed':'#fc8181')};">
-        ${rate>0 ? fmt(empRemaining)+' ج' : '—'}
+        ${rate>0 || empInc>0 ? fmt(empRemaining)+' ج' : '—'}
       </td>
     </tr>`;}).join('');
 
@@ -8835,7 +8841,7 @@ function attRenderAdmin() {
       </div>
       <div id="attSalBody">
         ${salRows
-          ? `<div class="tbl-w"><table><thead><tr><th>الاسم</th><th>ساعات فعلية</th><th>ساعات إضافية</th><th>الإجمالي</th><th>أيام</th><th>أخطاء</th><th>سعر الساعة</th><th>الراتب المستحق</th><th>المسحوبات</th><th>الخصومات</th><th>صافي المتبقي</th></tr></thead><tbody>${salRows}</tbody></table></div>`
+          ? `<div class="tbl-w"><table><thead><tr><th>الاسم</th><th>ساعات فعلية</th><th>ساعات إضافية</th><th>الإجمالي</th><th>أيام</th><th>أخطاء</th><th>سعر الساعة</th><th>الراتب المستحق</th><th>الحوافز</th><th>المسحوبات</th><th>الخصومات</th><th>صافي المتبقي</th></tr></thead><tbody>${salRows}</tbody></table></div>`
           : '<div class="nd" style="padding:12px;">لا توجد بيانات هذا الشهر</div>'}
       </div>
     </div>` : ''}
@@ -9041,15 +9047,17 @@ function attExportSalaryCSV() {
     if (s.error) byEmp[s.name].errors++;
   });
 
-  const header = ['الاسم', 'ساعات فعلية', 'ساعات إضافية', 'الإجمالي', 'أيام', 'أخطاء', 'سعر الساعة (ج/س)', 'الراتب (ج)'];
+  const header = ['الاسم', 'ساعات فعلية', 'ساعات إضافية', 'الإجمالي', 'أيام', 'أخطاء', 'سعر الساعة (ج/س)', 'الراتب المستحق (ج)', 'الحوافز (ج)', 'صافي المتبقي (ج)'];
   const rows = [header];
   Object.entries(byEmp).forEach(([n, v]) => {
     const rate    = attRates[n] || 0;
     const exKey   = `${month}__${n}`;
     const extra   = attExtraHours[exKey] || 0;
     const total   = v.hours + extra;
-    const salary  = rate > 0 ? String(Math.round((total / 26) * rate)) : '—';
-    rows.push([n, v.hours.toFixed(2), extra.toFixed(2), total.toFixed(2), v.days.size, v.errors, rate || '—', salary]);
+    const gross   = rate > 0 ? Math.round((total / 26) * rate) : 0;
+    const incK    = `${month}__${n}`;
+    const inc     = parseFloat(attIncentives[incK]) || 0;
+    rows.push([n, v.hours.toFixed(2), extra.toFixed(2), total.toFixed(2), v.days.size, v.errors, rate || '—', rate > 0 ? String(gross) : '—', inc > 0 ? String(inc) : '0', rate > 0 || inc > 0 ? String(gross + inc) : '—']);
   });
 
   const csv = '﻿' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -9200,12 +9208,19 @@ async function attRenameEmployee(oldName) {
       delete attRates[oldName];
     }
 
-    // 4. نقل الساعات الإضافية (كل المفاتيح التي تنتهي بـ __oldName)
+    // 4. نقل الساعات الإضافية والحوافز (كل المفاتيح التي تنتهي بـ __oldName)
     Object.keys(attExtraHours).forEach(k => {
       if (k.endsWith('__' + oldName)) {
         const newKey = k.slice(0, k.lastIndexOf('__' + oldName)) + '__' + newName;
         attExtraHours[newKey] = attExtraHours[k];
         delete attExtraHours[k];
+      }
+    });
+    Object.keys(attIncentives).forEach(k => {
+      if (k.endsWith('__' + oldName)) {
+        const newKey = k.slice(0, k.lastIndexOf('__' + oldName)) + '__' + newName;
+        attIncentives[newKey] = attIncentives[k];
+        delete attIncentives[k];
       }
     });
 
@@ -9216,6 +9231,7 @@ async function attRenameEmployee(oldName) {
     await sbSetMeta('attendanceEmployees',  { names: attEmpNames });
     await sbSetMeta('attendanceRates',      attRates);
     await sbSetMeta('attendanceExtraHours', attExtraHours);
+    await sbSetMeta('attendanceIncentives', attIncentives);
 
     toast(`✅ تمت إعادة التسمية: "${oldName}" → "${newName}"`);
     renderAttPane();
@@ -9330,9 +9346,13 @@ function attShowEmpReport() {
     if (!maxDay || workMap[d] > workMap[maxDay]) maxDay = d;
   });
 
-  // ── الراتب والمسحوبات والخصومات ──
+  // ── الراتب والحوافز والمسحوبات والخصومات ──
   const rate   = attRates[name] || 0;
   const salary = rate > 0 ? Math.round((totalHrs / 26) * rate) : null;
+
+  const incKey = `${month}__${name}`;
+  const incAmt = parseFloat(attIncentives[incKey]) || 0;
+  const totalDue = (salary != null ? salary : 0) + incAmt;
 
   const normN = normAr(name);
   const isMatchEmp = e => {
@@ -9361,7 +9381,7 @@ function attShowEmpReport() {
   const discAmt = discEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
   // صافي الراتب المتبقي
-  const netRemaining = (salary != null ? salary : 0) - withdrawnAmt - discAmt;
+  const netRemaining = totalDue - withdrawnAmt - discAmt;
 
   // ── تنسيق أيام الإجازة ──
   const fmtDay = ds => {
@@ -9413,15 +9433,38 @@ function attShowEmpReport() {
         <div class="at-kv" style="font-size:.95rem;">${maxDay} <span class="at-ku">(${workMap[maxDay].toFixed(1)}س)</span></div>
       </div>` : ''}
 
-      ${salary != null ? `
+      ${(salary != null || incAmt > 0) ? `
       <!-- 1. الراتب التقديري -->
       <div class="at-kpi at-kpi-o" style="padding:12px 16px;">
         <div class="at-kl">💰 الراتب التقديري</div>
-        <div class="at-kv">${fmt(salary)} <span class="at-ku">ج</span></div>
-        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">إجمالي الساعات × سعر الساعة</div>
+        <div class="at-kv">${salary != null ? fmt(salary) : '—'} <span class="at-ku">ج</span></div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">محسوب من ساعات العمل (${totalHrs.toFixed(1)}س)</div>
       </div>
 
-      <!-- 2. المسحوبات السابقة -->
+      <!-- 2. الحوافز والمكافآت (إدخال يدوي) -->
+      <div class="at-kpi" style="padding:12px 16px;border-color:rgba(72,187,120,.5);background:rgba(72,187,120,.05);" title="أدخل مبلغ الحافز أو المكافأة لهذا الشهر">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div class="at-kl" style="color:#48bb78;font-weight:700;">🎁 الحوافز والمكافآت</div>
+          <span style="font-size:.68rem;color:#48bb78;background:rgba(72,187,120,.18);padding:1px 6px;border-radius:4px;">إدخال يدوي</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" min="0" step="50"
+            id="attRepIncentiveInp"
+            style="width:115px;padding:4px 8px;font-size:1.15rem;font-weight:800;border-radius:8px;border:1.5px solid rgba(72,187,120,.6);background:var(--bg1);color:#48bb78;text-align:center;"
+            value="${incAmt > 0 ? incAmt : ''}" placeholder="0"
+            data-emp="${esc(name)}" data-month="${month}"
+            data-salary="${salary != null ? salary : 0}"
+            data-withdrawn="${withdrawnAmt}"
+            data-deduct="${discAmt}"
+            oninput="attSetIncentives(this)"
+            onchange="attSaveIncentiveDirect(this)"
+            title="اكتب مبلغ الحافز بالجنيه"/>
+          <span style="font-weight:700;color:#48bb78;font-size:.9rem;">ج</span>
+        </div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">تضاف لحساب الراتب وتُصرف مع المتبقي</div>
+      </div>
+
+      <!-- 3. المسحوبات السابقة -->
       <div class="at-kpi" onclick="toggleAttDrawer('attSalWithdrawnDrawer')" style="padding:12px 16px;border-color:rgba(237,137,54,.55);cursor:pointer;background:rgba(237,137,54,.06);" title="اضغط لعرض تفاصيل المسحوبات">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="at-kl" style="color:#f6ad55;">💸 المسحوبات المستلمة</div>
@@ -9431,7 +9474,7 @@ function attShowEmpReport() {
         <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">${salEntries.length ? 'اضغط لعرض التفاصيل 🔍' : 'لا توجد مسحوبات'}</div>
       </div>
 
-      <!-- 3. الخصومات المسجلة -->
+      <!-- 4. الخصومات المسجلة -->
       <div class="at-kpi" onclick="toggleAttDrawer('attSalDiscDrawer')" style="padding:12px 16px;border-color:rgba(252,129,129,.55);cursor:pointer;background:rgba(252,129,129,.06);" title="اضغط لعرض تفاصيل الخصومات أو إضافة خصم">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="at-kl" style="color:#fc8181;">✂️ الخصومات المسجلة</div>
@@ -9441,22 +9484,23 @@ function attShowEmpReport() {
         <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">${discEntries.length ? 'اضغط لعرض الأسباب 🔍' : 'لا توجد خصومات'}</div>
       </div>
 
-      <!-- 4. صافي الراتب المتبقي -->
-      <div class="at-kpi" style="padding:12px 16px;${netRemaining > 0 ? 'border-color:rgba(72,187,120,.7);background:rgba(72,187,120,.12);' : (netRemaining === 0 ? 'border-color:rgba(99,179,237,.5);background:rgba(99,179,237,.08);' : 'border-color:rgba(252,129,129,.7);background:rgba(252,129,129,.12);')}">
+      <!-- 5. صافي الراتب المتبقي -->
+      <div id="attRepNetCard" class="at-kpi" style="padding:12px 16px;${netRemaining > 0 ? 'border-color:rgba(72,187,120,.7);background:rgba(72,187,120,.12);' : (netRemaining === 0 ? 'border-color:rgba(99,179,237,.5);background:rgba(99,179,237,.08);' : 'border-color:rgba(252,129,129,.7);background:rgba(252,129,129,.12);')}">
         <div class="at-kl" style="color:${netRemaining > 0 ? '#68d391' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};">
           🏷️ صافي الراتب المتبقي
         </div>
-        <div class="at-kv" style="color:${netRemaining > 0 ? '#48bb78' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};font-size:1.35rem;font-weight:900;">
+        <div id="attRepNetVal" class="at-kv" style="color:${netRemaining > 0 ? '#48bb78' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};font-size:1.35rem;font-weight:900;">
           ${fmt(Math.abs(netRemaining))} <span class="at-ku">ج</span>
         </div>
-        <div style="font-size:.7rem;margin-top:2px;font-weight:700;color:${netRemaining > 0 ? '#68d391' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};">
+        <div id="attRepNetDesc" style="font-size:.7rem;margin-top:2px;font-weight:700;color:${netRemaining > 0 ? '#68d391' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};">
           ${netRemaining > 0 ? '✅ متبقي للصرف للموظف' : (netRemaining === 0 ? '🎉 تم تسوية الراتب بالكامل' : '⚠️ مسحوبات زائدة (عجز)')}
         </div>
       </div>
       ` : ''}
     </div>
 
-    ${(salary != null && netRemaining > 0) ? `
+    <div id="attRepPayBarWrapper">
+    ${(totalDue > 0 && netRemaining > 0) ? `
     <!-- شريط تسليم وصرف باقي الراتب -->
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:rgba(72,187,120,.09);border:1.5px solid rgba(72,187,120,.4);border-radius:12px;padding:12px 18px;margin-bottom:14px;">
       <div>
@@ -9465,18 +9509,19 @@ function attShowEmpReport() {
           <span style="font-size:.76rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;">المتبقي: ${fmt(netRemaining)} ج</span>
         </div>
         <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
-          المعادلة: راتب ${fmt(salary)} ج − مسحوبات ${fmt(withdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
+          المعادلة: راتب ${fmt(salary||0)} ج ${incAmt > 0 ? `+ حوافز ${fmt(incAmt)} ج ` : ''}− مسحوبات ${fmt(withdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
         </div>
       </div>
-      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${salary}, ${withdrawnAmt}, ${discAmt})"
+      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${salary||0}, ${withdrawnAmt}, ${discAmt}, ${incAmt})"
         style="padding:9px 22px;font-size:.92rem;font-weight:900;border-radius:10px;box-shadow:0 4px 14px rgba(72,187,120,.35);cursor:pointer;display:flex;align-items:center;gap:6px;">
         <span>💸 صرف وتسليم ${fmt(netRemaining)} ج من العهدة</span>
       </button>
-    </div>` : ((salary != null && (withdrawnAmt > 0 || discAmt > 0) && netRemaining === 0) ? `
+    </div>` : ((totalDue > 0 && (withdrawnAmt > 0 || discAmt > 0) && netRemaining === 0) ? `
     <div style="display:flex;align-items:center;gap:10px;background:rgba(99,179,237,.08);border:1px solid rgba(99,179,237,.3);border-radius:12px;padding:10px 16px;margin-bottom:14px;">
       <span style="font-size:1.2rem;">✅</span>
       <div style="font-size:.84rem;font-weight:700;color:#90cdf4;">تم تسوية وصرف كامل راتب شهر ${month} للموظف (${esc(name)}) بالكامل — لا توجد مبالغ متبقية للصرف.</div>
     </div>` : '')}
+    </div>
 
     <!-- تفاصيل المسحوبات -->
     <div id="attSalWithdrawnDrawer" style="display:none;background:var(--bg2);border:1px solid rgba(237,137,54,.35);border-radius:10px;padding:12px;margin-bottom:14px;">
@@ -9531,6 +9576,125 @@ function attShowEmpReport() {
       <div style="font-size:.82rem;color:var(--text3);margin-bottom:6px;">أيام الإجازة / الغياب:</div>
       <div>${offStr}</div>
     </div>` : ''}`;
+}
+
+let _incSaveTimer = null;
+function attSetIncentives(inp) {
+  const name  = inp.dataset.emp;
+  const month = inp.dataset.month;
+  const val   = Math.max(0, parseFloat(inp.value) || 0);
+  const key   = `${month}__${name}`;
+  attIncentives[key] = val;
+
+  // تحديث فوري للحسابات في الـ DOM بدون فقدان التركيز
+  attUpdateEmpReportCalculations(name, month);
+
+  clearTimeout(_incSaveTimer);
+  _incSaveTimer = setTimeout(async () => {
+    try {
+      await sbSetMeta('attendanceIncentives', attIncentives);
+      toast(`✅ تم حفظ حافز "${name}": ${val} ج`);
+      attUpdateSalaryTableIncentive(name, val);
+    } catch(e) {
+      toast('❌ خطأ في حفظ الحافز: ' + (e.message || e), false);
+    }
+  }, 800);
+}
+
+async function attSaveIncentiveDirect(inp) {
+  clearTimeout(_incSaveTimer);
+  const name  = inp.dataset.emp;
+  const month = inp.dataset.month;
+  const val   = Math.max(0, parseFloat(inp.value) || 0);
+  const key   = `${month}__${name}`;
+  attIncentives[key] = val;
+  attUpdateEmpReportCalculations(name, month);
+  try {
+    await sbSetMeta('attendanceIncentives', attIncentives);
+    toast(`✅ تم حفظ حافز "${name}": ${val} ج`);
+    attUpdateSalaryTableIncentive(name, val);
+  } catch(e) {
+    toast('❌ خطأ في حفظ الحافز: ' + (e.message || e), false);
+  }
+}
+
+function attUpdateEmpReportCalculations(name, month) {
+  const inp = document.getElementById('attRepIncentiveInp');
+  if (!inp) return;
+  const incVal = Math.max(0, parseFloat(inp.value) || 0);
+  const gross = parseFloat(inp.dataset.salary) || 0;
+  const withdrawn = parseFloat(inp.dataset.withdrawn) || 0;
+  const deduct = parseFloat(inp.dataset.deduct) || 0;
+
+  const totalDue = gross + incVal;
+  const netRem = totalDue - withdrawn - deduct;
+
+  const netCard = document.getElementById('attRepNetCard');
+  const netValEl = document.getElementById('attRepNetVal');
+  const netDescEl = document.getElementById('attRepNetDesc');
+  if (netValEl) {
+    netValEl.innerHTML = `${fmt(Math.abs(netRem))} <span class="at-ku">ج</span>`;
+    netValEl.style.color = netRem > 0 ? '#48bb78' : (netRem === 0 ? '#63b3ed' : '#fc8181');
+  }
+  if (netDescEl) {
+    netDescEl.textContent = netRem > 0 ? '✅ متبقي للصرف للموظف' : (netRem === 0 ? '🎉 تم تسوية الراتب بالكامل' : '⚠️ مسحوبات زائدة (عجز)');
+    netDescEl.style.color = netRem > 0 ? '#68d391' : (netRem === 0 ? '#63b3ed' : '#fc8181');
+  }
+  if (netCard) {
+    netCard.style.borderColor = netRem > 0 ? 'rgba(72,187,120,.7)' : (netRem === 0 ? 'rgba(99,179,237,.5)' : 'rgba(252,129,129,.7)');
+    netCard.style.background = netRem > 0 ? 'rgba(72,187,120,.12)' : (netRem === 0 ? 'rgba(99,179,237,.08)' : 'rgba(252,129,129,.12)');
+  }
+
+  const payBarWrap = document.getElementById('attRepPayBarWrapper');
+  if (payBarWrap) {
+    if (netRem > 0 && totalDue > 0) {
+      payBarWrap.style.display = 'block';
+      payBarWrap.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:rgba(72,187,120,.09);border:1.5px solid rgba(72,187,120,.4);border-radius:12px;padding:12px 18px;margin-bottom:14px;">
+          <div>
+            <div style="font-weight:900;color:#68d391;font-size:.95rem;display:flex;align-items:center;gap:6px;">
+              <span>💵 تسليم وصرف باقي الراتب</span>
+              <span style="font-size:.76rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;">المتبقي: ${fmt(netRem)} ج</span>
+            </div>
+            <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
+              المعادلة: راتب ${fmt(gross)} ج ${incVal > 0 ? `+ حوافز ${fmt(incVal)} ج ` : ''}− مسحوبات ${fmt(withdrawn)} ج − خصومات ${fmt(deduct)} ج = صافي ${fmt(netRem)} ج
+            </div>
+          </div>
+          <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRem}, '${month}', ${gross}, ${withdrawn}, ${deduct}, ${incVal})"
+            style="padding:9px 22px;font-size:.92rem;font-weight:900;border-radius:10px;box-shadow:0 4px 14px rgba(72,187,120,.35);cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <span>💸 صرف وتسليم ${fmt(netRem)} ج من العهدة</span>
+          </button>
+        </div>`;
+    } else {
+      payBarWrap.style.display = (totalDue > 0 && (withdrawn > 0 || deduct > 0) && netRem === 0) ? 'block' : 'none';
+      payBarWrap.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(99,179,237,.08);border:1px solid rgba(99,179,237,.3);border-radius:12px;padding:10px 16px;margin-bottom:14px;">
+          <span style="font-size:1.2rem;">✅</span>
+          <div style="font-size:.84rem;font-weight:700;color:#90cdf4;">تم تسوية وصرف كامل راتب شهر ${month} للموظف (${esc(name)}) بالكامل — لا توجد مبالغ متبقية للصرف.</div>
+        </div>`;
+    }
+  }
+}
+
+function attUpdateSalaryTableIncentive(name, val) {
+  const salBody = document.getElementById('attSalBody');
+  if (!salBody) return;
+  const rows = salBody.querySelectorAll('tbody tr');
+  rows.forEach(r => {
+    const nameCell = r.querySelector('td');
+    if (nameCell && nameCell.textContent.trim() === name.trim()) {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 12) {
+        cells[8].textContent = val > 0 ? fmt(val) + ' ج' : '—';
+        const gross = parseFloat((cells[7].textContent || '').replace(/[^\d.]/g, '')) || 0;
+        const withD = parseFloat((cells[9].textContent || '').replace(/[^\d.]/g, '')) || 0;
+        const ded = parseFloat((cells[10].textContent || '').replace(/[^\d.]/g, '')) || 0;
+        const rem = (gross + val) - withD - ded;
+        cells[11].textContent = fmt(rem) + ' ج';
+        cells[11].style.color = rem > 0 ? '#48bb78' : (rem === 0 ? '#63b3ed' : '#fc8181');
+      }
+    }
+  });
 }
 
 function toggleAttDrawer(drawerId) {
@@ -9590,13 +9754,15 @@ async function quickAddDeduction(empName) {
   }
 }
 
-async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn, deduct) {
+async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn, deduct, incentives = 0) {
   if (remAmt <= 0) {
     toast('⚠️ لا يوجد مبلغ متبقي للصرف', false);
     return;
   }
+  const inc = parseFloat(incentives) || 0;
   const msg = `تأكيد صرف وتسليم باقي راتب شهر ${month} للموظف (${empName})؟\n\n` +
     `• الراتب المستحق: ${fmt(grossSal)} ج\n` +
+    (inc > 0 ? `• الحوافز والمكافآت: +${fmt(inc)} ج\n` : '') +
     `• المسحوبات السابقة: ${fmt(withdrawn)} ج\n` +
     `• الخصومات: ${fmt(deduct)} ج\n` +
     `───────────────\n` +
@@ -9611,7 +9777,7 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
     const newId = crypto.randomUUID();
     const newB = await sbUpdateBalance(-remAmt);
 
-    const notes = `تسليم باقي راتب شهر ${month} (راتب ${fmt(grossSal)} - مسحوبات ${fmt(withdrawn)} - خصم ${fmt(deduct)})`;
+    const notes = `تسليم باقي راتب شهر ${month} (راتب ${fmt(grossSal)}${inc > 0 ? ` + حوافز ${fmt(inc)}` : ''} - مسحوبات ${fmt(withdrawn)} - خصم ${fmt(deduct)})`;
 
     const { error: insErr } = await sb.from('entries').insert({
       id: newId,
