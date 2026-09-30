@@ -1321,7 +1321,7 @@ function ensureXLSX() {
         </div>
 
         <!-- ── سهم تحويل وسيط أنيق بين ذمم المحفظة والعهدة ── -->
-        <button id="btnSettleWallet" onclick="settleAllWalletDebts()" class="btn-wallet-bridge" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية">
+        <button id="btnSettleWallet" onclick="openWalletSettleOptions()" class="btn-wallet-bridge" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية (كلي أو جزئي)">
           <span style="font-size:1.05rem;">📥</span>
           <span style="font-size:.78rem;font-weight:800;">تصفية المحفظة للعهدة</span>
           <span id="btnSettleWalletAmt" class="bridge-badge">0 ج</span>
@@ -4913,6 +4913,7 @@ function renderOnlineDebtsModalList() {
   const isAdmin = me && me.role === 'admin';
   const headerHtml = `
     <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;font-size:.72rem;color:var(--text3);font-weight:700;border-bottom:1.5px solid var(--border);background:rgba(255,255,255,.03);position:sticky;top:0;z-index:2;backdrop-filter:blur(4px);">
+      <input type="checkbox" id="odSelectAll" onchange="toggleSelectAllOdDebts(this)" style="cursor:pointer;" title="تحديد / إلغاء تحديد الكل"/>
       <span style="min-width:85px;">📅 التاريخ والوقت</span>
       <span style="min-width:95px;">🏢 البند</span>
       <span style="min-width:75px;text-align:center;">💵 المبلغ</span>
@@ -4932,6 +4933,9 @@ function renderOnlineDebtsModalList() {
 
     return `
       <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.78rem;${settled ? 'opacity:.6;' : ''}">
+        ${!settled ? `
+          <input type="checkbox" class="od-item-chk" value="${e.id}" data-amt="${e.amount}" data-company="${esc(e.company||'')}" onchange="updateOdSelectedBar()" style="cursor:pointer;width:15px;height:15px;accent-color:#48bb78;"/>
+        ` : '<span style="width:15px;display:inline-block;"></span>'}
         <span style="font-size:.72rem;color:var(--text3);white-space:nowrap;min-width:85px;">
           ${esc(e.date || '—')} <span style="font-size:.65rem;color:var(--text3);">${timeDisplay}</span>
         </span>
@@ -6934,6 +6938,336 @@ async function changeWalletPinPrompt() {
     toast('✅ تم تحديث وحفظ الرقم السري الجديد بنجاح');
   } catch(e) {
     toast('❌ فشل حفظ الرقم السري: ' + (e.message || e), false);
+  }
+}
+
+function openWalletSettleOptions() {
+  const walletDebts = entries.filter(e =>
+    !e.deleted &&
+    e.type === 'ذمم اونلاين' &&
+    !isSettled(e) &&
+    ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا'))
+  );
+
+  if (!walletDebts.length) {
+    toast('ℹ️ لا توجد ذمم معلقة في محفظة الصيدلية لتصفيتها', false);
+    return;
+  }
+
+  const totalAmt = walletDebts.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const modal = document.getElementById('walletSettleOptionsModal');
+  const totalEl = document.getElementById('wOptTotalAmt');
+  const badgeEl = document.getElementById('wOptAllBadge');
+
+  if (totalEl) totalEl.textContent = `${fmt(totalAmt)} ج`;
+  if (badgeEl) badgeEl.textContent = `${fmt(totalAmt)} ج`;
+
+  if (modal) modal.classList.add('on');
+}
+
+function closeWalletSettleOptionsModal() {
+  const modal = document.getElementById('walletSettleOptionsModal');
+  if (modal) modal.classList.remove('on');
+}
+
+async function chooseSettleOption(opt) {
+  closeWalletSettleOptionsModal();
+
+  if (opt === 'all') {
+    settleAllWalletDebts();
+  } else if (opt === 'partial') {
+    const walletDebts = entries.filter(e =>
+      !e.deleted &&
+      e.type === 'ذمم اونلاين' &&
+      !isSettled(e) &&
+      ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا'))
+    );
+    const maxAmt = walletDebts.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    const amtStr = prompt(`تصفية مبلغ جزئي من المحفظة:\nالرصيد المعلق الحالي: ${fmt(maxAmt)} ج\n\nأدخل المبلغ المراد ترحيله للعهدة (جنيه):`);
+    if (!amtStr) return;
+    const pAmt = parseFloat(amtStr);
+    if (isNaN(pAmt) || pAmt <= 0) {
+      toast('⚠️ يرجى إدخال مبلغ صحيح', false);
+      return;
+    }
+    settlePartialWalletAmount(pAmt);
+  } else if (opt === 'select') {
+    openOnlineDebtsModal('pending');
+    const coFilter = document.getElementById('odCompanyFilter');
+    if (coFilter) { coFilter.value = 'محفظة'; renderOnlineDebtsModalList(); }
+    toast('💡 حدد الحركات المراد تصفيتها بالـ Checkbox واضغط "تصفية الحركات المحددة"');
+  }
+}
+
+async function settlePartialWalletAmount(targetAmt) {
+  const walletDebts = entries.filter(e =>
+    !e.deleted &&
+    e.type === 'ذمم اونلاين' &&
+    !isSettled(e) &&
+    ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا'))
+  ).sort((a,b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : (a.ts||0)-(b.ts||0)));
+
+  if (!walletDebts.length) {
+    toast('ℹ️ لا توجد ذمم معلقة في محفظة الصيدلية', false);
+    return;
+  }
+
+  const maxAmt = walletDebts.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  if (targetAmt > maxAmt) {
+    toast(`⚠️ المبلغ المطلوب (${fmt(targetAmt)} ج) أكبر من رصيد المحفظة المعلق (${fmt(maxAmt)} ج)`, false);
+    return;
+  }
+  if (targetAmt <= 0) {
+    toast('⚠️ يرجى إدخال مبلغ صحيح أكبر من صفر', false);
+    return;
+  }
+
+  // طلب الرقم السري
+  const pinOk = await requestWalletPin(`
+    تصفية جزئية بمحفظة الصيدلية بقيمة <strong style="color:#68d391;font-size:1.15rem;">${fmt(targetAmt)} ج</strong> وترحيلها للعهدة.<br/>
+    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  `);
+  if (!pinOk) {
+    toast('❌ تم إلغاء التصفية الجزئية — الرقم السري مطلوب', false);
+    return;
+  }
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(targetAmt);
+
+    let remNeeded = targetAmt;
+    const fullySettledIds = [];
+    let splitEntry = null;
+
+    for (const d of walletDebts) {
+      if (remNeeded <= 0) break;
+      const amt = parseFloat(d.amount) || 0;
+      if (amt <= remNeeded) {
+        fullySettledIds.push(d.id);
+        remNeeded -= amt;
+      } else {
+        splitEntry = {
+          entry: d,
+          settledAmt: remNeeded,
+          remainAmt: amt - remNeeded
+        };
+        remNeeded = 0;
+        break;
+      }
+    }
+
+    if (fullySettledIds.length > 0) {
+      const { error: updErr } = await sb.from('entries')
+        .update({ invoice: 'settled:' + newId })
+        .in('id', fullySettledIds);
+      if (updErr) throw updErr;
+
+      walletDebts.forEach(d => {
+        if (fullySettledIds.includes(d.id)) d.invoice = 'settled:' + newId;
+      });
+    }
+
+    if (splitEntry) {
+      const orig = splitEntry.entry;
+      const oldNotes = orig.notes || '';
+      const newNotes = oldNotes ? `${oldNotes} (متبقي بعد تسوية جزئية ${fmt(splitEntry.settledAmt)} ج)` : `متبقي بعد تسوية جزئية ${fmt(splitEntry.settledAmt)} ج`;
+
+      const { error: updSplitErr } = await sb.from('entries')
+        .update({ amount: splitEntry.remainAmt, notes: newNotes })
+        .eq('id', orig.id);
+      if (updSplitErr) throw updSplitErr;
+
+      orig.amount = splitEntry.remainAmt;
+      orig.notes = newNotes;
+    }
+
+    const notes = `تصفية جزئية لذمم محفظة الصيدلية (${fmt(targetAmt)} ج)`;
+    const { error: insErr } = await sb.from('entries').insert({
+      id: newId,
+      date: today,
+      type: 'ايرادات',
+      company: 'تسوية ذمم محفظة الصيدلية',
+      invoice: '',
+      amount: targetAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+    if (insErr) throw insErr;
+
+    entries.unshift({
+      id: newId,
+      date: today,
+      type: 'ايرادات',
+      company: 'تسوية ذمم محفظة الصيدلية',
+      invoice: '',
+      amount: targetAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+
+    sbLogAction('settle_wallet_partial', fullySettledIds, {
+      settledAmount: targetAmt,
+      settlementEntryId: newId,
+      company: 'تسوية ذمم محفظة الصيدلية'
+    });
+
+    updateOnlineDebtsHeader();
+    renderAll();
+    renderSum();
+    updToday();
+
+    toast(`✅ تم تصفية مبلغ جزئي ${fmt(targetAmt)} ج وإضافته للعهدة الحالية`);
+  } catch(e) {
+    toast('❌ خطأ في التصفية الجزئية: ' + arErr(e), false);
+  }
+}
+
+function toggleSelectAllOdDebts(masterChk) {
+  const isChecked = masterChk.checked;
+  const chks = document.querySelectorAll('.od-item-chk');
+  chks.forEach(c => { c.checked = isChecked; });
+  updateOdSelectedBar();
+}
+
+function updateOdSelectedBar() {
+  const chks = document.querySelectorAll('.od-item-chk:checked');
+  const bar = document.getElementById('odSelectedActionBar');
+  const countText = document.getElementById('odSelectedCountText');
+  const amtText = document.getElementById('odSelectedAmtText');
+
+  if (!bar) return;
+  if (!chks.length) {
+    bar.style.display = 'none';
+    const master = document.getElementById('odSelectAll');
+    if (master) master.checked = false;
+    return;
+  }
+
+  let total = 0;
+  chks.forEach(c => {
+    total += parseFloat(c.dataset.amt) || 0;
+  });
+
+  bar.style.display = 'flex';
+  if (countText) countText.textContent = `تم تحديد ${chks.length} حركة`;
+  if (amtText) amtText.textContent = `${fmt(total)} ج`;
+}
+
+function clearOdSelection() {
+  const chks = document.querySelectorAll('.od-item-chk');
+  chks.forEach(c => { c.checked = false; });
+  const master = document.getElementById('odSelectAll');
+  if (master) master.checked = false;
+  updateOdSelectedBar();
+}
+
+async function settleSelectedWalletDebts() {
+  const chks = document.querySelectorAll('.od-item-chk:checked');
+  if (!chks.length) {
+    toast('⚠️ يرجى تحديد حركة واحدة على الأقل للتصفية', false);
+    return;
+  }
+
+  const selectedIds = Array.from(chks).map(c => c.value);
+  const selectedEntries = entries.filter(e => selectedIds.includes(e.id) && !e.deleted && !isSettled(e));
+
+  if (!selectedEntries.length) {
+    toast('⚠️ لم يتم العثور على حركات صالحة للتصفية', false);
+    return;
+  }
+
+  const totalAmt = selectedEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  if (totalAmt <= 0) {
+    toast('⚠️ إجمالي المبالغ المحددة صفر', false);
+    return;
+  }
+
+  const pinOk = await requestWalletPin(`
+    تصفية <strong>${selectedEntries.length}</strong> حركة محددة بمحفظة الصيدلية<br/>
+    بإجمالي مبلغ <strong style="color:#68d391;font-size:1.15rem;">${fmt(totalAmt)} ج</strong> وترحيلها للعهدة.<br/>
+    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  `);
+  if (!pinOk) {
+    toast('❌ تم إلغاء تصفية الحركات المحددة — الرقم السري مطلوب', false);
+    return;
+  }
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(totalAmt);
+
+    const notes = `تصفية حركات ذمم أونلاين محددة (${selectedEntries.length} حركة)`;
+
+    const { error: insErr } = await sb.from('entries').insert({
+      id: newId,
+      date: today,
+      type: 'ايرادات',
+      company: 'تسوية ذمم أونلاين',
+      invoice: '',
+      amount: totalAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+    if (insErr) throw insErr;
+
+    const { error: updErr } = await sb.from('entries')
+      .update({ invoice: 'settled:' + newId })
+      .in('id', selectedIds);
+    if (updErr) throw updErr;
+
+    selectedEntries.forEach(e => {
+      e.invoice = 'settled:' + newId;
+    });
+
+    entries.unshift({
+      id: newId,
+      date: today,
+      type: 'ايرادات',
+      company: 'تسوية ذمم أونلاين',
+      invoice: '',
+      amount: totalAmt,
+      notes: notes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+
+    sbLogAction('settle_online_selected', selectedIds, {
+      count: selectedEntries.length,
+      totalAmount: totalAmt,
+      settlementEntryId: newId
+    });
+
+    clearOdSelection();
+    updateOnlineDebtsHeader();
+    renderAll();
+    renderSum();
+    updToday();
+
+    toast(`✅ تم تصفية ${selectedEntries.length} حركة محددة بقيمة ${fmt(totalAmt)} ج وإضافتها للعهدة`);
+  } catch(e) {
+    toast('❌ خطأ في تصفية الحركات المحددة: ' + arErr(e), false);
   }
 }
 
@@ -14844,6 +15178,51 @@ document.addEventListener('keydown', e => {
   </div>
 </div>
 
+<!-- ── مودال خيارات تصفية المحفظة (كلي / جزئي / تحديد) ── -->
+<div id="walletSettleOptionsModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closeWalletSettleOptionsModal()">
+  <div class="modal-box" style="max-width:440px;text-align:center;padding:26px 20px;border-radius:18px;background:var(--bg2);border:1.5px solid rgba(72,187,120,.45);box-shadow:0 14px 45px rgba(0,0,0,.65);">
+    <div style="font-size:2.4rem;margin-bottom:6px;">📥</div>
+    <div style="font-weight:900;font-size:1.18rem;color:var(--text1);margin-bottom:6px;">تصفية وترحيل ذمم المحفظة للعهدة</div>
+    <div style="font-size:.84rem;color:var(--text3);margin-bottom:18px;">
+      إجمالي الرصيد المعلق في المحفظة حالياً: <strong style="color:#68d391;font-size:1.15rem;" id="wOptTotalAmt">0 ج</strong>
+    </div>
+
+    <!-- الخيارات الثلاثة -->
+    <div style="display:flex;flex-direction:column;gap:10px;text-align:right;margin-bottom:18px;">
+      <!-- الخيار 1: تصفية الكل -->
+      <div onclick="chooseSettleOption('all')" class="settle-opt-card" style="cursor:pointer;padding:12px 14px;border:1.5px solid rgba(72,187,120,.4);border-radius:12px;background:rgba(72,187,120,.08);transition:all .2s;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:800;color:#68d391;font-size:.92rem;">⚡ تصفية رصيد المحفظة بالكامل</div>
+          <span style="font-size:.78rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;font-weight:900;" id="wOptAllBadge">0 ج</span>
+        </div>
+        <div style="font-size:.74rem;color:var(--text3);margin-top:3px;">ترحيل كامل المبلغ للعهدة وتصفير ذمم المحفظة</div>
+      </div>
+
+      <!-- الخيار 2: تصفية مبلغ جزئي محدد -->
+      <div onclick="chooseSettleOption('partial')" class="settle-opt-card" style="cursor:pointer;padding:12px 14px;border:1.5px solid rgba(99,179,237,.4);border-radius:12px;background:rgba(99,179,237,.08);transition:all .2s;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:800;color:#63b3ed;font-size:.92rem;">💵 تصفية مبلغ مالي جزئي محدد</div>
+          <span style="font-size:.76rem;color:#63b3ed;">تحديد مبلغ ➔</span>
+        </div>
+        <div style="font-size:.74rem;color:var(--text3);margin-top:3px;">أدخل أي مبلغ قمت بسحبه كاش ليتم ترحيله للعهدة وخصمه من الذمم</div>
+      </div>
+
+      <!-- الخيار 3: اختيار حركات معينة من القائمة -->
+      <div onclick="chooseSettleOption('select')" class="settle-opt-card" style="cursor:pointer;padding:12px 14px;border:1.5px solid rgba(246,173,85,.4);border-radius:12px;background:rgba(246,173,85,.08);transition:all .2s;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:800;color:#f6ad55;font-size:.92rem;">📋 اختيار حركات معينة لتصفيتها</div>
+          <span style="font-size:.76rem;color:#f6ad55;">فتح القائمة ➔</span>
+        </div>
+        <div style="font-size:.74rem;color:var(--text3);margin-top:3px;">اختيار حركات تحويل محددة بالـ Checkbox وتصفيتها معاً</div>
+      </div>
+    </div>
+
+    <button onclick="closeWalletSettleOptionsModal()" class="btn btn-ghost" style="padding:8px 24px;border-radius:10px;font-size:.85rem;cursor:pointer;">
+      ✕ إلغاء
+    </button>
+  </div>
+</div>
+
 <!-- ── مودال الرقم السري لتصفية وترحيل المحفظة ── -->
 <div id="walletPinModal" class="modal-overlay" style="z-index:9999;" onclick="if(event.target===this)closeWalletPinModal()">
   <div class="modal-box" style="max-width:390px;text-align:center;padding:26px 22px;border-radius:18px;background:var(--bg2);border:1.5px solid rgba(124,58,237,.45);box-shadow:0 14px 45px rgba(0,0,0,.65);">
@@ -14906,6 +15285,25 @@ document.addEventListener('keydown', e => {
 
       <input type="text" id="odSearchInp" oninput="renderOnlineDebtsModalList()" placeholder="🔍 ابحث بالاسم أو المبلغ أو الملاحظات..."
         style="flex:1;min-width:180px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:.78rem;outline:none;"/>
+    </div>
+
+    <!-- شريط تصفية الحركات المحددة -->
+    <div id="odSelectedActionBar" style="display:none;background:linear-gradient(135deg, rgba(72,187,120,.2) 0%, rgba(56,161,105,.35) 100%);border:1.5px solid rgba(72,187,120,.6);border-radius:12px;padding:9px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1.1rem;">✅</span>
+        <div>
+          <div style="font-weight:900;color:#68d391;font-size:.88rem;" id="odSelectedCountText">تم تحديد 0 حركة</div>
+          <div style="font-size:.75rem;color:var(--text3);">إجمالي المبلغ المحدد: <strong style="color:#fff;font-size:.92rem;" id="odSelectedAmtText">0 ج</strong></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="settleSelectedWalletDebts()" class="btn btn-green" style="padding:6px 16px;font-weight:900;border-radius:8px;font-size:.82rem;box-shadow:0 3px 10px rgba(72,187,120,.35);cursor:pointer;">
+          📥 تصفية الحركات المحددة للعهدة
+        </button>
+        <button onclick="clearOdSelection()" class="btn btn-ghost" style="padding:6px 12px;font-size:.78rem;cursor:pointer;">
+          إلغاء التحديد
+        </button>
+      </div>
     </div>
 
     <!-- جدول الحركات -->
