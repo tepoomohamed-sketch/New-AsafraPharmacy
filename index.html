@@ -2728,6 +2728,9 @@ let attEmpNames   = [];  // from meta/attendanceEmployees
 let attRates      = {};  // from meta/attendanceRates { name: hourlyRate }
 let attExtraHours = {};  // from meta/attendanceExtraHours { "YYYY-MM__name": extraHrs }
 let attIncentives = {};  // from meta/attendanceIncentives { "YYYY-MM__name": incAmt }
+let attSalaryTypes    = {};  // from meta/attendanceSalaryTypes { name: 'hourly' | 'fixed' }
+let attFixedSalaries  = {};  // from meta/attendanceFixedSalaries { name: fixedAmount }
+let attManualSalaries = {};  // from meta/attendanceManualSalaries { "YYYY-MM__name": manualSalary }
 let walletSettlePin = '1234'; // الرقم السري لتصفية المحفظة والذمم إلى العهدة
 let attAttOff     = new Set();  // موظفين مستبعَدين من الحضور
 let attSalOff     = new Set();  // موظفين مستبعَدين من الرواتب
@@ -8871,18 +8874,24 @@ function listenAttMeta() {
 // ── Load employee names + rates from Supabase meta ──
 async function loadAttMeta() {
   try {
-    const [empV, rateV, extraV, attOffV, salOffV, incV] = await Promise.all([
+    const [empV, rateV, extraV, attOffV, salOffV, incV, typeV, fixedV, manualV] = await Promise.all([
       sbGetMeta('attendanceEmployees'),
       sbGetMeta('attendanceRates'),
       sbGetMeta('attendanceExtraHours'),
       sbGetMeta('attendanceAttOff'),
       sbGetMeta('attendanceSalOff'),
-      sbGetMeta('attendanceIncentives')
+      sbGetMeta('attendanceIncentives'),
+      sbGetMeta('attendanceSalaryTypes'),
+      sbGetMeta('attendanceFixedSalaries'),
+      sbGetMeta('attendanceManualSalaries')
     ]);
-    attEmpNames   = empV.names || [];
-    attRates      = rateV  || {};
-    attExtraHours = extraV || {};
-    attIncentives = incV   || {};
+    attEmpNames       = empV.names || [];
+    attRates          = rateV  || {};
+    attExtraHours     = extraV || {};
+    attIncentives     = incV   || {};
+    attSalaryTypes    = typeV  || {};
+    attFixedSalaries  = fixedV || {};
+    attManualSalaries = manualV || {};
     // [v13] قوائم الاستبعاد — لو مش موجودين = كلهم مفعّلين
     attAttOff = new Set(attOffV?.names || []);
     attSalOff = new Set(salOffV?.names || []);
@@ -9316,7 +9325,18 @@ function attRenderAdmin() {
   const todayHrs   = todaySess.filter(s=>!s.error && isAttOn(s.name)).reduce((a,s)=>a+(s.hours||0),0);
   const monthHrs   = validSess.filter(s=>isAttOn(s.name)).reduce((a,s)=>a+(s.hours||0),0);
   const activeEmps = new Set(todaySess.filter(s=>!s.error && isAttOn(s.name)).map(s=>s.name)).size;
-  const monthSalary= validSess.filter(s=>isSalOn(s.name)).reduce((a,s)=>a+((s.hours||0)/26)*(attRates[s.name]||0),0);
+  const monthSalary = attEmpNames.filter(isSalOn).reduce((acc, n) => {
+    const manKey = `${attFilter.month}__${n}`;
+    if (attManualSalaries[manKey] !== undefined && attManualSalaries[manKey] !== null && attManualSalaries[manKey] !== '') {
+      return acc + (parseFloat(attManualSalaries[manKey]) || 0);
+    }
+    if (attSalaryTypes[n] === 'fixed') {
+      return acc + (parseFloat(attFixedSalaries[n]) || 0);
+    }
+    const empTotalHrs = validSess.filter(s => s.name === n).reduce((a, s) => a + (s.hours || 0), 0) + (attExtraHours[`${attFilter.month}__${n}`] || 0);
+    const rate = attRates[n] || 0;
+    return acc + (rate > 0 ? Math.round((empTotalHrs / 26) * rate) : 0);
+  }, 0);
   const workDays   = new Set(validSess.filter(s=>isAttOn(s.name)).map(s=>s.date)).size;
   const avgHrsDay  = workDays > 0 ? monthHrs / workDays : 0;
 
@@ -9452,12 +9472,32 @@ function attRenderAdmin() {
     byEmp[s.name].days.add(s.date);
     if(s.error)byEmp[s.name].errors++;
   });
+  // شمول جميع الموظفين المفعّلين بالرواتب حتى من ليس لديهم جلسات حضور مسجلة (راتب ثابت أو يدوي)
+  attEmpNames.filter(isSalOn).forEach(n => {
+    if (!byEmp[n]) byEmp[n] = { hours: 0, days: new Set(), errors: 0 };
+  });
+
   const salRows=Object.entries(byEmp).map(([n,v])=>{
-    const rate  = attRates[n] || 0;
+    const isFixed = attSalaryTypes[n] === 'fixed';
+    const manKey = `${attFilter.month}__${n}`;
+    const manualSal = attManualSalaries[manKey];
     const exKey = `${attFilter.month}__${n}`;
     const extra = attExtraHours[exKey] || 0;
     const totalHrs = v.hours + extra;
-    const grossSalary = rate > 0 ? Math.round((totalHrs / 26) * rate) : 0;
+
+    let grossSalary = 0;
+    let rateColHtml = '';
+    if (manualSal !== undefined && manualSal !== null && manualSal !== '') {
+      grossSalary = parseFloat(manualSal) || 0;
+      rateColHtml = `<span style="color:#b794f4;font-size:.78rem;font-weight:700;" title="تم إدخال راتب يدوي مباشر لهذا الشهر">✏️ يدوي: ${fmt(grossSalary)} ج</span>`;
+    } else if (isFixed) {
+      grossSalary = parseFloat(attFixedSalaries[n]) || 0;
+      rateColHtml = `<span style="color:#48bb78;font-size:.78rem;font-weight:700;" title="راتب ثابت شهري معتمد">💵 ثابت: ${fmt(grossSalary)} ج</span>`;
+    } else {
+      const rate = attRates[n] || 0;
+      grossSalary = rate > 0 ? Math.round((totalHrs / 26) * rate) : 0;
+      rateColHtml = rate > 0 ? `${fmt(rate)} ج/س` : '—';
+    }
 
     const normN = normAr(n);
     const isMatch = e => {
@@ -9498,13 +9538,13 @@ function attRenderAdmin() {
       <td style="font-weight:700;color:${extra>0?'#f6ad55':'var(--text2)'};">${totalHrs.toFixed(2)}</td>
       <td>${v.days.size}</td>
       <td>${v.errors>0?`<span style="color:#c53030;font-weight:700;">${v.errors}</span>`:0}</td>
-      <td>${rate>0?fmt(rate)+' ج/س':'—'}</td>
-      <td style="font-weight:800;color:${rate>0?'#5b21b6':'#a0aec0'};">${rate>0?fmt(grossSalary)+' ج':'—'}</td>
+      <td>${rateColHtml}</td>
+      <td style="font-weight:800;color:${grossSalary>0?'#5b21b6':'#a0aec0'};">${grossSalary>0?fmt(grossSalary)+' ج':'—'}</td>
       <td style="font-weight:700;color:#48bb78;">${empInc>0?fmt(empInc)+' ج':'—'}</td>
       <td style="font-weight:700;color:#f6ad55;">${empWithdrawn>0?fmt(empWithdrawn)+' ج':'—'}</td>
       <td style="font-weight:700;color:#fc8181;">${empDeduct>0?fmt(empDeduct)+' ج':'—'}</td>
       <td style="font-weight:900;color:${empRemaining>0?'#48bb78':(empRemaining===0?'#63b3ed':'#fc8181')};">
-        ${rate>0 || empInc>0 ? fmt(empRemaining)+' ج' : '—'}
+        ${grossSalary>0 || empInc>0 || empWithdrawn>0 || empDeduct>0 ? fmt(empRemaining)+' ج' : '—'}
       </td>
     </tr>`;}).join('');
 
@@ -9546,13 +9586,40 @@ function attRenderAdmin() {
     </span>`;
   }).join('');
   const safeId = n => n.replace(/\s/g,'_').replace(/[^\w]/g,'');
-  const rateRows=attEmpNames.filter(isSalOn).map(n=>`
-    <div class="at-rate-row">
-      <span class="at-rate-name">👤 ${esc(n)}</span>
-      <input class="at-rate-inp" type="number" value="${attRates[n]||''}" placeholder="0" min="0"/>
-      <button class="at-rate-save" data-emp="${esc(n)}" onclick="attSaveRate(this)">💾 حفظ</button>
-      <span style="font-size:.74rem;color:#a0aec0;">ج/ساعة</span>
-    </div>`).join('');
+  const rateRows=attEmpNames.filter(isSalOn).map(n=>{
+    const isFixed = attSalaryTypes[n] === 'fixed';
+    const val = isFixed ? (attFixedSalaries[n] || '') : (attRates[n] || '');
+    return `
+    <div class="at-rate-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 12px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:10px;min-width:140px;">
+        <span class="at-rate-name" style="font-weight:800;color:var(--text1);font-size:.9rem;">👤 ${esc(n)}</span>
+        <button type="button" class="btn btn-xs" data-emp="${esc(n)}" onclick="attToggleSalaryType(this.dataset.emp)"
+          style="font-size:.74rem;font-weight:800;border-radius:7px;padding:3px 9px;cursor:pointer;
+                 background:${isFixed ? 'rgba(72,187,120,.18)' : 'rgba(99,179,237,.18)'};
+                 color:${isFixed ? '#48bb78' : '#63b3ed'};
+                 border:1px solid ${isFixed ? 'rgba(72,187,120,.4)' : 'rgba(99,179,237,.4)'};"
+          title="اضغط للتحويل بين راتب ثابت شهري أو حساب بالساعة">
+          ${isFixed ? '💵 راتب ثابت' : '⏱️ بالساعة'}
+        </button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:inline-flex;align-items:center;gap:4px;">
+          <input class="at-rate-inp" type="number" min="0"
+            style="width:105px;padding:4px 8px;font-size:.95rem;font-weight:800;text-align:center;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);"
+            value="${val}"
+            placeholder="${isFixed ? 'راتب شهري' : 'سعر الساعة'}"
+            data-emp="${esc(n)}" data-type="${isFixed ? 'fixed' : 'hourly'}"/>
+          <span style="font-size:.74rem;font-weight:700;color:${isFixed ? '#48bb78' : '#a0aec0'};min-width:44px;">
+            ${isFixed ? 'ج/شهر' : 'ج/ساعة'}
+          </span>
+        </div>
+        <button class="at-rate-save btn btn-sm btn-green" data-emp="${esc(n)}" onclick="attSaveRate(this)" style="padding:4px 12px;font-size:.78rem;font-weight:800;border-radius:8px;cursor:pointer;">
+          💾 حفظ
+        </button>
+      </div>
+    </div>`;
+  }).join('');
 
   document.getElementById('attPivotSection').innerHTML=`
     <!-- ① Daily pivot table — للجميع -->
@@ -9616,7 +9683,7 @@ function attRenderAdmin() {
 
     <!-- ⑤ Rate settings -->
     <div class="at-emp-sec" style="border:1.5px solid #fefcbf;margin-top:14px;">
-      <div class="at-emp-title">💰 سعر الساعة لكل موظف</div>
+      <div class="at-emp-title">💰 إعدادات الرواتب والأجور (بالساعات أو راتب ثابت)</div>
       ${rateRows||'<span style="color:#a0aec0;font-size:.83rem;">أضف موظفين أولاً</span>'}
     </div>
 
@@ -9627,7 +9694,7 @@ function attRenderAdmin() {
         <select id="attRepEmp" class="fel" style="flex:1;min-width:180px;"
           onchange="attShowEmpReport()">
           <option value="">— اختر موظف —</option>
-          ${attEmpNames.filter(isAttOn).map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')}
+          ${attEmpNames.map(n=>`<option value="${esc(n)}">${esc(n)}${!isAttOn(n)?' (بدون بصمة)':''}${attSalaryTypes[n]==='fixed'?' [راتب ثابت]':''}</option>`).join('')}
         </select>
       </div>
       <div id="attEmpReport"></div>
@@ -9782,17 +9849,38 @@ function attExportSalaryCSV() {
     if (s.error) byEmp[s.name].errors++;
   });
 
-  const header = ['الاسم', 'ساعات فعلية', 'ساعات إضافية', 'الإجمالي', 'أيام', 'أخطاء', 'سعر الساعة (ج/س)', 'الراتب المستحق (ج)', 'الحوافز (ج)', 'صافي المتبقي (ج)'];
+  // شمول جميع الموظفين المفعّلين بالرواتب
+  attEmpNames.filter(isSalOn).forEach(n => {
+    if (!byEmp[n]) byEmp[n] = { hours: 0, days: new Set(), errors: 0 };
+  });
+
+  const header = ['الاسم', 'ساعات فعلية', 'ساعات إضافية', 'الإجمالي', 'أيام', 'أخطاء', 'نظام الراتب', 'الراتب المستحق (ج)', 'الحوافز (ج)', 'صافي المتبقي (ج)'];
   const rows = [header];
   Object.entries(byEmp).forEach(([n, v]) => {
-    const rate    = attRates[n] || 0;
+    const isFixed = attSalaryTypes[n] === 'fixed';
+    const manKey = `${month}__${n}`;
+    const manualSal = attManualSalaries[manKey];
     const exKey   = `${month}__${n}`;
     const extra   = attExtraHours[exKey] || 0;
     const total   = v.hours + extra;
-    const gross   = rate > 0 ? Math.round((total / 26) * rate) : 0;
-    const incK    = `${month}__${n}`;
-    const inc     = parseFloat(attIncentives[incK]) || 0;
-    rows.push([n, v.hours.toFixed(2), extra.toFixed(2), total.toFixed(2), v.days.size, v.errors, rate || '—', rate > 0 ? String(gross) : '—', inc > 0 ? String(inc) : '0', rate > 0 || inc > 0 ? String(gross + inc) : '—']);
+
+    let gross = 0;
+    let rateTypeStr = '';
+    if (manualSal !== undefined && manualSal !== null && manualSal !== '') {
+      gross = parseFloat(manualSal) || 0;
+      rateTypeStr = `يدوي (${gross} ج)`;
+    } else if (isFixed) {
+      gross = parseFloat(attFixedSalaries[n]) || 0;
+      rateTypeStr = `ثابت (${gross} ج)`;
+    } else {
+      const rate = attRates[n] || 0;
+      gross = rate > 0 ? Math.round((total / 26) * rate) : 0;
+      rateTypeStr = rate > 0 ? `${rate} ج/س` : '—';
+    }
+
+    const incK = `${month}__${n}`;
+    const inc  = parseFloat(attIncentives[incK]) || 0;
+    rows.push([n, v.hours.toFixed(2), extra.toFixed(2), total.toFixed(2), v.days.size, v.errors, rateTypeStr, gross > 0 ? String(gross) : '—', inc > 0 ? String(inc) : '0', (gross > 0 || inc > 0) ? String(gross + inc) : '—']);
   });
 
   const csv = '﻿' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -10082,12 +10170,28 @@ function attShowEmpReport() {
   });
 
   // ── الراتب والحوافز والمسحوبات والخصومات ──
-  const rate   = attRates[name] || 0;
-  const salary = rate > 0 ? Math.round((totalHrs / 26) * rate) : null;
+  const isFixed = attSalaryTypes[name] === 'fixed';
+  const manKey = `${month}__${name}`;
+  const manualSal = attManualSalaries[manKey];
+
+  let baseSalary = 0;
+  let salarySource = ''; // 'manual' | 'fixed' | 'hourly'
+
+  if (manualSal !== undefined && manualSal !== null && manualSal !== '') {
+    baseSalary = parseFloat(manualSal) || 0;
+    salarySource = 'manual';
+  } else if (isFixed) {
+    baseSalary = parseFloat(attFixedSalaries[name]) || 0;
+    salarySource = 'fixed';
+  } else {
+    const rate = attRates[name] || 0;
+    baseSalary = rate > 0 ? Math.round((totalHrs / 26) * rate) : 0;
+    salarySource = 'hourly';
+  }
 
   const incKey = `${month}__${name}`;
   const incAmt = parseFloat(attIncentives[incKey]) || 0;
-  const totalDue = (salary != null ? salary : 0) + incAmt;
+  const totalDue = baseSalary + incAmt;
 
   const normN = normAr(name);
   const isMatchEmp = e => {
@@ -10168,12 +10272,32 @@ function attShowEmpReport() {
         <div class="at-kv" style="font-size:.95rem;">${maxDay} <span class="at-ku">(${workMap[maxDay].toFixed(1)}س)</span></div>
       </div>` : ''}
 
-      ${(salary != null || incAmt > 0) ? `
-      <!-- 1. الراتب التقديري -->
-      <div class="at-kpi at-kpi-o" style="padding:12px 16px;">
-        <div class="at-kl">💰 الراتب التقديري</div>
-        <div class="at-kv">${salary != null ? fmt(salary) : '—'} <span class="at-ku">ج</span></div>
-        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">محسوب من ساعات العمل (${totalHrs.toFixed(1)}س)</div>
+      <!-- 1. الراتب الأساسي (إدخال يدوي وتعديل مباشر) -->
+      <div class="at-kpi at-kpi-o" style="padding:12px 16px;border-color:rgba(237,137,54,.5);background:rgba(237,137,54,.05);" title="الراتب الأساسي للموظف لهذا الشهر">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div class="at-kl" style="color:#f6ad55;font-weight:800;">💰 الراتب الأساسي</div>
+          <span id="attRepSalaryBadge" style="font-size:.68rem;padding:2px 7px;border-radius:5px;font-weight:800;
+            background:${salarySource==='manual'?'rgba(124,58,237,.2)':(salarySource==='fixed'?'rgba(72,187,120,.2)':'rgba(99,179,237,.2)')};
+            color:${salarySource==='manual'?'#b794f4':(salarySource==='fixed'?'#68d391':'#63b3ed')};">
+            ${salarySource==='manual'?'✏️ إدخال يدوي':(salarySource==='fixed'?'💵 راتب ثابت':'⏱️ ساعات عمل')}
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" min="0" step="50"
+            id="attRepBaseSalaryInp"
+            style="width:125px;padding:4px 8px;font-size:1.15rem;font-weight:900;border-radius:8px;border:1.5px solid rgba(237,137,54,.6);background:var(--bg1);color:#f6ad55;text-align:center;"
+            value="${baseSalary > 0 ? baseSalary : ''}" placeholder="0"
+            data-emp="${esc(name)}" data-month="${month}"
+            data-withdrawn="${withdrawnAmt}"
+            data-deduct="${discAmt}"
+            oninput="attOnBaseSalaryInput(this)"
+            onchange="attSaveManualSalaryDirect(this)"
+            title="أدخل أو عدل الراتب الأساسي لهذا الشهر بالجنيه"/>
+          <span style="font-weight:800;color:#f6ad55;font-size:.9rem;">ج</span>
+        </div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:4px;" id="attRepBaseSalaryDesc">
+          ${salarySource==='fixed' ? 'راتب ثابت شهري معتمد (يمكنك تعديله هنا لهذا الشهر)' : (salarySource==='hourly' ? `محسوب من ساعات العمل (${totalHrs.toFixed(1)}س × ${attRates[name]||0} ج/س)` : 'تم إدخاله يدوياً لهذا الشهر')}
+        </div>
       </div>
 
       <!-- 2. الحوافز والمكافآت (إدخال يدوي) -->
@@ -10188,7 +10312,6 @@ function attShowEmpReport() {
             style="width:115px;padding:4px 8px;font-size:1.15rem;font-weight:800;border-radius:8px;border:1.5px solid rgba(72,187,120,.6);background:var(--bg1);color:#48bb78;text-align:center;"
             value="${incAmt > 0 ? incAmt : ''}" placeholder="0"
             data-emp="${esc(name)}" data-month="${month}"
-            data-salary="${salary != null ? salary : 0}"
             data-withdrawn="${withdrawnAmt}"
             data-deduct="${discAmt}"
             oninput="attSetIncentives(this)"
@@ -10231,7 +10354,6 @@ function attShowEmpReport() {
           ${netRemaining > 0 ? '✅ متبقي للصرف للموظف' : (netRemaining === 0 ? '🎉 تم تسوية الراتب بالكامل' : '⚠️ مسحوبات زائدة (عجز)')}
         </div>
       </div>
-      ` : ''}
     </div>
 
     <div id="attRepPayBarWrapper">
@@ -10244,10 +10366,10 @@ function attShowEmpReport() {
           <span style="font-size:.76rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;">المتبقي: ${fmt(netRemaining)} ج</span>
         </div>
         <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
-          المعادلة: راتب ${fmt(salary||0)} ج ${incAmt > 0 ? `+ حوافز ${fmt(incAmt)} ج ` : ''}− مسحوبات ${fmt(withdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
+          المعادلة: راتب ${fmt(baseSalary)} ج ${incAmt > 0 ? `+ حوافز ${fmt(incAmt)} ج ` : ''}− مسحوبات ${fmt(withdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
         </div>
       </div>
-      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${salary||0}, ${withdrawnAmt}, ${discAmt}, ${incAmt})"
+      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${baseSalary}, ${withdrawnAmt}, ${discAmt}, ${incAmt})"
         style="padding:9px 22px;font-size:.92rem;font-weight:900;border-radius:10px;box-shadow:0 4px 14px rgba(72,187,120,.35);cursor:pointer;display:flex;align-items:center;gap:6px;">
         <span>💸 صرف وتسليم ${fmt(netRemaining)} ج من العهدة</span>
       </button>
@@ -10353,19 +10475,93 @@ async function attSaveIncentiveDirect(inp) {
   }
 }
 
+let _baseSalSaveTimer = null;
+function attOnBaseSalaryInput(inp) {
+  const name  = inp.dataset.emp;
+  const month = inp.dataset.month;
+  const raw   = inp.value.trim();
+  const manKey = `${month}__${name}`;
+
+  if (raw === '') {
+    delete attManualSalaries[manKey];
+  } else {
+    attManualSalaries[manKey] = Math.max(0, parseFloat(raw) || 0);
+  }
+
+  // تحديث فوري للحسابات في الـ DOM
+  attUpdateEmpReportCalculations(name, month);
+
+  clearTimeout(_baseSalSaveTimer);
+  _baseSalSaveTimer = setTimeout(async () => {
+    try {
+      await sbSetMeta('attendanceManualSalaries', attManualSalaries);
+      if (raw !== '') toast(`✅ تم حفظ الراتب الأساسي لـ "${name}": ${fmt(attManualSalaries[manKey])} ج`);
+      attRenderAdmin();
+    } catch(e) {
+      toast('❌ خطأ في حفظ الراتب: ' + (e.message || e), false);
+    }
+  }, 800);
+}
+
+async function attSaveManualSalaryDirect(inp) {
+  clearTimeout(_baseSalSaveTimer);
+  const name  = inp.dataset.emp;
+  const month = inp.dataset.month;
+  const raw   = inp.value.trim();
+  const manKey = `${month}__${name}`;
+
+  if (raw === '') {
+    delete attManualSalaries[manKey];
+    try {
+      await sbSetMeta('attendanceManualSalaries', attManualSalaries);
+      toast(`ℹ️ تم إعادة تعيين الراتب الأساسي لـ "${name}" للنظام الافتراضي`);
+      attRenderAdmin();
+    } catch(e) {
+      toast('❌ خطأ في الحفظ: ' + (e.message || e), false);
+    }
+  } else {
+    attManualSalaries[manKey] = Math.max(0, parseFloat(raw) || 0);
+    try {
+      await sbSetMeta('attendanceManualSalaries', attManualSalaries);
+      toast(`✅ تم حفظ الراتب الأساسي لـ "${name}": ${fmt(attManualSalaries[manKey])} ج`);
+      attRenderAdmin();
+    } catch(e) {
+      toast('❌ خطأ في الحفظ: ' + (e.message || e), false);
+    }
+  }
+}
+
+async function attToggleSalaryType(name) {
+  const cur = attSalaryTypes[name] || 'hourly';
+  const next = cur === 'fixed' ? 'hourly' : 'fixed';
+  attSalaryTypes[name] = next;
+  try {
+    await sbSetMeta('attendanceSalaryTypes', attSalaryTypes);
+    toast(`✅ تم تغيير نظام حساب "${name}" إلى: ${next === 'fixed' ? '💵 راتب ثابت شهري' : '⏱️ بالساعة'}`);
+  } catch(e) {
+    toast('❌ ' + arErr(e), false);
+  }
+  attRenderAdmin();
+  const repName = document.getElementById('attRepEmp')?.value;
+  if (repName === name) {
+    attShowEmpReport();
+  }
+}
+
 function attUpdateEmpReportCalculations(name, month) {
-  const inp = document.getElementById('attRepIncentiveInp');
-  if (!inp) return;
-  const incVal = Math.max(0, parseFloat(inp.value) || 0);
-  const gross = parseFloat(inp.dataset.salary) || 0;
-  const withdrawn = parseFloat(inp.dataset.withdrawn) || 0;
-  const deduct = parseFloat(inp.dataset.deduct) || 0;
+  const baseInp = document.getElementById('attRepBaseSalaryInp');
+  const incInp  = document.getElementById('attRepIncentiveInp');
+
+  const gross     = baseInp ? Math.max(0, parseFloat(baseInp.value) || 0) : 0;
+  const incVal    = incInp  ? Math.max(0, parseFloat(incInp.value) || 0) : 0;
+  const withdrawn = baseInp ? parseFloat(baseInp.dataset.withdrawn) || 0 : (incInp ? parseFloat(incInp.dataset.withdrawn) || 0 : 0);
+  const deduct    = baseInp ? parseFloat(baseInp.dataset.deduct) || 0 : (incInp ? parseFloat(incInp.dataset.deduct) || 0 : 0);
 
   const totalDue = gross + incVal;
-  const netRem = totalDue - withdrawn - deduct;
+  const netRem   = totalDue - withdrawn - deduct;
 
-  const netCard = document.getElementById('attRepNetCard');
-  const netValEl = document.getElementById('attRepNetVal');
+  const netCard   = document.getElementById('attRepNetCard');
+  const netValEl  = document.getElementById('attRepNetVal');
   const netDescEl = document.getElementById('attRepNetDesc');
   if (netValEl) {
     netValEl.innerHTML = `${fmt(Math.abs(netRem))} <span class="at-ku">ج</span>`;
@@ -10377,7 +10573,7 @@ function attUpdateEmpReportCalculations(name, month) {
   }
   if (netCard) {
     netCard.style.borderColor = netRem > 0 ? 'rgba(72,187,120,.7)' : (netRem === 0 ? 'rgba(99,179,237,.5)' : 'rgba(252,129,129,.7)');
-    netCard.style.background = netRem > 0 ? 'rgba(72,187,120,.12)' : (netRem === 0 ? 'rgba(99,179,237,.08)' : 'rgba(252,129,129,.12)');
+    netCard.style.background  = netRem > 0 ? 'rgba(72,187,120,.12)' : (netRem === 0 ? 'rgba(99,179,237,.08)' : 'rgba(252,129,129,.12)');
   }
 
   const payBarWrap = document.getElementById('attRepPayBarWrapper');
@@ -10555,18 +10751,33 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
 }
 
 async function attSaveRate(btn) {
-  // ── الاسم محفوظ في data-emp بدل onclick string (يحل مشكلة الأسماء العربية) ──
   const name = btn.dataset.emp;
-  const inp = btn.parentElement.querySelector('.at-rate-inp');
+  const row = btn.closest('.at-rate-row') || btn.parentElement;
+  const inp = row.querySelector('.at-rate-inp');
   const val = parseFloat(inp?.value) || 0;
-  attRates[name] = val;
-  // تحديث عمود الراتب في جدول الرواتب فوراً بدون إعادة رسم كاملة
-  attUpdateSalaryRow(name, val);
-  try {
-    await sbSetMeta('attendanceRates', attRates);
-    toast(`✅ سعر ساعة "${name}": ${val} ج/س`);
-  } catch(e) {
-    toast('❌ '+arErr(e), false);
+  const isFixed = attSalaryTypes[name] === 'fixed';
+
+  if (isFixed) {
+    attFixedSalaries[name] = val;
+    try {
+      await sbSetMeta('attendanceFixedSalaries', attFixedSalaries);
+      toast(`✅ تم حفظ راتب "${name}" الثابت: ${fmt(val)} ج/شهرياً`);
+    } catch(e) {
+      toast('❌ '+arErr(e), false);
+    }
+  } else {
+    attRates[name] = val;
+    try {
+      await sbSetMeta('attendanceRates', attRates);
+      toast(`✅ سعر ساعة "${name}": ${val} ج/س`);
+    } catch(e) {
+      toast('❌ '+arErr(e), false);
+    }
+  }
+  attRenderAdmin();
+  const repName = document.getElementById('attRepEmp')?.value;
+  if (repName === name) {
+    attShowEmpReport();
   }
 }
 
