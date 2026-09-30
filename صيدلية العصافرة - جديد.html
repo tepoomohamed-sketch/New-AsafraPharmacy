@@ -84,8 +84,82 @@
   .steps code{background:var(--bg2);padding:2px 6px;border-radius:5px;font-size:.81rem;color:#68d391;}
   .cfg-ta{width:100%;height:155px;border:1.5px solid var(--border2);border-radius:10px;padding:11px;font-family:'Courier New',monospace;font-size:.8rem;resize:vertical;direction:ltr;background:var(--bg3);color:#68d391;}
   .cfg-ta:focus{outline:none;border-color:var(--green);}
-  .hdr{background:linear-gradient(135deg,#1e0845 0%,#3b0764 40%,#5b21b6 75%,#7c3aed 100%);color:white;padding:14px 24px;box-shadow:0 4px 20px rgba(124,58,237,.35);position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(124,58,237,.3);}
-  .hdr-in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .hdr {
+    background: linear-gradient(135deg, #180638 0%, #2e0652 40%, #4c1d95 75%, #6d28d9 100%);
+    color: white;
+    padding: 10px 24px;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1.5px solid rgba(124, 58, 237, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .hdr-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hdr-row-fin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ══ سهم تحويل وسيط أنيق بين المحفظة والعهدة ══ */
+  .btn-wallet-bridge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(72,187,120,0.18) 0%, rgba(56,161,105,0.32) 100%);
+    border: 1.5px solid rgba(72,187,120,0.65);
+    border-radius: 12px;
+    padding: 6px 14px;
+    color: #fff;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 14px rgba(72,187,120,0.2);
+    animation: pulseBridge 2.6s infinite;
+    white-space: nowrap;
+  }
+  .btn-wallet-bridge:hover {
+    transform: translateY(-2px) scale(1.03);
+    background: linear-gradient(135deg, rgba(72,187,120,0.35) 0%, rgba(56,161,105,0.55) 100%);
+    border-color: #68d391;
+    box-shadow: 0 6px 20px rgba(72,187,120,0.45);
+  }
+  .bridge-badge {
+    background: #38a169;
+    color: #fff;
+    font-weight: 900;
+    font-size: .84rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    letter-spacing: -.02em;
+  }
+  .bridge-arrow {
+    font-size: 1.15rem;
+    color: #68d391;
+    font-weight: 900;
+    transform: scaleX(-1);
+    display: inline-block;
+    transition: transform .2s ease;
+  }
+  .btn-wallet-bridge:hover .bridge-arrow {
+    transform: scaleX(-1) translateX(3px);
+  }
+  @keyframes pulseBridge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(72,187,120,0.4); }
+    50% { box-shadow: 0 0 0 7px rgba(72,187,120,0); }
+  }
   .ph-name{font-size:1.35rem;font-weight:900;letter-spacing:-.3px;}
   .u-badge{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.35);border-radius:22px;padding:5px 13px;font-size:.8rem;display:flex;align-items:center;gap:8px;}
   .r-chip{padding:2px 9px;border-radius:10px;font-size:.7rem;font-weight:800;}
@@ -192,32 +266,7 @@
     border-color: rgba(99, 179, 237, 0.6);
   }
 
-  /* ══ زر تصفية ذمم المحفظة للعهدة ══ */
-  .btn-wallet-transfer {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: linear-gradient(135deg, rgba(72,187,120,0.22) 0%, rgba(56,161,105,0.38) 100%);
-    border: 1.5px solid rgba(72,187,120,0.65);
-    border-radius: 12px;
-    padding: 6px 13px;
-    color: #fff;
-    cursor: pointer;
-    transition: all .25s ease;
-    box-shadow: 0 4px 14px rgba(72,187,120,0.25);
-    animation: pulseWallet 2.8s infinite;
-    white-space: nowrap;
-  }
-  .btn-wallet-transfer:hover {
-    transform: translateY(-2px) scale(1.03);
-    background: linear-gradient(135deg, rgba(72,187,120,0.38) 0%, rgba(56,161,105,0.6) 100%);
-    border-color: #68d391;
-    box-shadow: 0 6px 18px rgba(72,187,120,0.45);
-  }
-  @keyframes pulseWallet {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(72,187,120,0.4); }
-    50% { box-shadow: 0 0 0 6px rgba(72,187,120,0); }
-  }
+
 
   /* ══ TOP MONTHLY SALES TREND CARD (جراف مبيعات الشهر الاحترافي) ══ */
   .top-sales-card {
@@ -1215,32 +1264,51 @@ function ensureXLSX() {
 
   <!-- Header -->
   <div class="hdr">
-    <div class="hdr-in">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+    <!-- Row 1: Brand, User Profile, Quick Tools (Theme, Search, Logout) & Sales Targets -->
+    <div class="hdr-row-top">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div class="ph-name" id="hPhName">🏥 صيدلية العصافرة</div>
         <div class="u-badge">
           <span id="hUName">—</span>
           <span class="r-chip" id="hURole">—</span>
         </div>
+        <!-- أزرار التحكم مجمعة بجوار بيانات الحساب في اليمين -->
+        <div style="display:flex;align-items:center;gap:6px;margin-right:4px;">
+          <button id="themeToggle" onclick="toggleTheme()" title="تبديل المظهر"
+            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 11px;color:white;cursor:pointer;font-size:1rem;transition:all .2s;">🌙</button>
+          <button onclick="openGlobalSearch()" title="بحث عالمي (Ctrl+K)"
+            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 12px;color:white;cursor:pointer;font-size:.82rem;transition:all .2s;display:flex;align-items:center;gap:5px;">
+            <span>🔍</span><span style="opacity:.7;font-size:.7rem;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:1px 4px;">Ctrl+K</span>
+          </button>
+          <button class="btn-logout" onclick="doLogout()" style="padding:6px 13px;">خروج ↩</button>
+        </div>
+      </div>
+
+      <!-- صناديق التارجت في يسار الصف العلوي -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div class="target-box" id="salesTargetBox" style="display:none;" title="متوسط المبيعات اليومي مقارنةً بالتارجت">
           <div class="target-lbl">🎯 تحقيق التارجت</div>
           <div class="target-pct" id="targetPct">—</div>
           <div class="target-sub" id="targetSub">—</div>
         </div>
-        <div id="monthlyTargetBox" style="display:none;align-items:center;gap:8px;background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.25);border-radius:12px;padding:7px 13px;cursor:default;" title="تقدم المبيعات الشهرية">
-          <svg width="36" height="36" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
+        <div id="monthlyTargetBox" style="display:none;align-items:center;gap:8px;background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.25);border-radius:12px;padding:6px 12px;cursor:default;" title="تقدم المبيعات الشهرية">
+          <svg width="34" height="34" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
             <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(124,58,237,.2)" stroke-width="4"/>
             <circle id="monthRingFill" cx="18" cy="18" r="15" fill="none" stroke="#7c3aed" stroke-width="4"
               stroke-dasharray="94.25" stroke-dashoffset="94.25" stroke-linecap="round" style="transition:stroke-dashoffset .6s ease;"/>
           </svg>
           <div style="text-align:center;">
-            <div style="font-size:.7rem;color:rgba(255,255,255,.75);font-weight:600;">الشهر</div>
-            <div id="monthlyPct" style="font-size:1rem;font-weight:900;color:#fff;">0%</div>
+            <div style="font-size:.68rem;color:rgba(255,255,255,.75);font-weight:600;">الشهر</div>
+            <div id="monthlyPct" style="font-size:.95rem;font-weight:900;color:#fff;">0%</div>
           </div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:11px;">
-                <!-- ── صندوق ذمم أونلاين اليوم ── -->
+    </div>
+
+    <!-- Row 2: Financial Balances & Wallet-to-Cash Bridge -->
+    <div class="hdr-row-fin">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <!-- ── صندوق ذمم أونلاين اليوم ── -->
         <div class="online-box today-online-box" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم (متاح للموظفين)">
           <div class="online-lbl" style="color:#81e6d9;">⚡ أونلاين اليوم</div>
           <div class="online-val" id="hOnlineToday">0 ج</div>
@@ -1252,25 +1320,20 @@ function ensureXLSX() {
           <div class="online-val" id="hOnlineDebts">0 ج</div>
         </div>
 
-        <!-- ── زر تصفية ذمم المحفظة للعهدة ── -->
-        <button id="btnSettleWallet" onclick="settleAllWalletDebts()" class="btn-wallet-transfer" style="display:none;" title="تصفية كل ذمم المحفظة ونقلها إلى العهدة">
-          <span style="font-size:1.1rem;">📥</span>
-          <div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
-            <span style="font-size:.68rem;color:rgba(255,255,255,.8);font-weight:700;">تصفية المحفظة</span>
-            <span style="font-size:.84rem;font-weight:900;color:#68d391;" id="btnSettleWalletAmt">0 ج للعهدة</span>
-          </div>
+        <!-- ── سهم تحويل وسيط أنيق بين ذمم المحفظة والعهدة ── -->
+        <button id="btnSettleWallet" onclick="settleAllWalletDebts()" class="btn-wallet-bridge" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية">
+          <span style="font-size:1.05rem;">📥</span>
+          <span style="font-size:.78rem;font-weight:800;">تصفية المحفظة للعهدة</span>
+          <span id="btnSettleWalletAmt" class="bridge-badge">0 ج</span>
+          <span class="bridge-arrow">➔</span>
         </button>
-        <div class="bal-box">
-          <div class="bal-lbl">💼 العهدة الحالية</div>
-          <div class="bal-amt" id="hBal">0</div>
-          <div style="font-size:.68rem;opacity:.8;">جنيه مصري</div>
-        </div>
-        <button id="themeToggle" onclick="toggleTheme()" title="تبديل المظهر"
-  style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:7px 12px;color:white;cursor:pointer;font-size:1rem;transition:all .2s;">🌙</button>
-        <button onclick="openGlobalSearch()" title="بحث عالمي (Ctrl+K)"
-  style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:7px 14px;color:white;cursor:pointer;font-size:.85rem;transition:all .2s;display:flex;align-items:center;gap:6px;">
-  <span>🔍</span><span style="opacity:.7;font-size:.72rem;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:1px 5px;">Ctrl+K</span></button>
-        <button class="btn-logout" onclick="doLogout()">خروج ↩</button>
+      </div>
+
+      <!-- ── صندوق العهدة الحالية ── -->
+      <div class="bal-box" style="padding:6px 20px;">
+        <div class="bal-lbl">💼 العهدة الحالية</div>
+        <div class="bal-amt" id="hBal">0</div>
+        <div style="font-size:.65rem;opacity:.8;">جنيه مصري</div>
       </div>
     </div>
   </div>
@@ -4916,27 +4979,24 @@ function updateOnlineDebtsHeader() {
     } else if (instaAmt > 0 && walletAmt === 0) {
       elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
     } else if (walletAmt > 0 && instaAmt === 0) {
-      elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;display:inline-flex;align-items:center;gap:6px;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span> <button onclick="event.stopPropagation();settleAllWalletDebts();" title="تصفية ذمم المحفظة وإضافتها للعهدة" style="background:#48bb78;border:none;color:#fff;border-radius:5px;padding:2px 6px;font-size:.68rem;font-weight:900;cursor:pointer;">📥 للعهدة</button></span>`;
+      elTotal.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#48bb78;">محفظة: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletAmt)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
     } else {
       elTotal.innerHTML = `
-        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.78rem;font-weight:800;">
           <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaAmt)} ج</span>
-          <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">
-            محفظة: ${fmt(walletAmt)} ج
-            <button onclick="event.stopPropagation();settleAllWalletDebts();" title="تصفية ذمم المحفظة وإضافتها للعهدة" style="background:#48bb78;border:none;color:#fff;border-radius:4px;padding:1px 5px;font-size:.65rem;font-weight:900;cursor:pointer;">📥 للعهدة</button>
-          </span>
+          <span style="color:#48bb78;background:rgba(72,187,120,.18);border:1px solid rgba(72,187,120,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletAmt)} ج</span>
         </div>
       `;
     }
   }
 
-  // ── تحديث أزرار تصفية المحفظة للعهدة ──
+  // ── تحديث سهم تحويل المحفظة للعهدة في الشريط المالي ──
   const btnWallet = document.getElementById('btnSettleWallet');
   const btnWalletAmt = document.getElementById('btnSettleWalletAmt');
   if (btnWallet) {
     if (walletAmt > 0) {
       btnWallet.style.display = 'inline-flex';
-      if (btnWalletAmt) btnWalletAmt.textContent = `${fmt(walletAmt)} ج للعهدة`;
+      if (btnWalletAmt) btnWalletAmt.textContent = `${fmt(walletAmt)} ج`;
     } else {
       btnWallet.style.display = 'none';
     }
@@ -4959,10 +5019,10 @@ function updateOnlineDebtsHeader() {
     } else if (instaToday > 0 && walletToday === 0) {
       elToday.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#63b3ed;">انستا: <strong style="font-size:1.15rem;color:#fff;">${fmt(instaToday)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
     } else if (walletToday > 0 && instaToday === 0) {
-      elToday.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#4fd1c5;">محفظة صيدلية: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletToday)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
+      elToday.innerHTML = `<span style="font-size:.92rem;font-weight:900;color:#4fd1c5;">محفظة: <strong style="font-size:1.15rem;color:#fff;">${fmt(walletToday)}</strong> <span style="font-size:.7rem;color:rgba(255,255,255,.75);">ج</span></span>`;
     } else {
       elToday.innerHTML = `
-        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.76rem;font-weight:800;">
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.78rem;font-weight:800;">
           <span style="color:#63b3ed;background:rgba(99,179,237,.18);border:1px solid rgba(99,179,237,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">انستا: ${fmt(instaToday)} ج</span>
           <span style="color:#4fd1c5;background:rgba(79,209,197,.18);border:1px solid rgba(79,209,197,.35);padding:2px 7px;border-radius:6px;white-space:nowrap;">محفظة: ${fmt(walletToday)} ج</span>
         </div>
