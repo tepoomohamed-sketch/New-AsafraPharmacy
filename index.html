@@ -2731,7 +2731,7 @@ let attIncentives = {};  // from meta/attendanceIncentives { "YYYY-MM__name": in
 let attSalaryTypes    = {};  // from meta/attendanceSalaryTypes { name: 'hourly' | 'fixed' }
 let attFixedSalaries  = {};  // from meta/attendanceFixedSalaries { name: fixedAmount }
 let attManualSalaries = {};  // from meta/attendanceManualSalaries { "YYYY-MM__name": manualSalary }
-let walletSettlePin = '1234'; // الرقم السري لتصفية المحفظة والذمم إلى العهدة
+let walletSettlePin = (function(){ try { return localStorage.getItem('asafra_wallet_pin') || '1234'; } catch(e){ return '1234'; } })(); // الرقم السري لتصفية المحفظة والذمم إلى العهدة
 let attAttOff     = new Set();  // موظفين مستبعَدين من الحضور
 let attSalOff     = new Set();  // موظفين مستبعَدين من الرواتب
 let attFilter     = { month: '', emp: '', dateFrom: '', dateTo: '' }; // attendance filter state
@@ -3150,11 +3150,24 @@ async function setPermission(uid, key, value) {
 }
 
 async function delUser(uid, name) {
-  if (!confirm(`حذف حساب "${name}"؟\nقيوده السابقة ستبقى.`)) return;
-  await sb.from('users').delete().eq('id', uid);
-  delete users[uid];
-  renderUsersTab();
-  toast('🗑 تم حذف الحساب');
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: حذف الحسابات مخصص للمدير فقط', false);
+    return;
+  }
+  if (uid === me?.uid) {
+    toast('⚠️ لا يمكنك حذف حسابك الحالي أثناء تسجيل الدخول', false);
+    return;
+  }
+  if (!confirm(`حذف حساب "${name}"؟\nقيوده السابقة ستبقى محفوظة في النظام ولن تُحذف.`)) return;
+  try {
+    const { error } = await sb.from('users').delete().eq('id', uid);
+    if (error) throw error;
+    delete users[uid];
+    renderUsersTab();
+    toast('🗑 تم حذف الحساب بنجاح');
+  } catch(e) {
+    toast('❌ فشل حذف الحساب: ' + (e.message || e), false);
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -3236,9 +3249,21 @@ function listenBalance() {
   unsubB = () => sb.removeChannel(sbChanBalance);
 }
 
-// إعادة تحميل الرصيد لما النت يرجع
+// إعادة المزامنة الشاملة عند استعادة الاتصال بالإنترنت
 window.addEventListener('online', () => {
-  setTimeout(() => { if (me) listenBalance(); }, 1500);
+  toast('🟢 تم استعادة الاتصال بالإنترنت — جاري المزامنة...', true);
+  setTimeout(() => {
+    if (me) {
+      try { listenBalance(); } catch(e){}
+      try { listenEntries(); } catch(e){}
+      try { loadAndListenWalletPin(); } catch(e){}
+      try { fetchEntriesDebounced(300); } catch(e){}
+    }
+  }, 1200);
+});
+
+window.addEventListener('offline', () => {
+  toast('⚠️ انقطع الاتصال بالإنترنت — تحقق من شبكة الصيدلية', false);
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -3974,13 +3999,20 @@ async function saveEdit() {
 }
 
 async function resetAll() {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: تصفير البيانات مخصص للمدير فقط', false);
+    return;
+  }
   if (!confirm('⚠️ تصفير الكل: سيُحذف كل الحركات ويصبح الرصيد صفراً!\nهذه العملية لا يمكن التراجع عنها.')) return;
-  // [v12] تأكيد كتابي — الحماية السابقة كانت نقرتين على «موافق»،
-  // وبعض المتصفحات تكبت confirm() فيمر الحذف الكامل بلا أي تأكيد.
+  const pinInput = prompt('🔒 أدخل الرقم السري الخاص بالمدير للمتابعة:');
+  if (!pinInput || pinInput.trim() !== walletSettlePin) {
+    toast('❌ الرقم السري غير صحيح — تم إلغاء العملية فوراً لحماية البيانات', false);
+    return;
+  }
   const _typed = prompt('لتأكيد حذف كل البيانات نهائياً اكتب اسم الصيدلية بالضبط:\n\n' + pharmName);
   if (_typed === null) return;
   if (_typed.trim() !== pharmName.trim()) { toast('❌ الاسم غير مطابق — تم إلغاء العملية', false); return; }
-  // [v12] إجبار نسخة احتياطية قبل عملية لا رجعة فيها
+  // إجبار نسخة احتياطية قبل عملية لا رجعة فيها
   try { await doManualBackup(); }
   catch(_e) {
     if (!confirm('⚠️ تعذّر أخذ نسخة احتياطية.\nهل تريد المتابعة رغم ذلك؟')) return;
@@ -4468,9 +4500,13 @@ function trashChkChange() {
 
 // ── حذف نهائي للمحدد ──
 async function permDeleteSelected() {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: الحذف النهائي مخصص للمدير فقط', false);
+    return;
+  }
   const ids = [...document.querySelectorAll('.trash-chk:checked')].map(c => c.dataset.id);
   if (!ids.length) return;
-  if (!confirm(`⚠️ حذف نهائي لـ ${ids.length} بند؟\nهذه العملية لا يمكن التراجع عنها.`)) return;
+  if (!confirm(`⚠️ حذف نهائي لـ ${ids.length} بند؟\nهذه العملية لا يمكن التراجع عنها نهائياً.`)) return;
   try {
     const {error} = await sb.from('entries').delete().in('id', ids);
     if (error) throw error;
@@ -4481,9 +4517,13 @@ async function permDeleteSelected() {
 
 // ── حذف نهائي لبند واحد ──
 async function permDeleteOne(id) {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: الحذف النهائي مخصص للمدير فقط', false);
+    return;
+  }
   const e = trashedEntries.find(x => x.id === id);
   if (!e) return;
-  if (!confirm(`⚠️ حذف نهائي لهذا البند؟\n${e.type} — ${esc(e.company||'')} — ${fmt(e.amount)}\n\nلا يمكن التراجع عن هذا الإجراء.`)) return;
+  if (!confirm(`⚠️ حذف نهائي لهذا البند؟\n${e.type} — ${esc(e.company||'')} — ${fmt(e.amount)}\n\nلا يمكن التراجع عن هذا الإجراء نهائياً.`)) return;
   try {
     const {error} = await sb.from('entries').delete().eq('id', id);
     if (error) throw error;
@@ -6970,6 +7010,10 @@ function closeWalletPinModal() {
 }
 
 async function saveWalletPinFromSettings() {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: تغيير الرقم السري مخصص للمدير فقط', false);
+    return;
+  }
   const inp = document.getElementById('walletPinSettingsInp');
   const val = (inp?.value || '').trim();
   if (!val || val.length < 3) {
@@ -6980,7 +7024,7 @@ async function saveWalletPinFromSettings() {
   try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
   try {
     await sbSetMeta('walletSettlePin', { pin: walletSettlePin });
-    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة (${walletSettlePin}) بنجاح`);
+    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة بنجاح`);
   } catch(e) {
     toast('❌ فشل حفظ الرقم السري: ' + (e.message || e), false);
   }
@@ -6993,7 +7037,11 @@ function togglePinSettingsVisibility() {
 }
 
 async function changeWalletPinPrompt() {
-  const oldP = prompt('أدخل الرقم السري الحالي (الافتراضي: 1234):');
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: تغيير الرقم السري مخصص للمدير فقط', false);
+    return;
+  }
+  const oldP = prompt('أدخل الرقم السري الحالي:');
   if (oldP === null) return;
   if (oldP !== walletSettlePin) {
     toast('❌ الرقم السري الحالي غير صحيح', false);
