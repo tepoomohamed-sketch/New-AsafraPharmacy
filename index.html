@@ -1131,6 +1131,133 @@
     .print-hide{display:none!important;}
     .print-btn{display:none!important;}
   }
+
+/* ══════════════════════════════════════════════════════════════════
+   POS CASHIER & PHARMACY INVENTORY SYSTEM STYLES
+══════════════════════════════════════════════════════════════════ */
+.pos-wrap { display: flex; flex-direction: column; gap: 14px; }
+.pos-top-bar {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 12px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.pos-top-right, .pos-top-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pos-title { font-size: 1.25rem; font-weight: 900; color: var(--text1); display: flex; align-items: center; gap: 8px; }
+.pos-mode-pills, .pos-pay-pills { display: flex; background: var(--bg2); padding: 4px; border-radius: 12px; border: 1px solid var(--border); gap: 4px; }
+.pos-mode-btn, .pos-pay-btn {
+  padding: 6px 14px; border-radius: 8px; border: none; font-size: .84rem; font-weight: 800; cursor: pointer;
+  background: transparent; color: var(--text3); transition: all .18s; font-family: 'Tajawal', sans-serif;
+}
+.pos-mode-btn.on-sale.active { background: #2d6a4f; color: #fff; box-shadow: 0 2px 10px rgba(45,106,79,.4); }
+.pos-mode-btn.on-return.active { background: #c53030; color: #fff; box-shadow: 0 2px 10px rgba(197,48,48,.4); }
+.pos-pay-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 10px var(--accent-glow); }
+.pos-inv-tag { background: var(--bg3); border: 1px solid var(--border2); padding: 4px 10px; border-radius: 8px; font-size: .78rem; font-weight: 700; color: var(--teal); }
+
+.pos-search-container { position: relative; width: 100%; }
+.pos-search-inner {
+  display: flex; align-items: center; background: var(--card2); border: 2px solid var(--accent);
+  border-radius: 14px; padding: 4px 14px; box-shadow: 0 0 16px var(--accent-glow);
+}
+.pos-search-icon { font-size: 1.25rem; color: var(--teal); margin-left: 10px; }
+.pos-search-input {
+  flex: 1; background: transparent; border: none; outline: none; font-size: 1.15rem; font-weight: 800;
+  color: var(--text1); font-family: 'Tajawal', sans-serif; padding: 8px 4px;
+}
+.pos-search-input::placeholder { color: var(--text3); font-weight: 600; font-size: .95rem; }
+.btn-clear-search { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.1rem; padding: 4px 8px; }
+
+.pos-auto-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card);
+  border: 1.5px solid var(--accent); border-radius: 14px; max-height: 320px; overflow-y: auto;
+  z-index: 1000; box-shadow: var(--shadow-lg); backdrop-filter: blur(14px);
+}
+.pos-auto-item {
+  display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+  border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s;
+}
+.pos-auto-item:hover, .pos-auto-item.selected { background: rgba(124,58,237,.2); }
+.pos-auto-name { font-weight: 800; font-size: .95rem; color: var(--text1); }
+.pos-auto-meta { font-size: .78rem; color: var(--text3); display: flex; gap: 10px; margin-top: 2px; }
+.pos-auto-price { font-weight: 900; font-size: 1.05rem; color: #68d391; }
+
+.pos-grid-wrap {
+  background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r);
+  overflow-x: auto; min-height: 280px; max-height: 440px; overflow-y: auto;
+}
+.pos-table { width: 100%; border-collapse: collapse; min-width: 750px; }
+.pos-table th {
+  background: var(--bg2); padding: 12px 14px; text-align: right; font-weight: 800;
+  font-size: .82rem; color: var(--text2); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border2);
+}
+.pos-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--text1); vertical-align: middle; }
+.pos-table tr:hover td { background: var(--card2); }
+
+.pos-unit-btn {
+  padding: 4px 10px; border-radius: 8px; border: 1.5px solid; font-size: .78rem; font-weight: 800;
+  cursor: pointer; background: transparent; transition: all .15s; font-family: 'Tajawal', sans-serif;
+}
+.pos-unit-btn.pack { border-color: rgba(6,182,212,.4); color: var(--teal); background: rgba(6,182,212,.1); }
+.pos-unit-btn.strip { border-color: rgba(246,173,85,.4); color: #f6ad55; background: rgba(246,173,85,.1); }
+
+.pos-qty-ctrl { display: inline-flex; align-items: center; gap: 4px; background: var(--bg3); border-radius: 8px; padding: 2px 4px; border: 1px solid var(--border); }
+.pos-qty-btn { width: 24px; height: 24px; border: none; background: var(--card2); color: var(--text); border-radius: 6px; cursor: pointer; font-weight: 900; }
+.pos-qty-inp { width: 44px; text-align: center; border: none; background: transparent; color: var(--text1); font-weight: 900; font-size: .95rem; }
+
+.pos-footer-bar {
+  display: grid; grid-template-columns: 1fr 1.6fr; gap: 14px;
+}
+@media (max-width: 900px) { .pos-footer-bar { grid-template-columns: 1fr; } }
+
+.pos-item-details-box {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 18px;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+}
+.pos-id-title { font-weight: 900; font-size: 1.05rem; color: var(--teal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-id-specs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pos-spec-chip { background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 8px; font-size: .78rem; color: var(--text2); }
+
+.pos-checkout-box {
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 14px 18px;
+  display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 16px; align-items: center;
+}
+@media (max-width: 760px) { .pos-checkout-box { grid-template-columns: 1fr; } }
+
+.pos-calc-col { display: flex; flex-direction: column; gap: 5px; font-size: .84rem; }
+.pos-calc-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pos-paid-inp { width: 75px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text1); font-weight: 800; text-align: center; }
+
+.pos-giant-screen {
+  background: #060a12; border: 2px solid #22c55e; border-radius: 12px; padding: 10px 16px;
+  text-align: center; box-shadow: 0 0 20px rgba(34,197,94,.25); position: relative;
+}
+.pos-giant-screen.is-return { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,.25); }
+.pos-screen-lbl { font-size: .72rem; color: #a0aec0; letter-spacing: 1px; }
+.pos-screen-val { font-size: 2.3rem; font-weight: 900; color: #22c55e; font-family: 'Inter', monospace; line-height: 1.1; }
+.pos-giant-screen.is-return .pos-screen-val { color: #ef4444; }
+.pos-screen-cur { font-size: .72rem; color: #68d391; font-weight: 700; }
+
+.pos-action-btns { display: flex; flex-direction: column; gap: 6px; }
+.btn-pos-finish {
+  background: linear-gradient(135deg, #15803d, #22c55e); color: #fff; padding: 12px 18px;
+  border-radius: 12px; border: none; font-weight: 900; font-size: .95rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  box-shadow: 0 4px 15px rgba(34,197,94,.4); transition: transform .15s; font-family: 'Tajawal', sans-serif;
+}
+.btn-pos-finish:hover { transform: translateY(-2px); }
+.btn-pos-save-only { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+.btn-pos-cancel { background: rgba(239,68,68,.12); color: #fc8181; border: 1px solid rgba(239,68,68,.3); padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+
+/* ── Thermal Receipt Print Styling ── */
+@media print {
+  body * { visibility: hidden !important; }
+  #posReceiptPrintArea, #posReceiptPrintArea * { visibility: visible !important; }
+  #posReceiptPrintArea {
+    position: absolute !important; left: 0 !important; top: 0 !important; width: 80mm !important; padding: 4mm !important;
+    background: #fff !important; color: #000 !important; font-family: 'Courier New', Courier, monospace !important; font-size: 12px !important;
+    direction: rtl !important; display: block !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1630,173 +1757,209 @@ function ensureXLSX() {
 
     </div>
 
-    <!-- pane-pos removed -->
-    <div class="pane" id="pane-pos" style="display:none!important">
-
-      <!-- Blue Header -->
-      <div class="pd-hdr">
-        <div>
-          <div class="pd-hdr-title">🏪 داشبورد المبيعات الفعلي — POS</div>
-          <div style="font-size:.75rem;opacity:.8;" id="pdHdrSub">—</div>
+    <!-- ══════════════════════════════════════════════════════════
+     PANE: POS CASHIER (كاشير المبيعات والمرتجعات)
+══════════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-pos">
+  <div class="pos-wrap">
+    <!-- POS Top Header Bar -->
+    <div class="pos-top-bar">
+      <div class="pos-top-right">
+        <div class="pos-title">🛒 كاشير المبيعات</div>
+        <div class="pos-mode-pills">
+          <button type="button" class="pos-mode-btn on-sale active" id="posModeSale" onclick="setPosMode('sale')">🟢 بيع [F1]</button>
+          <button type="button" class="pos-mode-btn on-return" id="posModeReturn" onclick="setPosMode('return')">🔴 مرتجع [F2]</button>
         </div>
-        <div class="pd-hdr-actions">
-          <label class="btn btn-sm btn-blue" style="cursor:pointer;">
-            📂 استيراد POS
-            <input type="file" accept=".xlsx,.xls" onchange="importPOS(event)" style="display:none;"/>
-          </label>
-          <button class="btn btn-sm btn-blue" onclick="pdExportCSV()">⬇️ CSV</button>
-        </div>
+        <span class="pos-inv-tag" id="posInvTag">فاتورة: #---</span>
       </div>
 
-      <!-- Filter Panel -->
-      <div class="pos-filter-panel" id="posFilterPanel">
-
-        <!-- Row 1: Period + import info -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">📅 الفترة:</span>
-          <div class="pf-chips" id="pfPeriodChips">
-            <div class="pf-chip" onclick="pdSetFilter('period','today',this)">اليوم</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','week',this)">الأسبوع</div>
-            <div class="pf-chip on" onclick="pdSetFilter('period','month',this)">هذا الشهر</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','lastMonth',this)">الشهر الماضي</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','quarter',this)">الربع</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','year',this)">هذا العام</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','all',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','custom',this)">📆 مخصص</div>
-          </div>
-          <span class="pf-import-info" id="pdImportInfo"></span>
+      <div class="pos-top-left">
+        <div class="pos-pay-pills">
+          <button type="button" class="pos-pay-btn active" data-pay="cash" onclick="setPosPayMethod('cash')">💵 كاش [C]</button>
+          <button type="button" class="pos-pay-btn" data-pay="wallet" onclick="setPosPayMethod('wallet')">📱 محفظة [W]</button>
+          <button type="button" class="pos-pay-btn" data-pay="delivery" onclick="setPosPayMethod('delivery')">🛵 دليفري [H]</button>
+          <button type="button" class="pos-pay-btn" data-pay="credit" onclick="setPosPayMethod('credit')">⏳ آجل [R]</button>
         </div>
-
-        <!-- Row 1b: Custom date range (hidden unless period=custom) -->
-        <div class="pos-filter-row" id="pfCustomRow" style="display:none;">
-          <span class="pos-filter-label">من–إلى:</span>
-          <div class="pf-date-wrap">
-            <input type="date" class="pf-date" id="pfDateFrom" onchange="pdApplyFilters()"/>
-            <span style="color:var(--text3);font-size:.8rem;">←</span>
-            <input type="date" class="pf-date" id="pfDateTo" onchange="pdApplyFilters()"/>
-          </div>
-        </div>
-
-        <!-- Row 2: Type + Status -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">💳 النوع:</span>
-          <div class="pf-chips" id="pfTypeChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('type','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','نقدية',this)">نقدية</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','توصيل للمنازل',this)">توصيل</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','آجلة',this)">آجلة</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','نقدية غير مسددة',this)">غير مسددة</div>
-          </div>
-          <span class="pos-filter-label" style="margin-right:14px;">✅ السداد:</span>
-          <div class="pf-chips" id="pfStatusChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('status','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('status','مسددة',this)">مسددة</div>
-            <div class="pf-chip" onclick="pdSetFilter('status','غير مسددة',this)">غير مسددة</div>
-          </div>
-        </div>
-
-        <!-- Row 3: Margin + Discount -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">📊 الهامش:</span>
-          <div class="pf-chips" id="pfMarginChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('margin','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','neg',this)" style="border-color:#c53030;color:#c53030;">خسارة</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','low',this)">&lt;10%</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','mid',this)">10–30%</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','high',this)">&gt;30%</div>
-          </div>
-          <span class="pos-filter-label" style="margin-right:14px;">💸 الخصم:</span>
-          <div class="pf-chips" id="pfDiscChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('hasDiscount','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('hasDiscount','yes',this)">بخصم</div>
-            <div class="pf-chip" onclick="pdSetFilter('hasDiscount','no',this)">بدون خصم</div>
-          </div>
-        </div>
-
-        <!-- Row 4: Day of week + Customer search + Reset -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">📆 اليوم:</span>
-          <div class="pf-chips" id="pfDayChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('dayOfWeek','',this)">كل الأيام</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','6',this)">سبت</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','0',this)">أحد</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','1',this)">اثنين</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','2',this)">ثلاثاء</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','3',this)">أربعاء</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','4',this)">خميس</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','5',this)">جمعة</div>
-          </div>
-        </div>
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">🔍 العميل:</span>
-          <input type="text" class="pf-search" id="pfCustomerSearch"
-            placeholder="ابحث باسم العميل أو كود البيع..."
-            oninput="pdApplyFilters()"/>
-          <button class="pf-clear" onclick="pdClearFilters()">↺ إعادة تعيين</button>
-        </div>
-
+        <button type="button" class="btn btn-sm btn-ghost" onclick="openPosHistoryModal()" title="سجل فواتير اليوم">📜 فواتير اليوم</button>
       </div>
-
-      <!-- KPI Grid -->
-      <div class="pd-kpi-grid" id="pdKpiGrid"></div>
-
-      <!-- Charts Row 1: Daily Bar + Type Comparison -->
-      <div class="ch-row">
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">📊 المبيعات اليومية <small>(مبيعات · تكلفة · ربح)</small></div>
-          <canvas id="pdDailyBar" height="230"></canvas>
-        </div>
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">🔄 مقارنة أنواع البيع</div>
-          <div id="pdTypeCmp"></div>
-          <canvas id="pdTypePie" height="160" style="margin-top:10px;"></canvas>
-        </div>
-      </div>
-
-      <!-- Charts Row 2: Margin Line + Histogram -->
-      <div class="ch-row">
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">📈 منحنى الهامش اليومي</div>
-          <canvas id="pdMarginLine" height="210"></canvas>
-        </div>
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">📉 توزيع هامش الربح <small>(عدد الفواتير بكل نطاق)</small></div>
-          <canvas id="pdMarginHist" height="210"></canvas>
-        </div>
-      </div>
-
-      <!-- Row 3: Discount + Top Customers -->
-      <div class="ch-row">
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">💸 تحليل الخصومات</div>
-          <div id="pdDiscAnalysis"></div>
-        </div>
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">👥 أكبر العملاء <small>المسميين فقط</small></div>
-          <div id="pdTopCustomers"></div>
-        </div>
-      </div>
-
-      <!-- Insights -->
-      <div class="pd-ch-card" style="margin-bottom:18px;">
-        <div class="pd-ch-title">💡 رؤى ومؤشرات تنبيه</div>
-        <div id="pdInsightsBox"></div>
-      </div>
-
-      <!-- Invoices Table -->
-      <div class="pd-ch-card" style="margin-bottom:22px;">
-        <div class="pd-ch-title">
-          📋 قائمة الفواتير
-          <span style="font-size:.77rem;color:#a0aec0;font-weight:400;" id="pdTblCount"></span>
-        </div>
-        <!-- filters moved to panel above -->
-        <div class="tbl-w"><div id="pdTblHolder"></div></div>
-        <div class="pgr" id="pdTblPgr"></div>
-      </div>
-
     </div>
 
-    <!-- ── ATTENDANCE (all users) ── -->
+    <!-- POS Search & Barcode Input Bar -->
+    <div class="pos-search-container">
+      <div class="pos-search-inner">
+        <span class="pos-search-icon">⚡</span>
+        <input type="text" id="posSearchInp" class="pos-search-input"
+          placeholder="امسح الباركود بالسكانر أو اكتب كود الصنف أو اسمه..."
+          autocomplete="off"
+          onkeydown="handlePosSearchKeydown(event)"
+          oninput="handlePosSearchInput(this.value)" />
+        <button type="button" class="btn-clear-search" onclick="clearPosSearch()" title="مسح">✕</button>
+      </div>
+      <!-- Autocomplete Dropdown -->
+      <div id="posAutoDropdown" class="pos-auto-dropdown" style="display:none;"></div>
+    </div>
+
+    <!-- Cart Table -->
+    <div class="pos-grid-wrap">
+      <table class="pos-table" id="posTable">
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th style="width:110px;">الكود</th>
+            <th>اسم الصنف</th>
+            <th style="width:115px;text-align:center;">الوحدة</th>
+            <th style="width:130px;text-align:center;">الكمية</th>
+            <th style="width:100px;text-align:center;">سعر البيع</th>
+            <th style="width:85px;text-align:center;">خصم %</th>
+            <th style="width:110px;text-align:center;">المجموع</th>
+            <th style="width:45px;text-align:center;">حذف</th>
+          </tr>
+        </thead>
+        <tbody id="posItemsBody">
+          <tr id="posEmptyRow">
+            <td colspan="9" style="text-align:center;padding:45px 20px;color:var(--text3);">
+              <div style="font-size:2.2rem;margin-bottom:8px;opacity:.6;">🛒</div>
+              <div style="font-weight:700;font-size:1.05rem;">الفاتورة فارغة</div>
+              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه لإضافته فوراً</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Bottom Status Bar & Giant Digital Total -->
+    <div class="pos-footer-bar">
+      <!-- Active Item Details -->
+      <div class="pos-item-details-box" id="posActiveItemBox">
+        <div class="pos-id-title" id="posItemDetailName">لم يتم تحديد صنف</div>
+        <div class="pos-id-specs">
+          <span class="pos-spec-chip">📦 الرصيد: <strong id="posItemDetailStock">—</strong></span>
+          <span class="pos-spec-chip">💊 شريط/علبة: <strong id="posItemDetailUnits">—</strong></span>
+          <span class="pos-spec-chip">🏷️ الرف: <strong id="posItemDetailShelf">—</strong></span>
+          <span class="pos-spec-chip">⏳ الصلاحية: <strong id="posItemDetailExpiry">—</strong></span>
+        </div>
+      </div>
+
+      <!-- Checkout & Actions -->
+      <div class="pos-checkout-box">
+        <div class="pos-calc-col">
+          <div class="pos-calc-row">
+            <span>الإجمالي:</span>
+            <strong id="posSubtotalText">0.00 ج</strong>
+          </div>
+          <div class="pos-calc-row">
+            <span>الخصم:</span>
+            <strong id="posDiscountText" style="color:#f6ad55;">0.00 ج</strong>
+          </div>
+          <div class="pos-calc-row">
+            <span>المدفوع:</span>
+            <input type="number" id="posPaidInp" class="pos-paid-inp" value="0" step="any" oninput="calcPosChange()" />
+          </div>
+          <div class="pos-calc-row">
+            <span>الباقي:</span>
+            <strong id="posChangeText" style="color:#68d391;">0.00 ج</strong>
+          </div>
+        </div>
+
+        <!-- Giant LED Display -->
+        <div class="pos-giant-screen" id="posGiantScreen">
+          <div class="pos-screen-lbl" id="posScreenLabel">الصافي المطلوب</div>
+          <div class="pos-screen-val" id="posGiantTotal">0.00</div>
+          <div class="pos-screen-cur">ج.م</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="pos-action-btns">
+          <button type="button" class="btn btn-pos-finish" id="btnPosFinish" onclick="finishPosSale(true)">
+            <span>💾 إنهاء وطباعة</span>
+            <kbd style="background:rgba(0,0,0,.25);padding:2px 6px;border-radius:4px;font-size:.7rem;">[F10]</kbd>
+          </button>
+          <button type="button" class="btn btn-pos-save-only" onclick="finishPosSale(false)">
+            <span>حفظ فقط [S]</span>
+          </button>
+          <button type="button" class="btn btn-pos-cancel" onclick="cancelPosSale()">
+            <span>إلغاء [Esc]</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PANE: ITEMS MASTER & PHARMAFLY UPLOADER (الأصناف والمخزن)
+══════════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-items">
+  <div class="card">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+      <div>
+        <div style="font-size:1.25rem;font-weight:900;color:var(--text1);">📦 دليل الأصناف والمخزون</div>
+        <div style="font-size:.82rem;color:var(--text3);">إدارة أسعار وأرصدة الصيدلية ورفع قاعدة الأصناف من PharmaFly</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-green" onclick="openAddItemModal()">➕ صنف جديد</button>
+        <button type="button" class="btn btn-sm btn-blue" onclick="openPharmaflyImportModal()">📂 استيراد أصناف فلاي (Excel)</button>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="exportItemsXLSX()">⬇️ تصدير إكسيل</button>
+      </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+        <div style="font-size:.75rem;color:var(--text3);font-weight:600;">إجمالي الأصناف المعرفة</div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--text1);margin-top:2px;" id="itemsTotalCount">0</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+        <div style="font-size:.75rem;color:var(--text3);font-weight:600;">أصناف متوفرة بالمخزن</div>
+        <div style="font-size:1.6rem;font-weight:900;color:#68d391;margin-top:2px;" id="itemsInStockCount">0</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+        <div style="font-size:.75rem;color:var(--text3);font-weight:600;">أصناف نفدت (نواقص)</div>
+        <div style="font-size:1.6rem;font-weight:900;color:#fc8181;margin-top:2px;" id="itemsOutStockCount">0</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
+        <div style="font-size:.75rem;color:var(--text3);font-weight:600;">إجمالي قيمة البضاعة (بيع)</div>
+        <div style="font-size:1.6rem;font-weight:900;color:#f6ad55;margin-top:2px;" id="itemsTotalValue">0 ج</div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+      <input type="text" id="itemsSearchInp" class="fel" placeholder="🔍 ابحث بالاسم، الكود الداخلي، أو الباركود الدولي..." style="flex:1;min-width:240px;" oninput="filterItemsTable()" />
+      <select id="itemsStockFilter" class="fel" style="width:160px;" onchange="filterItemsTable()">
+        <option value="all">كل الأصناف</option>
+        <option value="instock">المتوفر في المخزن فقط</option>
+        <option value="outstock">النواقص (رصيد 0)</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="tbl-w" style="max-height:560px;overflow-y:auto;">
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th style="width:105px;">كود الصيدلية</th>
+            <th style="width:130px;">الباركود الدولي</th>
+            <th>اسم الصنف</th>
+            <th style="width:85px;text-align:center;">الأجزاء</th>
+            <th style="width:110px;text-align:center;">سعر الجمهور</th>
+            <th style="width:100px;text-align:center;">سعر الشريط</th>
+            <th style="width:130px;text-align:center;">الرصيد المخزني</th>
+            <th style="width:95px;text-align:center;">الصلاحية</th>
+            <th style="width:80px;text-align:center;">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="itemsTableBody">
+          <tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text3);">جاري تحميل دليل الأصناف...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── ATTENDANCE (all users) ── -->
     <div class="pane" id="pane-att">
 
       <!-- Green Header with live clock -->
@@ -3409,10 +3572,12 @@ function buildApp() {
   const isAdmin = me.role==='admin';
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
   document.getElementById('mainTabs').innerHTML = `
-    <div class="tab on" onclick="swTab('add',this)">➕ قيد جديد</div>
+    <div class="tab on" onclick="swTab('pos',this)">🛒 كاشير المبيعات</div>
+    <div class="tab" onclick="swTab('add',this)">➕ قيد جديد</div>
     ${isAdmin
       ? '<div class="tab" onclick="swTab(\'all\',this)">📋 كل الحركات</div>'
       : '<div class="tab" onclick="swTab(\'mine\',this)">📋 حركاتي</div>'}
+    <div class="tab" onclick="swTab('items',this)">📦 الأصناف والمخزن</div>
     ${isAdmin ? '<div class="tab" onclick="swTab(\'sum\',this)">📊 الملخص</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'budget\',this)">📑 الموازنة المالية</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'salesdb\',this)">📊 داشبورد المبيعات</div>' : ''}
@@ -3433,13 +3598,16 @@ function buildApp() {
   {
     const isAdm = me.role==='admin';
     const adminItems = [
+      {tab:'pos',  ico:'🛒', lbl:'كاشير'},
       {tab:'add',  ico:'➕', lbl:'قيد'},
       {tab:'all',  ico:'📋', lbl:'حركات'},
+      {tab:'items',ico:'📦', lbl:'مخزن'},
       {tab:'sum',  ico:'📊', lbl:'ملخص'},
       {tab:'att',  ico:'⏱', lbl:'حضور'},
       {tab:'set',  ico:'⚙️', lbl:'إعدادات'},
     ];
     const empItems = [
+      {tab:'pos',  ico:'🛒', lbl:'كاشير'},
       {tab:'add',  ico:'➕', lbl:'قيد'},
       {tab:'mine', ico:'📋', lbl:'حركاتي'},
       {tab:'att',  ico:'⏱', lbl:'حضور'},
@@ -3584,6 +3752,8 @@ function swTab(name, el) {
       });
     }, 600);
   }
+  if (name==='pos')   { setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
+  if (name==='items') { loadItemsCatalog(); }
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
   if (name==='sum')   renderSum();
@@ -15557,6 +15727,1084 @@ document.addEventListener('keydown', e => {
   else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
 });
 
+
+// ══════════════════════════════════════════════════════════════════
+//  POS & PHARMACY INVENTORY SYSTEM ENGINE (كاشير المبيعات والمخزن)
+// ══════════════════════════════════════════════════════════════════
+let posCart = [];
+let posMode = 'sale';           // 'sale' | 'return'
+let posPayMethod = 'cash';      // 'cash' | 'wallet' | 'delivery' | 'credit'
+let cachedItems = [];           // Array of all items in memory
+let itemsByCode = new Map();    // Map<internal_code, item>
+let itemsByBarcode = new Map(); // Map<barcode, item>
+let posCurrentInvNo = '';
+let posAudioCtx = null;
+let pfParsedRows = [];
+let _scannerBuffer = '';
+let _scannerLastKeyTime = 0;
+
+// ── توليد رقم فاتورة تلقائي ──
+function genPosInvoiceNo() {
+  const d = new Date();
+  const ym = String(d.getFullYear()).slice(-2) + String(d.getMonth() + 1).padStart(2, '0');
+  const rnd = Math.floor(1000 + Math.random() * 9000);
+  posCurrentInvNo = `INV-${ym}-${rnd}`;
+  const el = document.getElementById('posInvTag');
+  if (el) el.textContent = 'فاتورة: #' + posCurrentInvNo;
+}
+
+// ── صوت التنبيه بالسكانر (Web Audio API) ──
+function playPosBeep(isSuccess = true) {
+  try {
+    if (!posAudioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) posAudioCtx = new AudioContext();
+    }
+    if (!posAudioCtx) return;
+    if (posAudioCtx.state === 'suspended') posAudioCtx.resume();
+    const osc = posAudioCtx.createOscillator();
+    const gain = posAudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(posAudioCtx.destination);
+    if (isSuccess) {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, posAudioCtx.currentTime); // A5
+      gain.gain.setValueAtTime(0.18, posAudioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, posAudioCtx.currentTime + 0.08);
+      osc.start();
+      osc.stop(posAudioCtx.currentTime + 0.08);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, posAudioCtx.currentTime); // A3
+      gain.gain.setValueAtTime(0.22, posAudioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, posAudioCtx.currentTime + 0.16);
+      osc.start();
+      osc.stop(posAudioCtx.currentTime + 0.16);
+    }
+  } catch(e) {}
+}
+
+// ── تهيئة نظام الـ POS وتحميل الأصناف ──
+async function initPosSystem() {
+  genPosInvoiceNo();
+  await loadItemsCatalog();
+  setupGlobalScannerListener();
+}
+
+// ── مستمع الباركود الشامل من أي مكان بالشاشة ──
+function setupGlobalScannerListener() {
+  window.addEventListener('keydown', (e) => {
+    // اختصارات F-keys في شاشة POS
+    const posPane = document.getElementById('pane-pos');
+    const isPosActive = posPane && posPane.classList.contains('on');
+    if (isPosActive) {
+      if (e.key === 'F1') { e.preventDefault(); setPosMode('sale'); return; }
+      if (e.key === 'F2') { e.preventDefault(); setPosMode('return'); return; }
+      if (e.key === 'F4') { e.preventDefault(); setPosPayMethod('cash'); return; }
+      if (e.key === 'F9') { e.preventDefault(); setPosPayMethod('wallet'); return; }
+      if (e.key === 'F10') { e.preventDefault(); finishPosSale(true); return; }
+      if (e.key === 'Escape') { e.preventDefault(); cancelPosSale(); return; }
+    }
+
+    // مستمع السكانر فائق السرعة (< 45ms بين كل ضغطة)
+    const now = Date.now();
+    const isSpecial = e.ctrlKey || e.altKey || e.metaKey;
+    if (isSpecial) return;
+
+    if (e.key === 'Enter') {
+      if (_scannerBuffer.length >= 3 && (now - _scannerLastKeyTime < 120)) {
+        e.preventDefault();
+        const code = _scannerBuffer.trim();
+        _scannerBuffer = '';
+        if (code) handleScannedBarcode(code);
+        return;
+      }
+      _scannerBuffer = '';
+      return;
+    }
+
+    if (e.key.length === 1) {
+      if (now - _scannerLastKeyTime > 65) {
+        _scannerBuffer = ''; // بدأت كتابة جديدة
+      }
+      _scannerBuffer += e.key;
+      _scannerLastKeyTime = now;
+    }
+  });
+}
+
+// ── معالجة قراءة الباركود أو الكود الداخلي ──
+function handleScannedBarcode(code) {
+  code = String(code).trim();
+  if (!code) return;
+  // 1. بحث بالباركود الدولي
+  let item = itemsByBarcode.get(code);
+  // 2. بحث بالكود الداخلي
+  if (!item) item = itemsByCode.get(code);
+  // 3. بحث جزئي بالكود
+  if (!item) {
+    item = cachedItems.find(it => it.barcode === code || it.internal_code === code);
+  }
+
+  if (item) {
+    posAddToCart(item, 'pack', 1);
+    playPosBeep(true);
+    toast(`⚡ تمت إضافة: ${item.name}`);
+    const searchInp = document.getElementById('posSearchInp');
+    if (searchInp) searchInp.value = '';
+    closePosAutoDropdown();
+  } else {
+    playPosBeep(false);
+    toast(`⚠️ كود غير مسجل: (${code}) — يمكنك تعريفه من دليل الأصناف`, false);
+  }
+}
+
+// ── تبديل نوع العملية (بيع / مرتجع) ──
+function setPosMode(mode) {
+  posMode = mode;
+  document.getElementById('posModeSale')?.classList.toggle('active', mode === 'sale');
+  document.getElementById('posModeReturn')?.classList.toggle('active', mode === 'return');
+  const screen = document.getElementById('posGiantScreen');
+  const screenLbl = document.getElementById('posScreenLabel');
+  if (screen) screen.classList.toggle('is-return', mode === 'return');
+  if (screenLbl) screenLbl.textContent = mode === 'sale' ? 'الصافي المطلوب' : 'صافي المرتجع للعميل';
+  calcPosTotals();
+  toast(mode === 'sale' ? '🟢 وضع البيع [F1]' : '🔴 وضع تسجيل المرتجعات [F2]');
+}
+
+// ── تبديل طريقة الدفع ──
+function setPosPayMethod(method) {
+  posPayMethod = method;
+  document.querySelectorAll('.pos-pay-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.pay === method);
+  });
+}
+
+// ── البحث التفاعلي في حقل البحث ──
+let _posSearchTimer = null;
+function handlePosSearchInput(val) {
+  clearTimeout(_posSearchTimer);
+  _posSearchTimer = setTimeout(() => {
+    const q = (val || '').trim().toLowerCase();
+    const dropdown = document.getElementById('posAutoDropdown');
+    if (!dropdown) return;
+    if (q.length < 2) {
+      dropdown.style.display = 'none';
+      dropdown.innerHTML = '';
+      return;
+    }
+    const matches = cachedItems.filter(it =>
+      (it.name && it.name.toLowerCase().includes(q)) ||
+      (it.internal_code && it.internal_code.includes(q)) ||
+      (it.barcode && it.barcode.includes(q))
+    ).slice(0, 15);
+
+    if (!matches.length) {
+      dropdown.innerHTML = `<div style="padding:14px;text-align:center;color:var(--text3);font-size:.85rem;">لا توجد أصناف مطابقة لـ "${esc(q)}"</div>`;
+      dropdown.style.display = 'block';
+      return;
+    }
+
+    dropdown.innerHTML = matches.map(it => `
+      <div class="pos-auto-item" onclick="posSelectFromAuto('${it.id}')">
+        <div>
+          <div class="pos-auto-name">${esc(it.name)}</div>
+          <div class="pos-auto-meta">
+            <span>كود: <strong>${esc(it.internal_code||'—')}</strong></span>
+            <span>باركود: <strong>${esc(it.barcode||'—')}</strong></span>
+            <span>رصيد: <strong>${it.stock_packs}:${it.stock_units}</strong></span>
+            ${it.expiry_date ? `<span>صلاحية: ${esc(it.expiry_date)}</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:left;">
+          <div class="pos-auto-price">${fmt(it.selling_price)} ج</div>
+          <div style="font-size:.74rem;color:var(--text3);">${it.pack_units > 1 ? `(الشريط: ${fmt(it.unit_price)} ج)` : 'علبة'}</div>
+        </div>
+      </div>
+    `).join('');
+    dropdown.style.display = 'block';
+  }, 120);
+}
+
+function handlePosSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = (e.target.value || '').trim();
+    if (!val) return;
+    // إذا كان كوداً مسجلاً
+    const item = itemsByBarcode.get(val) || itemsByCode.get(val);
+    if (item) {
+      posAddToCart(item, 'pack', 1);
+      playPosBeep(true);
+      e.target.value = '';
+      closePosAutoDropdown();
+    } else {
+      // اختيار أول نتيجة
+      const firstItem = document.querySelector('.pos-auto-item');
+      if (firstItem) firstItem.click();
+    }
+  } else if (e.key === 'Escape') {
+    closePosAutoDropdown();
+  }
+}
+
+function clearPosSearch() {
+  const inp = document.getElementById('posSearchInp');
+  if (inp) { inp.value = ''; inp.focus(); }
+  closePosAutoDropdown();
+}
+
+function closePosAutoDropdown() {
+  const d = document.getElementById('posAutoDropdown');
+  if (d) { d.style.display = 'none'; d.innerHTML = ''; }
+}
+
+function posSelectFromAuto(itemId) {
+  const item = cachedItems.find(it => it.id === itemId);
+  if (item) {
+    posAddToCart(item, 'pack', 1);
+    playPosBeep(true);
+    clearPosSearch();
+  }
+}
+
+// ── إضافة صنف للسلة ──
+function posAddToCart(item, unitType = 'pack', qty = 1) {
+  const existing = posCart.find(r => r.item_id === item.id && r.unit_type === unitType);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    const isStrip = unitType === 'unit' && (item.pack_units || 1) > 1;
+    const price = isStrip ? (item.unit_price || (item.selling_price / item.pack_units)) : item.selling_price;
+    posCart.push({
+      item_id: item.id,
+      internal_code: item.internal_code || '',
+      barcode: item.barcode || '',
+      name: item.name,
+      unit_type: unitType, // 'pack' أو 'unit'
+      pack_units: item.pack_units || 1,
+      pack_price: item.selling_price || 0,
+      unit_price: item.unit_price || 0,
+      price: price || 0,
+      qty: qty,
+      discount_pct: 0,
+      stock_packs: item.stock_packs || 0,
+      stock_units: item.stock_units || 0,
+      expiry_date: item.expiry_date || '',
+      shelf_location: item.shelf_location || ''
+    });
+  }
+  updateActiveItemDetails(item);
+  renderPosCart();
+}
+
+// ── تحديث تفاصيل الصنف النشط بالشريط السفلي ──
+function updateActiveItemDetails(item) {
+  const nameEl = document.getElementById('posItemDetailName');
+  const stockEl = document.getElementById('posItemDetailStock');
+  const unitsEl = document.getElementById('posItemDetailUnits');
+  const shelfEl = document.getElementById('posItemDetailShelf');
+  const expEl = document.getElementById('posItemDetailExpiry');
+  if (nameEl) nameEl.textContent = item ? item.name : 'لم يتم تحديد صنف';
+  if (stockEl) stockEl.textContent = item ? `${item.stock_packs} علبة : ${item.stock_units} أجزاء` : '—';
+  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1} شريط بالعلبة` : '—';
+  if (shelfEl) shelfEl.textContent = item ? (item.shelf_location || 'غير محدد') : '—';
+  if (expEl) expEl.textContent = item ? (item.expiry_date || 'غير محدد') : '—';
+}
+
+// ── تبديل الوحدة (علبة 📦 / شريط 💊) ──
+function posToggleUnit(idx) {
+  const row = posCart[idx];
+  if (!row) return;
+  if ((row.pack_units || 1) <= 1) {
+    toast('ℹ️ هذا الصنف لا يحتوي على أشرطة متعددة بالعلبة');
+    return;
+  }
+  row.unit_type = row.unit_type === 'pack' ? 'unit' : 'pack';
+  if (row.unit_type === 'unit') {
+    row.price = row.unit_price || (row.pack_price / row.pack_units);
+  } else {
+    row.price = row.pack_price;
+  }
+  renderPosCart();
+}
+
+// ── تعديل الكمية ──
+function posChangeQty(idx, delta) {
+  const row = posCart[idx];
+  if (!row) return;
+  row.qty += delta;
+  if (row.qty <= 0) {
+    posRemoveItem(idx);
+    return;
+  }
+  renderPosCart();
+}
+
+function posSetQty(idx, val) {
+  const row = posCart[idx];
+  if (!row) return;
+  const num = parseFloat(val);
+  if (isNaN(num) || num <= 0) {
+    posRemoveItem(idx);
+    return;
+  }
+  row.qty = num;
+  renderPosCart();
+}
+
+function posChangeDiscount(idx, val) {
+  const row = posCart[idx];
+  if (!row) return;
+  const num = Math.max(0, Math.min(100, parseFloat(val) || 0));
+  row.discount_pct = num;
+  renderPosCart();
+}
+
+function posRemoveItem(idx) {
+  posCart.splice(idx, 1);
+  renderPosCart();
+}
+
+// ── رسم جدول السلة ──
+function renderPosCart() {
+  const body = document.getElementById('posItemsBody');
+  if (!body) return;
+  if (!posCart.length) {
+    body.innerHTML = `
+      <tr id="posEmptyRow">
+        <td colspan="9" style="text-align:center;padding:45px 20px;color:var(--text3);">
+          <div style="font-size:2.2rem;margin-bottom:8px;opacity:.6;">🛒</div>
+          <div style="font-weight:700;font-size:1.05rem;">الفاتورة فارغة</div>
+          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه لإضافته فوراً</div>
+        </td>
+      </tr>
+    `;
+    calcPosTotals();
+    return;
+  }
+
+  body.innerHTML = posCart.map((row, idx) => {
+    const rawTotal = row.qty * row.price;
+    const disc = rawTotal * (row.discount_pct / 100);
+    const lineTotal = Math.max(0, rawTotal - disc);
+    const isStrip = row.unit_type === 'unit';
+    return `
+      <tr onclick="updateActiveItemDetails(${JSON.stringify(row).replace(/"/g, '&quot;')})">
+        <td style="color:var(--text3);font-size:.8rem;">${idx + 1}</td>
+        <td>
+          <span style="font-family:monospace;font-weight:700;color:var(--teal);">${esc(row.internal_code || row.barcode || '—')}</span>
+        </td>
+        <td>
+          <div style="font-weight:800;color:var(--text1);">${esc(row.name)}</div>
+          <div style="font-size:.72rem;color:var(--text3);">رصيد: ${row.stock_packs}:${row.stock_units}</div>
+        </td>
+        <td style="text-align:center;">
+          <button type="button" class="pos-unit-btn ${isStrip ? 'strip' : 'pack'}" onclick="posToggleUnit(${idx})" title="انقر للتبديل بين علبة وشريط">
+            ${isStrip ? '💊 شريط' : '📦 علبة'}
+          </button>
+        </td>
+        <td style="text-align:center;">
+          <div class="pos-qty-ctrl">
+            <button type="button" class="pos-qty-btn" onclick="posChangeQty(${idx}, -1)">-</button>
+            <input type="number" class="pos-qty-inp" value="${row.qty}" min="0.1" step="any" onchange="posSetQty(${idx}, this.value)" />
+            <button type="button" class="pos-qty-btn" onclick="posChangeQty(${idx}, 1)">+</button>
+          </div>
+        </td>
+        <td style="text-align:center;font-weight:800;">${fmt(row.price)} ج</td>
+        <td style="text-align:center;">
+          <input type="number" value="${row.discount_pct || 0}" min="0" max="100" style="width:48px;padding:3px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:#f6ad55;font-weight:800;font-size:.8rem;" onchange="posChangeDiscount(${idx}, this.value)" />
+        </td>
+        <td style="text-align:center;font-weight:900;color:#68d391;font-size:.95rem;">${fmt(lineTotal)} ج</td>
+        <td style="text-align:center;">
+          <button type="button" onclick="posRemoveItem(${idx})" style="background:none;border:none;color:#fc8181;cursor:pointer;font-size:1.1rem;" title="حذف">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  calcPosTotals();
+}
+
+// ── حساب الإجماليات والباقي ──
+function calcPosTotals() {
+  let subtotal = 0;
+  let totalDiscount = 0;
+
+  posCart.forEach(row => {
+    const raw = row.qty * row.price;
+    const d = raw * (row.discount_pct / 100);
+    subtotal += raw;
+    totalDiscount += d;
+  });
+
+  const finalTotal = Math.max(0, subtotal - totalDiscount);
+  const subEl = document.getElementById('posSubtotalText');
+  const discEl = document.getElementById('posDiscountText');
+  const giantEl = document.getElementById('posGiantTotal');
+  const paidInp = document.getElementById('posPaidInp');
+
+  if (subEl) subEl.textContent = fmt(subtotal) + ' ج';
+  if (discEl) discEl.textContent = fmt(totalDiscount) + ' ج';
+  if (giantEl) giantEl.textContent = fmt(finalTotal);
+
+  if (paidInp && (paidInp.value === '0' || !paidInp.value || parseFloat(paidInp.value) === 0)) {
+    paidInp.value = finalTotal.toFixed(2);
+  }
+  calcPosChange();
+}
+
+function calcPosChange() {
+  const giantEl = document.getElementById('posGiantTotal');
+  const total = parseFloat(giantEl?.textContent.replace(/,/g, '')) || 0;
+  const paidInp = document.getElementById('posPaidInp');
+  const paid = parseFloat(paidInp?.value) || 0;
+  const changeEl = document.getElementById('posChangeText');
+  const change = Math.max(0, paid - total);
+  if (changeEl) changeEl.textContent = fmt(change) + ' ج';
+}
+
+// ── إنهاء الفاتورة وحفظها ذرياً ──
+async function finishPosSale(printReceipt = true) {
+  if (!posCart.length) {
+    toast('⚠️ الفاتورة فارغة — يرجى إضافة أصناف أولاً', false);
+    return;
+  }
+
+  const btnFinish = document.getElementById('btnPosFinish');
+  if (btnFinish) { btnFinish.disabled = true; btnFinish.textContent = '⏳ جاري الحفظ...'; }
+
+  let subtotal = 0;
+  let totalDiscount = 0;
+  posCart.forEach(row => {
+    const raw = row.qty * row.price;
+    subtotal += raw;
+    totalDiscount += raw * (row.discount_pct / 100);
+  });
+  const total = Math.max(0, subtotal - totalDiscount);
+  const paidInp = document.getElementById('posPaidInp');
+  const paid = parseFloat(paidInp?.value) || total;
+  const change = Math.max(0, paid - total);
+
+  // إعداد بيانات بنود الفاتورة وحساب كميات العلب والأجزاء بدقة
+  const itemsData = posCart.map(r => {
+    const isStrip = r.unit_type === 'unit';
+    return {
+      item_id: r.item_id,
+      internal_code: r.internal_code,
+      barcode: r.barcode,
+      name: r.name,
+      unit_type: r.unit_type,
+      pack_units: r.pack_units,
+      qty_packs: isStrip ? 0 : Math.floor(r.qty),
+      qty_units: isStrip ? Math.round(r.qty) : 0,
+      price: r.price,
+      total: r.qty * r.price * (1 - r.discount_pct / 100)
+    };
+  });
+
+  const salePayload = {
+    id: crypto.randomUUID(),
+    invoice_no: posCurrentInvNo,
+    type: posMode,
+    payment_method: posPayMethod,
+    cashier_name: me?.name || 'كاشير',
+    cashier_uid: me?.uid || '',
+    customer_name: 'نقدي',
+    subtotal: subtotal,
+    discount: totalDiscount,
+    total: total,
+    paid: paid,
+    change: change,
+    shift_id: todayStr(),
+    date: todayStr(),
+    time: new Date().toTimeString().slice(0, 5),
+    ts: Date.now(),
+    items_data: itemsData
+  };
+
+  try {
+    // 1. استدعاء دالة المعالجة الذرية في Supabase
+    let rpcSuccess = false;
+    try {
+      const { data: rpcRes, error: rpcErr } = await sb.rpc('pos_process_sale_atomic', { sale_payload: salePayload });
+      if (!rpcErr && rpcRes && rpcRes.success) {
+        rpcSuccess = true;
+      }
+    } catch(e) {}
+
+    // Fallback في حالة عدم إنشاء دالة RPC بعد في سوبابيز
+    if (!rpcSuccess) {
+      const { error: insErr } = await sb.from('sales').insert({
+        id: salePayload.id,
+        invoice_no: salePayload.invoice_no,
+        type: salePayload.type,
+        payment_method: salePayload.payment_method,
+        cashier_name: salePayload.cashier_name,
+        cashier_uid: salePayload.cashier_uid,
+        subtotal: salePayload.subtotal,
+        discount: salePayload.discount,
+        total: salePayload.total,
+        paid: salePayload.paid,
+        change: salePayload.change,
+        shift_id: salePayload.shift_id,
+        date: salePayload.date,
+        time: salePayload.time,
+        ts: salePayload.ts,
+        items_count: itemsData.length,
+        items_data: itemsData
+      });
+      if (insErr) {
+        console.warn('Direct sales insert notice:', insErr);
+      }
+    }
+
+    // 2. خصم المخزون المحلي اللحظي في ذاكرة المتصفح
+    itemsData.forEach(saleItem => {
+      const target = cachedItems.find(it => it.id === saleItem.item_id);
+      if (target) {
+        const packUnits = target.pack_units || 1;
+        let totUnits = (target.stock_packs * packUnits) + target.stock_units;
+        const delta = (saleItem.qty_packs * packUnits) + saleItem.qty_units;
+        if (posMode === 'sale') totUnits -= delta;
+        else totUnits += delta;
+        target.stock_packs = Math.floor(totUnits / packUnits);
+        target.stock_units = totUnits % packUnits;
+      }
+    });
+
+    // 3. ربط النقدية بالخزينة أو المحفظة
+    if (posPayMethod === 'cash') {
+      const delta = posMode === 'sale' ? total : -total;
+      await sbUpdateBalance(delta);
+    } else if (posPayMethod === 'wallet') {
+      // تسجيل كـ ذمة في المحفظة
+      await sb.from('entries').insert({
+        id: crypto.randomUUID(),
+        date: todayStr(),
+        type: 'ذمم اونلاين',
+        company: 'محفظة الصيدلية',
+        invoice: 'POS:' + salePayload.invoice_no,
+        amount: total,
+        notes: `مبيعات POS فاتورة ${salePayload.invoice_no}`,
+        uid: me?.uid,
+        uname: me?.name,
+        time: salePayload.time,
+        ts: Date.now()
+      });
+    }
+
+    toast(`✅ تم حفظ الفاتورة (${salePayload.invoice_no}) بنجاح`);
+    playPosBeep(true);
+
+    // 4. طباعة الفاتورة الحرارية
+    if (printReceipt) {
+      renderAndPrintReceipt(salePayload);
+    }
+
+    // إعادة ضبط السلة وتجهيز الفاتورة التالية
+    cancelPosSale();
+
+  } catch(err) {
+    toast('❌ حدث خطأ أثناء حفظ الفاتورة: ' + (err.message || err), false);
+  } finally {
+    if (btnFinish) { btnFinish.disabled = false; btnFinish.textContent = '💾 إنهاء وطباعة [F10]'; }
+  }
+}
+
+// ── إلغاء أو تفريغ الفاتورة ──
+function cancelPosSale() {
+  posCart = [];
+  renderPosCart();
+  genPosInvoiceNo();
+  updateActiveItemDetails(null);
+  const inp = document.getElementById('posSearchInp');
+  if (inp) { inp.value = ''; inp.focus(); }
+}
+
+// ── طباعة الفاتورة الحرارية 80mm ──
+function renderAndPrintReceipt(sale) {
+  const content = `
+    <div style="font-family:'Courier New',Courier,monospace;direction:rtl;text-align:center;padding:5px;">
+      <div style="font-size:16px;font-weight:900;margin-bottom:4px;">🏥 ${esc(pharmName)}</div>
+      <div style="font-size:11px;color:#555;">صيدليات دوا العصافرة — خدمة 24 ساعة</div>
+      <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;">
+        <span>رقم: <strong>#${sale.invoice_no}</strong></span>
+        <span>نوع: <strong>${sale.type === 'sale' ? 'مبيعات' : 'مرتجع'}</strong></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;">
+        <span>التاريخ: ${sale.date}</span>
+        <span>الوقت: ${sale.time}</span>
+      </div>
+      <div style="font-size:11px;text-align:right;">الكاشير: ${esc(sale.cashier_name)}</div>
+      <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+
+      <table style="width:100%;font-size:11px;border-collapse:collapse;text-align:right;">
+        <thead>
+          <tr style="border-bottom:1px solid #000;">
+            <th>الصنف</th>
+            <th style="text-align:center;">كمية</th>
+            <th style="text-align:left;">السعر</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sale.items_data.map(it => `
+            <tr>
+              <td>${esc(it.name)} ${it.unit_type === 'unit' ? '(شريط)' : ''}</td>
+              <td style="text-align:center;">${it.qty_packs || it.qty_units}</td>
+              <td style="text-align:left;">${fmt(it.total)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;">
+        <span>الصافي المطلوب:</span>
+        <span>${fmt(sale.total)} ج.م</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;">
+        <span>المدفوع: ${fmt(sale.paid)} ج</span>
+        <span>الباقي: ${fmt(sale.change)} ج</span>
+      </div>
+      <div style="font-size:11px;margin-top:2px;">طريقة الدفع: ${sale.payment_method === 'cash' ? 'نقدي (كاش)' : sale.payment_method === 'wallet' ? 'محفظة إلكترونية' : 'آجل'}</div>
+      <div style="border-top:1px dashed #000;margin:8px 0 4px;"></div>
+      <div style="font-size:11px;font-weight:700;">نتمنى لكم دوام الصحة والعافية ❤️</div>
+    </div>
+  `;
+
+  // في منطقة الطباعة
+  const printArea = document.getElementById('posReceiptPrintArea');
+  if (printArea) {
+    printArea.innerHTML = content;
+    window.print();
+  }
+
+  // في المودال للمعاينة
+  const modalContent = document.getElementById('posReceiptModalContent');
+  if (modalContent) modalContent.innerHTML = content;
+}
+
+function closePosReceiptModal() {
+  const m = document.getElementById('posReceiptModal');
+  if (m) m.classList.remove('on');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  PHARMAFLY EXCEL IMPORT (معالج رفع أصناف فلاي فارما السحابي)
+// ══════════════════════════════════════════════════════════════════
+function openPharmaflyImportModal() {
+  pfParsedRows = [];
+  const wrap = document.getElementById('pfImportProgressWrap');
+  const btn = document.getElementById('btnStartPfImport');
+  if (wrap) wrap.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = '🚀 بدء الاستيراد والرفع'; }
+  const m = document.getElementById('pharmaflyImportModal');
+  if (m) m.classList.add('on');
+}
+
+function closePharmaflyImportModal() {
+  const m = document.getElementById('pharmaflyImportModal');
+  if (m) m.classList.remove('on');
+}
+
+function handlePfExcelDrop(e) {
+  e.preventDefault();
+  const dt = e.dataTransfer;
+  if (dt && dt.files && dt.files.length) {
+    handlePfExcelSelected(dt.files);
+  }
+}
+
+async function handlePfExcelSelected(files) {
+  if (!files || !files.length) return;
+  const file = files[0];
+  await ensureXLSX();
+  if (typeof XLSX === 'undefined') {
+    toast('❌ تعذر تحميل مكتبة معالجة الإكسيل', false);
+    return;
+  }
+
+  toast('⏳ جاري قراءة ملف الأصناف من فلاي فارما...');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+      if (!rows || !rows.length) {
+        toast('❌ الملف فارغ أو لا يحتوي على صفوف بيانات', false);
+        return;
+      }
+
+      // مطابقة الأعمدة الصيدلية بمرونة تامة
+      pfParsedRows = rows.map(r => {
+        const getVal = (keys) => {
+          for (const k of keys) {
+            if (r[k] !== undefined && r[k] !== '') return r[k];
+            // بحث تقريبي
+            const foundKey = Object.keys(r).find(x => x.trim().toLowerCase().includes(k.toLowerCase()));
+            if (foundKey && r[foundKey] !== undefined && r[foundKey] !== '') return r[foundKey];
+          }
+          return '';
+        };
+
+        const internalCode = String(getVal(['الكود', 'كود الصنف', 'كود', 'code', 'item_code', 'الكود الداخلي'])).trim();
+        const barcode = String(getVal(['الباركود', 'باركود', 'كود دولي', 'barcode', 'international_code', 'EAN'])).trim();
+        const name = String(getVal(['اسم الصنف', 'الصنف', 'الاسم', 'name', 'item_name'])).trim();
+        const sellPrice = parseFloat(getVal(['سعر البيع', 'السعر', 'سعر', 'price', 'selling_price'])) || 0;
+        const costPrice = parseFloat(getVal(['سعر الشراء', 'التكلفة', 'شراء', 'cost', 'cost_price'])) || 0;
+        const packUnits = parseInt(getVal(['أجزاء', 'الاجزاء', 'الأجزاء', 'شرائط', 'units', 'pack_units'])) || 1;
+        const stockPacks = parseInt(getVal(['الكمية الموجودة', 'الرصيد', 'كمية', 'stock', 'packs'])) || 0;
+        const expiryDate = String(getVal(['تاريخ الصلاحية', 'الصلاحية', 'تاريخ', 'expiry', 'exp'])).trim();
+        const shelf = String(getVal(['الرف', 'مكان الرف', 'shelf', 'location'])).trim();
+
+        const unitPrice = packUnits > 1 ? (sellPrice / packUnits) : sellPrice;
+
+        return {
+          internal_code: internalCode,
+          barcode: barcode,
+          name: name,
+          selling_price: sellPrice,
+          unit_price: Math.round(unitPrice * 100) / 100,
+          cost_price: costPrice,
+          pack_units: packUnits,
+          stock_packs: stockPacks,
+          stock_units: 0,
+          expiry_date: expiryDate,
+          shelf_location: shelf,
+          is_active: true
+        };
+      }).filter(it => it.name && (it.internal_code || it.barcode || it.selling_price > 0));
+
+      const btn = document.getElementById('btnStartPfImport');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = `🚀 بدء رفع (${pfParsedRows.length} صنف)`;
+      }
+      toast(`✅ تم فحص الملف بنجاح — جاهز لرفع ${pfParsedRows.length} صنف`);
+    } catch(err) {
+      toast('❌ خطأ في معالجة ملف الإكسيل: ' + err.message, false);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── رفع الأصناف إلى سوبابيز بالدفعات (Chunks) ──
+async function startPharmaflyBatchImport() {
+  if (!pfParsedRows || !pfParsedRows.length) return;
+  const wrap = document.getElementById('pfImportProgressWrap');
+  const bar = document.getElementById('pfImportProgressBar');
+  const txt = document.getElementById('pfImportStatusText');
+  const pctTxt = document.getElementById('pfImportPctText');
+  const btn = document.getElementById('btnStartPfImport');
+
+  if (wrap) wrap.style.display = 'block';
+  if (btn) btn.disabled = true;
+
+  const total = pfParsedRows.length;
+  const CHUNK_SIZE = 150;
+  let processed = 0;
+
+  try {
+    for (let i = 0; i < total; i += CHUNK_SIZE) {
+      const chunk = pfParsedRows.slice(i, i + CHUNK_SIZE);
+      const { error } = await sb.from('items').upsert(chunk, { onConflict: 'internal_code' });
+      if (error) {
+        console.warn('Chunk upload notice:', error);
+      }
+      processed += chunk.length;
+      const pct = Math.min(100, Math.round((processed / total) * 100));
+      if (bar) bar.style.width = pct + '%';
+      if (pctTxt) pctTxt.textContent = pct + '%';
+      if (txt) txt.textContent = `تم رفع ${processed} من ${total} صنف...`;
+    }
+
+    toast('🎉 تم استيراد ورفع قاعدة أصناف الصيدلية بالكامل بنجاح!');
+    closePharmaflyImportModal();
+    await loadItemsCatalog();
+  } catch(err) {
+    toast('❌ تعذر إكمال الرفع: ' + err.message, false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🚀 بدء الاستيراد والرفع'; }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ITEMS MASTER CATALOG (إدارة دليل الأصناف والمخزن)
+// ══════════════════════════════════════════════════════════════════
+async function loadItemsCatalog() {
+  try {
+    const { data, error } = await sb.from('items').select('*').order('name');
+    if (error) throw error;
+    cachedItems = data || [];
+
+    // بناء فهارس الذاكرة الفورية (O(1) HashMaps)
+    itemsByCode.clear();
+    itemsByBarcode.clear();
+    cachedItems.forEach(it => {
+      if (it.internal_code) itemsByCode.set(String(it.internal_code).trim(), it);
+      if (it.barcode) itemsByBarcode.set(String(it.barcode).trim(), it);
+    });
+
+    renderItemsTable();
+    updateItemsKpis();
+  } catch(err) {
+    console.warn('loadItemsCatalog notice:', err);
+    // إبقاء البيانات القديمة لو حصل خطأ شبكة
+    renderItemsTable();
+  }
+}
+
+function updateItemsKpis() {
+  const totalEl = document.getElementById('itemsTotalCount');
+  const inStockEl = document.getElementById('itemsInStockCount');
+  const outStockEl = document.getElementById('itemsOutStockCount');
+  const valEl = document.getElementById('itemsTotalValue');
+
+  const total = cachedItems.length;
+  let inStock = 0;
+  let outStock = 0;
+  let totalVal = 0;
+
+  cachedItems.forEach(it => {
+    const p = it.stock_packs || 0;
+    const u = it.stock_units || 0;
+    if (p > 0 || u > 0) inStock++;
+    else outStock++;
+    totalVal += (p * (it.selling_price || 0)) + (u * (it.unit_price || 0));
+  });
+
+  if (totalEl) totalEl.textContent = fmt(total);
+  if (inStockEl) inStockEl.textContent = fmt(inStock);
+  if (outStockEl) outStockEl.textContent = fmt(outStock);
+  if (valEl) valEl.textContent = fmt(Math.round(totalVal)) + ' ج';
+}
+
+function renderItemsTable(itemsToRender = null) {
+  const list = itemsToRender || cachedItems;
+  const tbody = document.getElementById('itemsTableBody');
+  if (!tbody) return;
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:36px;color:var(--text3);">لا توجد أصناف مسجلة بعد — يمكنك إضافة صنف جديد أو رفع ملف إكسيل فلاي فارما</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.slice(0, 100).map((it, idx) => {
+    const isOut = (it.stock_packs || 0) <= 0 && (it.stock_units || 0) <= 0;
+    return `
+      <tr style="${isOut ? 'background:rgba(229,62,62,.06);' : ''}">
+        <td style="color:var(--text3);">${idx + 1}</td>
+        <td><strong style="color:var(--teal);">${esc(it.internal_code || '—')}</strong></td>
+        <td><span style="font-family:monospace;font-size:.8rem;">${esc(it.barcode || '—')}</span></td>
+        <td>
+          <div style="font-weight:800;color:var(--text1);">${esc(it.name)}</div>
+          ${it.shelf_location ? `<div style="font-size:.72rem;color:var(--text3);">رف: ${esc(it.shelf_location)}</div>` : ''}
+        </td>
+        <td style="text-align:center;">${it.pack_units || 1}</td>
+        <td style="text-align:center;font-weight:900;color:#68d391;">${fmt(it.selling_price)} ج</td>
+        <td style="text-align:center;color:var(--text2);">${fmt(it.unit_price)} ج</td>
+        <td style="text-align:center;">
+          <span class="badge ${isOut ? 'be' : 'br'}">${it.stock_packs || 0} : ${it.stock_units || 0}</span>
+        </td>
+        <td style="text-align:center;font-size:.78rem;color:var(--text3);">${esc(it.expiry_date || '—')}</td>
+        <td style="text-align:center;">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="openAddItemModal('${it.id}')" title="تعديل">✏️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterItemsTable() {
+  const q = (document.getElementById('itemsSearchInp')?.value || '').trim().toLowerCase();
+  const filter = document.getElementById('itemsStockFilter')?.value || 'all';
+
+  let filtered = cachedItems.filter(it => {
+    const matchQ = !q ||
+      (it.name && it.name.toLowerCase().includes(q)) ||
+      (it.internal_code && it.internal_code.includes(q)) ||
+      (it.barcode && it.barcode.includes(q));
+
+    const isOut = (it.stock_packs || 0) <= 0 && (it.stock_units || 0) <= 0;
+    const matchStock = filter === 'all' || (filter === 'instock' && !isOut) || (filter === 'outstock' && isOut);
+
+    return matchQ && matchStock;
+  });
+
+  renderItemsTable(filtered);
+}
+
+// ── إضافة أو تعديل صنف بالمودال ──
+function openAddItemModal(editId = null) {
+  const modal = document.getElementById('addItemModal');
+  const title = document.getElementById('addItemModalTitle');
+  const idInp = document.getElementById('editItemId');
+
+  if (editId) {
+    const item = cachedItems.find(x => x.id === editId);
+    if (!item) return;
+    if (title) title.textContent = '✏️ تعديل بيانات الصنف';
+    if (idInp) idInp.value = item.id;
+    document.getElementById('inpItemCode').value = item.internal_code || '';
+    document.getElementById('inpItemBarcode').value = item.barcode || '';
+    document.getElementById('inpItemName').value = item.name || '';
+    document.getElementById('inpItemSellPrice').value = item.selling_price || '';
+    document.getElementById('inpItemPackUnits').value = item.pack_units || 1;
+    document.getElementById('inpItemUnitPrice').value = item.unit_price || '';
+    document.getElementById('inpItemCostPrice').value = item.cost_price || '';
+    document.getElementById('inpItemStockPacks').value = item.stock_packs || 0;
+    document.getElementById('inpItemStockUnits').value = item.stock_units || 0;
+    document.getElementById('inpItemExpiry').value = item.expiry_date || '';
+    document.getElementById('inpItemShelf').value = item.shelf_location || '';
+  } else {
+    if (title) title.textContent = '➕ إضافة صنف جديد';
+    if (idInp) idInp.value = '';
+    ['inpItemCode','inpItemBarcode','inpItemName','inpItemSellPrice','inpItemCostPrice','inpItemExpiry','inpItemShelf'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('inpItemPackUnits').value = 1;
+    document.getElementById('inpItemUnitPrice').value = '0.00';
+    document.getElementById('inpItemStockPacks').value = 0;
+    document.getElementById('inpItemStockUnits').value = 0;
+  }
+
+  if (modal) modal.classList.add('on');
+}
+
+function closeAddItemModal() {
+  const m = document.getElementById('addItemModal');
+  if (m) m.classList.remove('on');
+}
+
+function calcUnitSellPrice() {
+  const sell = parseFloat(document.getElementById('inpItemSellPrice')?.value) || 0;
+  const units = parseInt(document.getElementById('inpItemPackUnits')?.value) || 1;
+  const unitPrice = units > 1 ? (sell / units) : sell;
+  const out = document.getElementById('inpItemUnitPrice');
+  if (out) out.value = unitPrice.toFixed(2);
+}
+
+async function saveItemFromModal() {
+  const name = (document.getElementById('inpItemName')?.value || '').trim();
+  if (!name) {
+    toast('⚠️ اسم الصنف مطلوب', false);
+    return;
+  }
+  const editId = document.getElementById('editItemId')?.value;
+  const sellPrice = parseFloat(document.getElementById('inpItemSellPrice')?.value) || 0;
+  const packUnits = parseInt(document.getElementById('inpItemPackUnits')?.value) || 1;
+  const unitPrice = packUnits > 1 ? (sellPrice / packUnits) : sellPrice;
+
+  const itemObj = {
+    internal_code: (document.getElementById('inpItemCode')?.value || '').trim() || null,
+    barcode: (document.getElementById('inpItemBarcode')?.value || '').trim() || null,
+    name: name,
+    selling_price: sellPrice,
+    unit_price: Math.round(unitPrice * 100) / 100,
+    cost_price: parseFloat(document.getElementById('inpItemCostPrice')?.value) || 0,
+    pack_units: packUnits,
+    stock_packs: parseInt(document.getElementById('inpItemStockPacks')?.value) || 0,
+    stock_units: parseInt(document.getElementById('inpItemStockUnits')?.value) || 0,
+    expiry_date: (document.getElementById('inpItemExpiry')?.value || '').trim(),
+    shelf_location: (document.getElementById('inpItemShelf')?.value || '').trim(),
+    is_active: true
+  };
+
+  try {
+    if (editId) {
+      const { error } = await sb.from('items').update(itemObj).eq('id', editId);
+      if (error) throw error;
+      toast('✅ تم تحديث بيانات الصنف بنجاح');
+    } else {
+      itemObj.id = crypto.randomUUID();
+      const { error } = await sb.from('items').insert(itemObj);
+      if (error) throw error;
+      toast('✅ تم حفظ الصنف الجديد بنجاح');
+    }
+    closeAddItemModal();
+    await loadItemsCatalog();
+  } catch(err) {
+    toast('❌ خطأ في حفظ الصنف: ' + err.message, false);
+  }
+}
+
+// ── تصدير دليل الأصناف إكسيل ──
+async function exportItemsXLSX() {
+  await ensureXLSX();
+  if (typeof XLSX === 'undefined') {
+    toast('❌ تعذر تحميل مكتبة تصدير الإكسيل', false);
+    return;
+  }
+  const data = cachedItems.map(it => ({
+    'كود الصيدلية': it.internal_code || '',
+    'الباركود الدولي': it.barcode || '',
+    'اسم الصنف': it.name,
+    'أجزاء العلبة': it.pack_units || 1,
+    'سعر البيع': it.selling_price || 0,
+    'سعر الشريط': it.unit_price || 0,
+    'سعر التكلفة': it.cost_price || 0,
+    'رصيد علب': it.stock_packs || 0,
+    'رصيد أشرطة': it.stock_units || 0,
+    'الصلاحية': it.expiry_date || '',
+    'الرف': it.shelf_location || ''
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'الأصناف');
+  XLSX.writeFile(wb, `asafra_items_${todayStr()}.xlsx`);
+  toast('✅ تم تصدير ملف إكسيل الأصناف');
+}
+
+// ── سجل فواتير مبيعات اليوم ──
+async function openPosHistoryModal() {
+  const modal = document.getElementById('posHistoryModal');
+  const tbody = document.getElementById('posHistoryBody');
+  if (modal) modal.classList.add('on');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">⏳ جاري جلب فواتير اليوم...</td></tr>`;
+
+  try {
+    const today = todayStr();
+    const { data, error } = await sb.from('sales').select('*').eq('date', today).order('ts', { ascending: false });
+    if (error) throw error;
+
+    if (!data || !data.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">لا توجد فواتير مسجلة اليوم حتى الآن</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(s => `
+      <tr>
+        <td style="font-weight:800;color:var(--teal);">#${esc(s.invoice_no)}</td>
+        <td style="font-size:.8rem;color:var(--text3);">${esc(s.time)}</td>
+        <td>
+          <span class="badge ${s.type === 'sale' ? 'br' : 'be'}">${s.type === 'sale' ? '🟢 بيع' : '🔴 مرتجع'}</span>
+        </td>
+        <td style="font-size:.82rem;">${s.payment_method === 'cash' ? '💵 كاش' : s.payment_method === 'wallet' ? '📱 محفظة' : '⏳ آجل'}</td>
+        <td style="font-weight:900;color:#68d391;">${fmt(s.total)} ج</td>
+        <td style="text-align:center;">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="renderAndPrintReceipt(${JSON.stringify(s).replace(/"/g, '&quot;')})" title="طباعة">🖨️</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(err) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:#fc8181;">تعذر جلب الفواتير: ${esc(err.message)}</td></tr>`;
+  }
+}
+
+function closePosHistoryModal() {
+  const m = document.getElementById('posHistoryModal');
+  if (m) m.classList.remove('on');
+}
+
+// ── تشغيل النظام عند الإقلاع ──
+setTimeout(initPosSystem, 1000);
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -15890,6 +17138,164 @@ document.addEventListener('keydown', e => {
     </div>
   </div>
 </div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: POS SALES HISTORY (فواتير اليوم وإعادة الطباعة)
+══════════════════════════════════════════════════════════ -->
+<div id="posHistoryModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closePosHistoryModal()">
+  <div class="modal-box" style="max-width:760px;padding:24px;border-radius:18px;background:var(--bg2);border:1.5px solid var(--border2);max-height:85vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:1.15rem;font-weight:900;color:var(--text1);">📜 فواتير مبيعات اليوم</div>
+      <button onclick="closePosHistoryModal()" style="background:none;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--bg3);">
+      <table style="width:100%;border-collapse:collapse;" id="posHistoryTable">
+        <thead>
+          <tr style="background:var(--bg2);position:sticky;top:0;">
+            <th style="padding:10px;text-align:right;font-size:.78rem;color:var(--text2);">الفاتورة</th>
+            <th style="padding:10px;text-align:right;font-size:.78rem;color:var(--text2);">الوقت</th>
+            <th style="padding:10px;text-align:right;font-size:.78rem;color:var(--text2);">النوع</th>
+            <th style="padding:10px;text-align:right;font-size:.78rem;color:var(--text2);">الدفع</th>
+            <th style="padding:10px;text-align:right;font-size:.78rem;color:var(--text2);">الإجمالي</th>
+            <th style="padding:10px;text-align:center;font-size:.78rem;color:var(--text2);">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="posHistoryBody">
+          <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">جاري التحميل...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+      <button onclick="closePosHistoryModal()" class="btn btn-ghost" style="padding:6px 18px;">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: PHARMAFLY EXCEL IMPORT (رفع واستيراد الأصناف)
+══════════════════════════════════════════════════════════ -->
+<div id="pharmaflyImportModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closePharmaflyImportModal()">
+  <div class="modal-box" style="max-width:560px;padding:26px;border-radius:18px;background:var(--bg2);border:1.5px solid rgba(49,130,206,.5);text-align:center;">
+    <div style="font-size:2.4rem;margin-bottom:8px;">📦</div>
+    <div style="font-size:1.2rem;font-weight:900;color:var(--text1);margin-bottom:6px;">استيراد أصناف فلاي فارما (Excel)</div>
+    <div style="font-size:.82rem;color:var(--text3);margin-bottom:18px;line-height:1.6;">
+      ارفع ملف الإكسيل المصدّر من برنامج فلاي فارما.<br>
+      يقوم النظام تلقائياً بالتعرف على الأكواد والباركود والأسعار ورصيد العلب والأجزاء ورفعها إلى السحابة.
+    </div>
+
+    <!-- Drop Zone -->
+    <div id="pfDropZone" ondragover="event.preventDefault();this.style.borderColor='var(--accent)';" ondragleave="this.style.borderColor='var(--border2)';" ondrop="handlePfExcelDrop(event)"
+      style="border:2px dashed var(--border2);border-radius:14px;padding:28px 18px;background:var(--bg3);cursor:pointer;margin-bottom:16px;transition:border-color .2s;"
+      onclick="document.getElementById('pfExcelFileInput').click()">
+      <div style="font-size:1.8rem;margin-bottom:6px;">📂</div>
+      <div style="font-weight:800;color:var(--text1);font-size:.92rem;">اسحب وأفلت ملف Excel هنا أو اضغط للاختيار</div>
+      <div style="font-size:.76rem;color:var(--text3);margin-top:4px;">يدعم صيغ .xlsx و .xls و .csv</div>
+      <input type="file" id="pfExcelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handlePfExcelSelected(this.files)" />
+    </div>
+
+    <!-- Progress & Status -->
+    <div id="pfImportProgressWrap" style="display:none;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text2);margin-bottom:4px;">
+        <span id="pfImportStatusText">جاري المعالجة...</span>
+        <strong id="pfImportPctText">0%</strong>
+      </div>
+      <div style="height:10px;background:var(--bg1);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+        <div id="pfImportProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3182ce,#06b6d4);transition:width .2s;"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="btnStartPfImport" onclick="startPharmaflyBatchImport()" class="btn btn-blue" style="padding:9px 24px;font-weight:900;" disabled>🚀 بدء الاستيراد والرفع</button>
+      <button onclick="closePharmaflyImportModal()" class="btn btn-ghost" style="padding:9px 18px;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: ADD / EDIT ITEM (إضافة أو تعديل صنف بالمخزن)
+══════════════════════════════════════════════════════════ -->
+<div id="addItemModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closeAddItemModal()">
+  <div class="modal-box" style="max-width:540px;padding:24px;border-radius:18px;background:var(--bg2);border:1.5px solid var(--border2);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:1.15rem;font-weight:900;color:var(--text1);" id="addItemModalTitle">➕ إضافة صنف جديد</div>
+      <button onclick="closeAddItemModal()" style="background:none;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <input type="hidden" id="editItemId" value="" />
+    <div class="fg-row">
+      <div class="fg">
+        <label>كود الصيدلية الداخلي</label>
+        <input type="text" id="inpItemCode" class="fel" placeholder="مثال: 16240" />
+      </div>
+      <div class="fg">
+        <label>الباركود الدولي (EAN)</label>
+        <input type="text" id="inpItemBarcode" class="fel" placeholder="امسح بالسكانر أو اكتب" />
+      </div>
+    </div>
+    <div class="fg">
+      <label>اسم الصنف (التجاري والعلمي) *</label>
+      <input type="text" id="inpItemName" class="fel" placeholder="اسم الدواء..." required />
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>سعر الجمهور (العلبة) *</label>
+        <input type="number" id="inpItemSellPrice" class="fel" step="any" placeholder="0.00" oninput="calcUnitSellPrice()" />
+      </div>
+      <div class="fg">
+        <label>أجزاء / شرائط العلبة</label>
+        <input type="number" id="inpItemPackUnits" class="fel" value="1" min="1" oninput="calcUnitSellPrice()" />
+      </div>
+      <div class="fg">
+        <label>سعر الشريط المحسوب</label>
+        <input type="number" id="inpItemUnitPrice" class="fel" step="any" placeholder="0.00" readonly style="opacity:.85;background:var(--bg1);" />
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>سعر التكلفة / الشراء</label>
+        <input type="number" id="inpItemCostPrice" class="fel" step="any" placeholder="0.00" />
+      </div>
+      <div class="fg">
+        <label>الرصيد (علب)</label>
+        <input type="number" id="inpItemStockPacks" class="fel" value="0" />
+      </div>
+      <div class="fg">
+        <label>الرصيد (أشرطة متبقية)</label>
+        <input type="number" id="inpItemStockUnits" class="fel" value="0" />
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>تاريخ الصلاحية</label>
+        <input type="text" id="inpItemExpiry" class="fel" placeholder="مثال: 12/2028" />
+      </div>
+      <div class="fg">
+        <label>مكان الرف</label>
+        <input type="text" id="inpItemShelf" class="fel" placeholder="مثال: A-3" />
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button onclick="saveItemFromModal()" class="btn btn-green" style="padding:9px 24px;font-weight:900;">💾 حفظ الصنف</button>
+      <button onclick="closeAddItemModal()" class="btn btn-ghost" style="padding:9px 16px;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: THERMAL RECEIPT PREVIEW (معاينة وطباعة الفاتورة)
+══════════════════════════════════════════════════════════ -->
+<div id="posReceiptModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closePosReceiptModal()">
+  <div class="modal-box" style="max-width:380px;padding:18px;border-radius:14px;background:#fff;color:#000;text-align:center;">
+    <div id="posReceiptModalContent"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;">
+      <button onclick="window.print()" class="btn btn-sm btn-green" style="padding:8px 20px;font-weight:900;">🖨️ طباعة الآن</button>
+      <button onclick="closePosReceiptModal()" class="btn btn-sm btn-gray" style="padding:8px 16px;">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Area dedicated for physical thermal printer (80mm/58mm) -->
+<div id="posReceiptPrintArea" style="display:none;"></div>
 
 </body>
 </html>
