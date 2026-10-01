@@ -2673,7 +2673,7 @@ function ensureXLSX() {
 const COS = {
   ايرادات:['بداية العهدة','شيفت صباحي','شيفت وسط','شيفت مسائي','شيفت يوم كامل','د.محمد ايداع'],
   طلبيات:['فارما جروب','ميراميديكال','تاج','الابرار','اللوتس','كريم فارما','كيو فارما','تارجت','المجد','مستورد','ماستر كوزمو','نبض','فارما اوفر سيز','شراء ادوية 50%','ميجا ستور','نفرتيتي','الدوليه','ابن خلدون','الاطباء','الصيادلة المصريين','الفا جروب','اليكس سيوتكس','اليكس واي','براند جروب','جرين فارما','جولدن','ديرما ستامب','ميد شيلد','رويال فارما','عابدين','غرناطه','فارما بروفايدرز','فارما ويست','فاروس','لوتس فارم','مارو مستحضرات','ميديسين','نيو طيبة','نيو ميديسن','هيلثى فارم','صيدلية السيوف','ثوريكس','تراست','فيوتشر ميديكال','ص. الطيبي','براند جمالك','سبشيال فارما','3N','سهم','كير','برايم فارما','قنديل'],
-  مصاريف:['رواتب','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
+  مصاريف:['رسوم سحب محفظة','رواتب','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
   ارباح:['أرباح الشهر','توزيع أرباح'],
   'اصول ثابتة':['معدات طبية','ثلاجات أدوية','كمبيوترات وسيستم','كاميرات مراقبة','أثاث وديكور','سيارة / عجلة توصيل','برامج وتراخيص','شاشات وأجهزة'],
   'ذمم اونلاين':['انستا باي','محفظة الصيدلية'],
@@ -6909,7 +6909,9 @@ function confirmWalletPin() {
     const modal = document.getElementById('walletPinModal');
     if (modal) modal.classList.remove('on');
     if (_walletPinResolve) {
-      _walletPinResolve(true);
+      const feeRateInp = document.getElementById('walletFeeRateInp');
+      const feeRate = feeRateInp ? Math.max(0, Math.min(20, parseFloat(feeRateInp.value) || 0)) : 1.0;
+      _walletPinResolve({ success: true, feeRate: feeRate });
       _walletPinResolve = null;
     }
   } else {
@@ -6923,6 +6925,39 @@ function confirmWalletPin() {
     }
     toast('❌ الرقم السري غير صحيح', false);
   }
+}
+
+function setWalletFeeRate(rate, totalAmt) {
+  const inp = document.getElementById('walletFeeRateInp');
+  if (inp) {
+    inp.value = rate.toFixed(1);
+    onWalletFeeRateInput(inp, totalAmt);
+  }
+  document.querySelectorAll('.fee-btn').forEach(b => {
+    const bRate = parseFloat(b.dataset.rate);
+    const isActive = Math.abs(bRate - rate) < 0.01;
+    b.classList.toggle('active', isActive);
+    if (isActive) {
+      b.style.background = '#f6ad55';
+      b.style.color = '#1a202c';
+      b.style.fontWeight = '900';
+    } else {
+      b.style.background = 'rgba(246,173,85,.15)';
+      b.style.color = '#f6ad55';
+      b.style.fontWeight = '700';
+    }
+  });
+}
+
+function onWalletFeeRateInput(inp, totalAmt) {
+  const rate = Math.max(0, Math.min(20, parseFloat(inp.value) || 0));
+  const fee = Math.round((totalAmt * (rate / 100)) * 100) / 100;
+  const net = Math.round((totalAmt - fee) * 100) / 100;
+
+  const feeEl = document.getElementById('walletFeeAmtText');
+  const netEl = document.getElementById('walletNetAmtText');
+  if (feeEl) feeEl.textContent = `-${fmt(fee)} ج`;
+  if (netEl) netEl.textContent = `+${fmt(net)} ج`;
 }
 
 function closeWalletPinModal() {
@@ -6998,8 +7033,10 @@ function openWalletSettleOptions() {
   const totalEl = document.getElementById('wOptTotalAmt');
   const badgeEl = document.getElementById('wOptAllBadge');
 
-  if (totalEl) totalEl.textContent = `${fmt(totalAmt)} ج`;
-  if (badgeEl) badgeEl.textContent = `${fmt(totalAmt)} ج`;
+  const estFee = Math.round((totalAmt * 0.01) * 100) / 100;
+  const estNet = Math.round((totalAmt - estFee) * 100) / 100;
+  if (totalEl) totalEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.78rem;color:#f6ad55;margin-right:8px;font-weight:700;">(صافي العهدة: +${fmt(estNet)} ج بعد رسوم 1%: -${fmt(estFee)} ج)</span>`;
+  if (badgeEl) badgeEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.68rem;opacity:.9;">(صافي: ${fmt(estNet)})</span>`;
 
   if (modal) modal.classList.add('on');
 }
@@ -7061,22 +7098,60 @@ async function settlePartialWalletAmount(targetAmt) {
     return;
   }
 
-  // طلب الرقم السري
-  const pinOk = await requestWalletPin(`
-    تصفية جزئية بمحفظة الصيدلية بقيمة <strong style="color:#68d391;font-size:1.15rem;">${fmt(targetAmt)} ج</strong> وترحيلها للعهدة.<br/>
-    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  const estFee = Math.round((targetAmt * 0.01) * 100) / 100;
+  const estNet = Math.round((targetAmt - estFee) * 100) / 100;
+
+  // طلب الرقم السري وتحديد رسوم السحب (0.5% - 1.5%)
+  const pinRes = await requestWalletPin(`
+    <div style="font-weight:900;font-size:1.05rem;color:var(--text1);margin-bottom:10px;">تصفية جزئية بمحفظة الصيدلية</div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:right;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.82rem;color:var(--text3);">المبلغ المصفى من الذمم:</span>
+        <strong style="color:var(--text1);font-size:1.05rem;">${fmt(targetAmt)} ج</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
+        <div>
+          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نسبة رسوم السحب:</span>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <button type="button" class="btn btn-xs fee-btn" data-rate="0.5" onclick="setWalletFeeRate(0.5, ${targetAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">0.5%</button>
+            <button type="button" class="btn btn-xs fee-btn active" data-rate="1.0" onclick="setWalletFeeRate(1.0, ${targetAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:#f6ad55;color:#1a202c;font-weight:900;cursor:pointer;">1.0%</button>
+            <button type="button" class="btn btn-xs fee-btn" data-rate="1.5" onclick="setWalletFeeRate(1.5, ${targetAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">1.5%</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="walletFeeRateInp" step="0.1" min="0" max="10" value="1.0"
+            oninput="onWalletFeeRateInput(this, ${targetAmt})"
+            style="width:58px;padding:3px 6px;text-align:center;font-weight:900;border-radius:6px;border:1px solid rgba(246,173,85,.5);background:var(--bg1);color:#f6ad55;font-size:.9rem;"/>
+          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">%</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف):</span>
+        <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.12);">
+        <span style="font-size:.86rem;color:#68d391;font-weight:800;">صافي النقدية للعهدة:</span>
+        <strong id="walletNetAmtText" style="color:#68d391;font-size:1.25rem;">+${fmt(estNet)} ج</strong>
+      </div>
+    </div>
+    <div style="font-size:.76rem;color:var(--text3);margin-bottom:6px;">أدخل الرقم السري للمتابعة:</div>
   `);
-  if (!pinOk) {
+  if (!pinRes) {
     toast('❌ تم إلغاء التصفية الجزئية — الرقم السري مطلوب', false);
     return;
   }
+
+  const feeRate = (typeof pinRes === 'object' && pinRes?.feeRate != null) ? pinRes.feeRate : 1.0;
+  const fee = Math.round((targetAmt * (feeRate / 100)) * 100) / 100;
+  const netAmt = Math.round((targetAmt - fee) * 100) / 100;
 
   try {
     const today = todayStr();
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
-    const newId = crypto.randomUUID();
-    const newB = await sbUpdateBalance(targetAmt);
+    const revId = crypto.randomUUID();
+    const feeId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(netAmt);
 
     let remNeeded = targetAmt;
     const fullySettledIds = [];
@@ -7101,12 +7176,12 @@ async function settlePartialWalletAmount(targetAmt) {
 
     if (fullySettledIds.length > 0) {
       const { error: updErr } = await sb.from('entries')
-        .update({ invoice: 'settled:' + newId })
+        .update({ invoice: 'settled:' + revId })
         .in('id', fullySettledIds);
       if (updErr) throw updErr;
 
       walletDebts.forEach(d => {
-        if (fullySettledIds.includes(d.id)) d.invoice = 'settled:' + newId;
+        if (fullySettledIds.includes(d.id)) d.invoice = 'settled:' + revId;
       });
     }
 
@@ -7124,41 +7199,83 @@ async function settlePartialWalletAmount(targetAmt) {
       orig.notes = newNotes;
     }
 
-    const notes = `تصفية جزئية لذمم محفظة الصيدلية (${fmt(targetAmt)} ج)`;
+    const revNotes = `تصفية جزئية لذمم محفظة الصيدلية (${fmt(targetAmt)} ج)`;
+
+    // 1. قيد إيرادات بإجمالي المبلغ
     const { error: insErr } = await sb.from('entries').insert({
-      id: newId,
+      id: revId,
       date: today,
       type: 'ايرادات',
       company: 'تسوية ذمم محفظة الصيدلية',
       invoice: '',
       amount: targetAmt,
-      notes: notes,
+      notes: revNotes,
       uid: me.uid,
       uname: me.name,
-      balance: newB,
+      balance: newB + fee,
       time: timeStr,
-      ts: Date.now()
+      ts: Date.now() - 50
     });
     if (insErr) throw insErr;
 
+    // 2. قيد مصاريف بقيمة رسوم السحب
+    if (fee > 0) {
+      const feeNotes = `رسوم سحب ${feeRate}% عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`;
+      const { error: feeErr } = await sb.from('entries').insert({
+        id: feeId,
+        date: today,
+        type: 'مصاريف',
+        company: 'رسوم سحب محفظة',
+        invoice: '',
+        amount: fee,
+        notes: feeNotes,
+        uid: me.uid,
+        uname: me.name,
+        balance: newB,
+        time: timeStr,
+        ts: Date.now()
+      });
+      if (feeErr) console.warn('fee insert error:', feeErr);
+    }
+
     entries.unshift({
-      id: newId,
+      id: revId,
       date: today,
       type: 'ايرادات',
       company: 'تسوية ذمم محفظة الصيدلية',
       invoice: '',
       amount: targetAmt,
-      notes: notes,
+      notes: revNotes,
       uid: me.uid,
       uname: me.name,
-      balance: newB,
+      balance: newB + fee,
       time: timeStr,
-      ts: Date.now()
+      ts: Date.now() - 50
     });
+
+    if (fee > 0) {
+      entries.unshift({
+        id: feeId,
+        date: today,
+        type: 'مصاريف',
+        company: 'رسوم سحب محفظة',
+        invoice: '',
+        amount: fee,
+        notes: `رسوم سحب ${feeRate}% عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`,
+        uid: me.uid,
+        uname: me.name,
+        balance: newB,
+        time: timeStr,
+        ts: Date.now()
+      });
+    }
 
     sbLogAction('settle_wallet_partial', fullySettledIds, {
       settledAmount: targetAmt,
-      settlementEntryId: newId,
+      feeRate: feeRate,
+      feeAmount: fee,
+      netAmount: netAmt,
+      settlementEntryId: revId,
       company: 'تسوية ذمم محفظة الصيدلية'
     });
 
@@ -7167,7 +7284,7 @@ async function settlePartialWalletAmount(targetAmt) {
     renderSum();
     updToday();
 
-    toast(`✅ تم تصفية مبلغ جزئي ${fmt(targetAmt)} ج وإضافته للعهدة الحالية`);
+    toast(`✅ تم تصفية ${fmt(targetAmt)} ج من المحفظة (رسوم سحب ${fmt(fee)} ج | صافي العهدة +${fmt(netAmt)} ج)`);
   } catch(e) {
     toast('❌ خطأ في التصفية الجزئية: ' + arErr(e), false);
   }
@@ -7201,7 +7318,11 @@ function updateOdSelectedBar() {
 
   bar.style.display = 'flex';
   if (countText) countText.textContent = `تم تحديد ${chks.length} حركة`;
-  if (amtText) amtText.textContent = `${fmt(total)} ج`;
+  if (amtText) {
+    const estFee = Math.round((total * 0.01) * 100) / 100;
+    const estNet = Math.round((total - estFee) * 100) / 100;
+    amtText.innerHTML = `${fmt(total)} ج <span style="font-size:.74rem;color:#f6ad55;font-weight:700;margin-right:6px;">(رسوم 1%: -${fmt(estFee)} ج | صافي العهدة: +${fmt(estNet)} ج)</span>`;
+  }
 }
 
 function clearOdSelection() {
@@ -7233,69 +7354,148 @@ async function settleSelectedWalletDebts() {
     return;
   }
 
-  const pinOk = await requestWalletPin(`
-    تصفية <strong>${selectedEntries.length}</strong> حركة محددة بمحفظة الصيدلية<br/>
-    بإجمالي مبلغ <strong style="color:#68d391;font-size:1.15rem;">${fmt(totalAmt)} ج</strong> وترحيلها للعهدة.<br/>
-    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  const estFee = Math.round((totalAmt * 0.01) * 100) / 100;
+  const estNet = Math.round((totalAmt - estFee) * 100) / 100;
+
+  // طلب الرقم السري وتحديد رسوم السحب (0.5% - 1.5%)
+  const pinRes = await requestWalletPin(`
+    <div style="font-weight:900;font-size:1.05rem;color:var(--text1);margin-bottom:10px;">تصفية حركات محددة بمحفظة الصيدلية</div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:right;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.82rem;color:var(--text3);">إجمالي الحركات المحددة (${selectedEntries.length} حركة):</span>
+        <strong style="color:var(--text1);font-size:1.05rem;">${fmt(totalAmt)} ج</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
+        <div>
+          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نسبة رسوم السحب:</span>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <button type="button" class="btn btn-xs fee-btn" data-rate="0.5" onclick="setWalletFeeRate(0.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">0.5%</button>
+            <button type="button" class="btn btn-xs fee-btn active" data-rate="1.0" onclick="setWalletFeeRate(1.0, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:#f6ad55;color:#1a202c;font-weight:900;cursor:pointer;">1.0%</button>
+            <button type="button" class="btn btn-xs fee-btn" data-rate="1.5" onclick="setWalletFeeRate(1.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">1.5%</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="walletFeeRateInp" step="0.1" min="0" max="10" value="1.0"
+            oninput="onWalletFeeRateInput(this, ${totalAmt})"
+            style="width:58px;padding:3px 6px;text-align:center;font-weight:900;border-radius:6px;border:1px solid rgba(246,173,85,.5);background:var(--bg1);color:#f6ad55;font-size:.9rem;"/>
+          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">%</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف):</span>
+        <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.12);">
+        <span style="font-size:.86rem;color:#68d391;font-weight:800;">صافي النقدية للعهدة:</span>
+        <strong id="walletNetAmtText" style="color:#68d391;font-size:1.25rem;">+${fmt(estNet)} ج</strong>
+      </div>
+    </div>
+    <div style="font-size:.76rem;color:var(--text3);margin-bottom:6px;">أدخل الرقم السري للمتابعة:</div>
   `);
-  if (!pinOk) {
+  if (!pinRes) {
     toast('❌ تم إلغاء تصفية الحركات المحددة — الرقم السري مطلوب', false);
     return;
   }
+
+  const feeRate = (typeof pinRes === 'object' && pinRes?.feeRate != null) ? pinRes.feeRate : 1.0;
+  const fee = Math.round((totalAmt * (feeRate / 100)) * 100) / 100;
+  const netAmt = Math.round((totalAmt - fee) * 100) / 100;
 
   try {
     const today = todayStr();
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
-    const newId = crypto.randomUUID();
-    const newB = await sbUpdateBalance(totalAmt);
+    const revId = crypto.randomUUID();
+    const feeId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(netAmt);
 
-    const notes = `تصفية حركات ذمم أونلاين محددة (${selectedEntries.length} حركة)`;
+    const revNotes = `تصفية حركات ذمم أونلاين محددة (${selectedEntries.length} حركة) — إجمالي ${fmt(totalAmt)} ج`;
 
+    // 1. قيد إيرادات بإجمالي المبلغ
     const { error: insErr } = await sb.from('entries').insert({
-      id: newId,
+      id: revId,
       date: today,
       type: 'ايرادات',
       company: 'تسوية ذمم أونلاين',
       invoice: '',
       amount: totalAmt,
-      notes: notes,
+      notes: revNotes,
       uid: me.uid,
       uname: me.name,
-      balance: newB,
+      balance: newB + fee,
       time: timeStr,
-      ts: Date.now()
+      ts: Date.now() - 50
     });
     if (insErr) throw insErr;
 
+    // 2. قيد مصاريف بقيمة رسوم السحب
+    if (fee > 0) {
+      const feeNotes = `رسوم سحب ${feeRate}% عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`;
+      const { error: feeErr } = await sb.from('entries').insert({
+        id: feeId,
+        date: today,
+        type: 'مصاريف',
+        company: 'رسوم سحب محفظة',
+        invoice: '',
+        amount: fee,
+        notes: feeNotes,
+        uid: me.uid,
+        uname: me.name,
+        balance: newB,
+        time: timeStr,
+        ts: Date.now()
+      });
+      if (feeErr) console.warn('fee insert error:', feeErr);
+    }
+
     const { error: updErr } = await sb.from('entries')
-      .update({ invoice: 'settled:' + newId })
+      .update({ invoice: 'settled:' + revId })
       .in('id', selectedIds);
     if (updErr) throw updErr;
 
     selectedEntries.forEach(e => {
-      e.invoice = 'settled:' + newId;
+      e.invoice = 'settled:' + revId;
     });
 
     entries.unshift({
-      id: newId,
+      id: revId,
       date: today,
       type: 'ايرادات',
       company: 'تسوية ذمم أونلاين',
       invoice: '',
       amount: totalAmt,
-      notes: notes,
+      notes: revNotes,
       uid: me.uid,
       uname: me.name,
-      balance: newB,
+      balance: newB + fee,
       time: timeStr,
-      ts: Date.now()
+      ts: Date.now() - 50
     });
+
+    if (fee > 0) {
+      entries.unshift({
+        id: feeId,
+        date: today,
+        type: 'مصاريف',
+        company: 'رسوم سحب محفظة',
+        invoice: '',
+        amount: fee,
+        notes: `رسوم سحب ${feeRate}% عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`,
+        uid: me.uid,
+        uname: me.name,
+        balance: newB,
+        time: timeStr,
+        ts: Date.now()
+      });
+    }
 
     sbLogAction('settle_online_selected', selectedIds, {
       count: selectedEntries.length,
       totalAmount: totalAmt,
-      settlementEntryId: newId
+      feeRate: feeRate,
+      feeAmount: fee,
+      netAmount: netAmt,
+      settlementEntryId: revId
     });
 
     clearOdSelection();
@@ -7304,7 +7504,7 @@ async function settleSelectedWalletDebts() {
     renderSum();
     updToday();
 
-    toast(`✅ تم تصفية ${selectedEntries.length} حركة محددة بقيمة ${fmt(totalAmt)} ج وإضافتها للعهدة`);
+    toast(`✅ تم تصفية ${selectedEntries.length} حركة بقيمة ${fmt(totalAmt)} ج (رسوم ${fmt(fee)} ج | صافي العهدة +${fmt(netAmt)} ج)`);
   } catch(e) {
     toast('❌ خطأ في تصفية الحركات المحددة: ' + arErr(e), false);
   }
@@ -7329,86 +7529,163 @@ async function settleAllWalletDebts() {
     return;
   }
 
-  // 🔐 طلب الرقم السري لحماية الترحيل
-  const pinOk = await requestWalletPin(`
-    تصفية <strong>${walletDebts.length}</strong> حركة بمحفظة الصيدلية<br/>
-    بإجمالي مبلغ <strong style="color:#68d391;font-size:1.15rem;">${fmt(totalAmt)} ج</strong> وترحيلها للعهدة.<br/>
-    <span style="font-size:.76rem;color:var(--text3);">أدخل الرقم السري للمتابعة:</span>
+  const estFee = Math.round((totalAmt * 0.01) * 100) / 100;
+  const estNet = Math.round((totalAmt - estFee) * 100) / 100;
+
+  // 🔐 طلب الرقم السري وتحديد رسوم السحب (0.5% - 1.5%)
+  const pinRes = await requestWalletPin(`
+    <div style="font-weight:900;font-size:1.05rem;color:var(--text1);margin-bottom:10px;">تصفية محفظة الصيدلية بالكامل للعهدة</div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:right;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.82rem;color:var(--text3);">إجمالي رصيد المحفظة (${walletDebts.length} حركة):</span>
+        <strong style="color:var(--text1);font-size:1.05rem;">${fmt(totalAmt)} ج</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
+        <div>
+          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نسبة رسوم السحب:</span>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <button type="button" class="btn btn-xs fee-btn" data-rate="0.5" onclick="setWalletFeeRate(0.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">0.5%</button>
+            <button type="button" class="btn btn-xs fee-btn active" data-rate="1.0" onclick="setWalletFeeRate(1.0, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:#f6ad55;color:#1a202c;font-weight:900;cursor:pointer;">1.0%</button>
+            <button type="button" class="btn btn-xs fee-btn" data-rate="1.5" onclick="setWalletFeeRate(1.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">1.5%</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="walletFeeRateInp" step="0.1" min="0" max="10" value="1.0"
+            oninput="onWalletFeeRateInput(this, ${totalAmt})"
+            style="width:58px;padding:3px 6px;text-align:center;font-weight:900;border-radius:6px;border:1px solid rgba(246,173,85,.5);background:var(--bg1);color:#f6ad55;font-size:.9rem;"/>
+          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">%</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف):</span>
+        <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.12);">
+        <span style="font-size:.86rem;color:#68d391;font-weight:800;">صافي النقدية للعهدة:</span>
+        <strong id="walletNetAmtText" style="color:#68d391;font-size:1.25rem;">+${fmt(estNet)} ج</strong>
+      </div>
+    </div>
+    <div style="font-size:.76rem;color:var(--text3);margin-bottom:6px;">أدخل الرقم السري لتأكيد الترحيل:</div>
   `);
 
-  if (!pinOk) {
+  if (!pinRes) {
     toast('❌ تم إلغاء التصفية — الرقم السري مطلوب للترحيل', false);
     return;
   }
+
+  const feeRate = (typeof pinRes === 'object' && pinRes?.feeRate != null) ? pinRes.feeRate : 1.0;
+  const fee = Math.round((totalAmt * (feeRate / 100)) * 100) / 100;
+  const netAmt = Math.round((totalAmt - fee) * 100) / 100;
 
   try {
     const today = todayStr();
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
-    const newId = crypto.randomUUID();
-    const newB = await sbUpdateBalance(totalAmt);
+    const revId = crypto.randomUUID();
+    const feeId = crypto.randomUUID();
+    const newB = await sbUpdateBalance(netAmt);
     const walletIds = walletDebts.map(e => e.id);
 
-    const notes = `تصفية وتسوية ذمم المحفظة بالكامل (${walletDebts.length} حركة)`;
+    const revNotes = `تصفية وتسوية ذمم المحفظة بالكامل (${walletDebts.length} حركة) — إجمالي ${fmt(totalAmt)} ج`;
 
     // 1. إنشاء قيد إيرادات رسمي بالتحويل للعهدة
     const { error: insErr } = await sb.from('entries').insert({
-      id: newId,
+      id: revId,
       date: today,
       type: 'ايرادات',
       company: 'تسوية ذمم محفظة الصيدلية',
       invoice: '',
       amount: totalAmt,
-      notes: notes,
+      notes: revNotes,
       uid: me.uid,
       uname: me.name,
-      balance: newB,
+      balance: newB + fee,
       time: timeStr,
-      ts: Date.now()
+      ts: Date.now() - 50
     });
     if (insErr) throw new Error(insErr.message);
 
-    // 2. تحديث جميع قيود المحفظة في Supabase لتصبح مسواة
+    // 2. قيد مصاريف بقيمة رسوم السحب (إذا كانت الرسوم > 0)
+    if (fee > 0) {
+      const feeNotes = `رسوم سحب ${feeRate}% عن تصفية محفظة الصيدلية بمبلغ ${fmt(totalAmt)} ج`;
+      const { error: feeErr } = await sb.from('entries').insert({
+        id: feeId,
+        date: today,
+        type: 'مصاريف',
+        company: 'رسوم سحب محفظة',
+        invoice: '',
+        amount: fee,
+        notes: feeNotes,
+        uid: me.uid,
+        uname: me.name,
+        balance: newB,
+        time: timeStr,
+        ts: Date.now()
+      });
+      if (feeErr) console.warn('fee insert error:', feeErr);
+    }
+
+    // 3. تحديث جميع قيود المحفظة في Supabase لتصبح مسواة
     const { error: updErr } = await sb.from('entries')
-      .update({ invoice: 'settled:' + newId })
+      .update({ invoice: 'settled:' + revId })
       .in('id', walletIds);
     if (updErr) throw new Error(updErr.message);
 
-    // 3. تحديث الذاكرة المحلية
+    // 4. تحديث الذاكرة المحلية
     walletDebts.forEach(e => {
-      e.invoice = 'settled:' + newId;
+      e.invoice = 'settled:' + revId;
     });
 
     entries.unshift({
-      id: newId,
+      id: revId,
       date: today,
       type: 'ايرادات',
       company: 'تسوية ذمم محفظة الصيدلية',
       invoice: '',
       amount: totalAmt,
-      notes: notes,
+      notes: revNotes,
       uid: me.uid,
       uname: me.name,
-      balance: newB,
+      balance: newB + fee,
       time: timeStr,
-      ts: Date.now()
+      ts: Date.now() - 50
     });
 
-    // 4. تسجيل في سجل الحركات
+    if (fee > 0) {
+      entries.unshift({
+        id: feeId,
+        date: today,
+        type: 'مصاريف',
+        company: 'رسوم سحب محفظة',
+        invoice: '',
+        amount: fee,
+        notes: `رسوم سحب ${feeRate}% عن تصفية محفظة بمبلغ ${fmt(totalAmt)} ج`,
+        uid: me.uid,
+        uname: me.name,
+        balance: newB,
+        time: timeStr,
+        ts: Date.now()
+      });
+    }
+
+    // 5. تسجيل في سجل الحركات
     sbLogAction('settle_wallet_all', walletIds, {
       count: walletDebts.length,
       totalAmount: totalAmt,
-      settlementEntryId: newId,
+      feeRate: feeRate,
+      feeAmount: fee,
+      netAmount: netAmt,
+      settlementEntryId: revId,
       company: 'تسوية ذمم محفظة الصيدلية'
     });
 
-    // 5. تحديث الشاشات والقيم
+    // 6. تحديث الشاشات والقيم
     updateOnlineDebtsHeader();
     renderAll();
     renderSum();
     updToday();
 
-    toast(`✅ تم تصفية ذمم المحفظة (${walletDebts.length} حركة) وإضافة ${fmt(totalAmt)} ج للعهدة`);
+    toast(`✅ تم تصفية ذمم المحفظة بالكامل: إجمالي ${fmt(totalAmt)} ج | رسوم سحب ${fmt(fee)} ج (${feeRate}%) | صافي العهدة +${fmt(netAmt)} ج`);
   } catch(e) {
     toast('❌ خطأ في تصفية المحفظة: ' + arErr(e), false);
   }
