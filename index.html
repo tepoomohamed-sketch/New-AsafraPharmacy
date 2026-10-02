@@ -3572,12 +3572,12 @@ function buildApp() {
   const isAdmin = me.role==='admin';
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
   document.getElementById('mainTabs').innerHTML = `
-    <div class="tab on" onclick="swTab('pos',this)">🛒 كاشير المبيعات</div>
-    <div class="tab" onclick="swTab('add',this)">➕ قيد جديد</div>
+    <div class="tab on" onclick="swTab('add',this)">➕ قيد جديد</div>
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'pos\',this)">🛒 كاشير المبيعات (تجريبي)</div>' : ''}
     ${isAdmin
       ? '<div class="tab" onclick="swTab(\'all\',this)">📋 كل الحركات</div>'
       : '<div class="tab" onclick="swTab(\'mine\',this)">📋 حركاتي</div>'}
-    <div class="tab" onclick="swTab('items',this)">📦 الأصناف والمخزن</div>
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'items\',this)">📦 الأصناف والمخزن</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'sum\',this)">📊 الملخص</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'budget\',this)">📑 الموازنة المالية</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'salesdb\',this)">📊 داشبورد المبيعات</div>' : ''}
@@ -3598,8 +3598,8 @@ function buildApp() {
   {
     const isAdm = me.role==='admin';
     const adminItems = [
-      {tab:'pos',  ico:'🛒', lbl:'كاشير'},
       {tab:'add',  ico:'➕', lbl:'قيد'},
+      {tab:'pos',  ico:'🛒', lbl:'كاشير'},
       {tab:'all',  ico:'📋', lbl:'حركات'},
       {tab:'items',ico:'📦', lbl:'مخزن'},
       {tab:'sum',  ico:'📊', lbl:'ملخص'},
@@ -3607,7 +3607,6 @@ function buildApp() {
       {tab:'set',  ico:'⚙️', lbl:'إعدادات'},
     ];
     const empItems = [
-      {tab:'pos',  ico:'🛒', lbl:'كاشير'},
       {tab:'add',  ico:'➕', lbl:'قيد'},
       {tab:'mine', ico:'📋', lbl:'حركاتي'},
       {tab:'att',  ico:'⏱', lbl:'حضور'},
@@ -3716,6 +3715,10 @@ function fireFlyingParticles(originEl, icons = ['💵', '💊', '✨', '🎉', '
 }
 
 function swTab(name, el) {
+  if ((name === 'pos' || name === 'items') && me?.role !== 'admin') {
+    toast('🔒 كاشير المبيعات والمخزن قيد التجربة ومتاح للمدير فقط حالياً', false);
+    return;
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
   if (el) {
