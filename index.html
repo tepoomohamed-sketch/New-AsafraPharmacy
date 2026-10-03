@@ -6923,15 +6923,24 @@ async function getBkpData() {
     from += step;
   }
 
-  const [{data: att}, {data: metas}] = await Promise.all([
-    sb.from('attendance').select('*').order('ts'),
-    sb.from('meta').select('*')
+  const [{data: att}, {data: metas}, {data: allSales}, {data: allItems}, {data: allShifts}] = await Promise.all([
+    sb.from('attendance').select('*').order('ts').catch(()=>({data:[]})),
+    sb.from('meta').select('*').catch(()=>({data:[]})),
+    sb.from('sales').select('*').order('ts', { ascending: false }).limit(2000).catch(()=>({data:[]})),
+    sb.from('items').select('*').order('name').catch(()=>({data:[]})),
+    sb.from('shift_handovers').select('*').order('id', { ascending: false }).limit(500).catch(()=>({data:[]}))
   ]);
+
   return {
+    version: '3.0',
     date: new Date().toISOString(),
+    pharmacy: 'صيدليات دوا العصافرة',
     entries: allEnts,
     attendance: att || [],
-    meta: metas || []
+    meta: metas || [],
+    sales: allSales || [],
+    items: allItems || [],
+    shift_handovers: allShifts || []
   };
 }
 
