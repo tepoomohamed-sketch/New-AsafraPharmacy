@@ -17023,8 +17023,55 @@ async function startPharmaflyBatchImport() {
 // ══════════════════════════════════════════════════════════════════
 //  ITEMS MASTER CATALOG (إدارة دليل الأصناف والمخزن)
 // ══════════════════════════════════════════════════════════════════
-async function loadItemsCatalog() {
+function idbItemsOpen() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('asafra_items_cache_v2', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('cache');
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+async function idbGetCachedItems() {
   try {
+    const db = await idbItemsOpen();
+    const tx = db.transaction('cache', 'readonly');
+    return new Promise(res => {
+      const req = tx.objectStore('cache').get('catalog');
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => res(null);
+    });
+  } catch(e) { return null; }
+}
+
+async function idbSaveCachedItems(items) {
+  try {
+    const db = await idbItemsOpen();
+    const tx = db.transaction('cache', 'readwrite');
+    tx.objectStore('cache').put(items, 'catalog');
+    return new Promise(res => { tx.oncomplete = res; tx.onerror = () => res(); });
+  } catch(e) {}
+}
+
+async function loadItemsCatalog(forceRefresh = false) {
+  try {
+    // 1. سرعة البرق: تحميل فوري من الذاكرة المحلية IndexedDB خلال 50ms
+    if (!forceRefresh && (!cachedItems || !cachedItems.length)) {
+      const localCached = await idbGetCachedItems();
+      if (localCached && localCached.length > 0) {
+        cachedItems = localCached;
+        itemsByCode.clear();
+        itemsByBarcode.clear();
+        cachedItems.forEach(it => {
+          if (it.internal_code) itemsByCode.set(String(it.internal_code).trim(), it);
+          if (it.barcode) itemsByBarcode.set(String(it.barcode).trim(), it);
+        });
+        renderItemsTable();
+        updateItemsKpis();
+      }
+    }
+
+    // 2. مزامنة البيانات الكاملة من Supabase
     let allData = [];
     let page = 0;
     const pageSize = 1000;
@@ -17042,6 +17089,7 @@ async function loadItemsCatalog() {
 
     if (allData.length > 0) {
       cachedItems = allData;
+      idbSaveCachedItems(allData); // حفظ محلي دائم في المتصفح لعدم الانتظار مستقبلاً
     } else if (!cachedItems.length) {
       cachedItems = getDefaultSeedItems();
     }
@@ -17059,7 +17107,12 @@ async function loadItemsCatalog() {
   } catch(err) {
     console.warn('loadItemsCatalog notice:', err);
     if (!cachedItems.length) {
-      cachedItems = getDefaultSeedItems();
+      const localCached = await idbGetCachedItems();
+      if (localCached && localCached.length > 0) {
+        cachedItems = localCached;
+      } else {
+        cachedItems = getDefaultSeedItems();
+      }
       itemsByCode.clear();
       itemsByBarcode.clear();
       cachedItems.forEach(it => {
