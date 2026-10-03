@@ -16501,6 +16501,48 @@ function handlePfExcelDrop(e) {
 async function handlePfExcelSelected(files) {
   if (!files || !files.length) return;
   const file = files[0];
+
+  // 1. دعم ملفات JSON المباشرة عالية السرعة
+  if (file.name.toLowerCase().endsWith('.json')) {
+    toast('⏳ جاري قراءة ملف الأصناف JSON بسرعة فائقة...');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!Array.isArray(parsed) || !parsed.length) {
+          toast('❌ ملف JSON فارغ أو غير متوافق', false);
+          return;
+        }
+        pfParsedRows = parsed.map(it => ({
+          internal_code: String(it.internal_code || it.id || '').trim(),
+          barcode: it.barcode ? String(it.barcode).trim() : null,
+          name: String(it.name || '').trim(),
+          selling_price: parseFloat(it.selling_price || it.sales_price) || 0,
+          unit_price: parseFloat(it.unit_price) || (parseFloat(it.selling_price || it.sales_price) || 0),
+          cost_price: parseFloat(it.cost_price) || 0,
+          pack_units: parseInt(it.pack_units) || 1,
+          stock_packs: parseInt(it.stock_packs) || 0,
+          stock_units: parseInt(it.stock_units) || 0,
+          expiry_date: it.expiry_date || null,
+          shelf_location: it.shelf_location || it.category || null,
+          is_active: true
+        })).filter(it => it.name && (it.internal_code || it.barcode || it.selling_price > 0));
+
+        const btn = document.getElementById('btnStartPfImport');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = `🚀 بدء رفع (${pfParsedRows.length} صنف)`;
+        }
+        toast(`✅ تم فحص ملف JSON بنجاح — جاهز لرفع ${pfParsedRows.length} صنف`);
+      } catch(err) {
+        toast('❌ خطأ في معالجة ملف JSON: ' + err.message, false);
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+    return;
+  }
+
+  // 2. معالجة ملفات الإكسيل (.xlsx, .xls, .csv)
   await ensureXLSX();
   if (typeof XLSX === 'undefined') {
     toast('❌ تعذر تحميل مكتبة معالجة الإكسيل', false);
@@ -16521,42 +16563,42 @@ async function handlePfExcelSelected(files) {
         return;
       }
 
-      // مطابقة الأعمدة الصيدلية بمرونة تامة
+      // مطابقة الأعمدة الصيدلية بمرونة تامة ودعم شيتات فارما فلاي والمخزون
       pfParsedRows = rows.map(r => {
         const getVal = (keys) => {
           for (const k of keys) {
             if (r[k] !== undefined && r[k] !== '') return r[k];
-            // بحث تقريبي
             const foundKey = Object.keys(r).find(x => x.trim().toLowerCase().includes(k.toLowerCase()));
             if (foundKey && r[foundKey] !== undefined && r[foundKey] !== '') return r[foundKey];
           }
           return '';
         };
 
-        const internalCode = String(getVal(['الكود', 'كود الصنف', 'كود', 'code', 'item_code', 'الكود الداخلي'])).trim();
+        const internalCode = String(getVal(['كود الصنف', 'ID', 'الكود', 'كود', 'code', 'item_code', 'الكود الداخلي'])).trim();
         const barcode = String(getVal(['الباركود', 'باركود', 'كود دولي', 'barcode', 'international_code', 'EAN'])).trim();
-        const name = String(getVal(['اسم الصنف', 'الصنف', 'الاسم', 'name', 'item_name'])).trim();
-        const sellPrice = parseFloat(getVal(['سعر البيع', 'السعر', 'سعر', 'price', 'selling_price'])) || 0;
-        const costPrice = parseFloat(getVal(['سعر الشراء', 'التكلفة', 'شراء', 'cost', 'cost_price'])) || 0;
-        const packUnits = parseInt(getVal(['أجزاء', 'الاجزاء', 'الأجزاء', 'شرائط', 'units', 'pack_units'])) || 1;
-        const stockPacks = parseInt(getVal(['الكمية الموجودة', 'الرصيد', 'كمية', 'stock', 'packs'])) || 0;
+        const name = String(getVal(['اسم الصنف', 'Name', 'الصنف', 'الاسم', 'name', 'item_name'])).trim();
+        const sellPrice = parseFloat(getVal(['سعر البيع', 'Sales Price', 'السعر', 'سعر', 'price', 'selling_price'])) || 0;
+        const costPrice = parseFloat(getVal(['سعر الشراء/التكلفة', 'سعر الشراء', 'Cost Price', 'Cost Value', 'التكلفة', 'شراء', 'cost', 'cost_price'])) || 0;
+        const packUnits = parseInt(getVal(['عدد الأشرطة/الأجزاء', 'Parts', 'أجزاء', 'الاجزاء', 'الأجزاء', 'شرائط', 'units', 'pack_units'])) || 1;
+        const stockPacks = parseInt(getVal(['رصيد العلب', 'Packs', 'الكمية الموجودة', 'الرصيد', 'كمية', 'stock', 'packs'])) || 0;
+        const stockUnits = parseInt(getVal(['رصيد الأشرطة', 'Units', 'أشرطة', 'أجزاء', 'stock_units'])) || 0;
         const expiryDate = String(getVal(['تاريخ الصلاحية', 'الصلاحية', 'تاريخ', 'expiry', 'exp'])).trim();
-        const shelf = String(getVal(['الرف', 'مكان الرف', 'shelf', 'location'])).trim();
+        const shelf = String(getVal(['التصنيف', 'Category', 'الرف', 'مكان الرف', 'shelf', 'location'])).trim();
 
         const unitPrice = packUnits > 1 ? (sellPrice / packUnits) : sellPrice;
 
         return {
           internal_code: internalCode,
-          barcode: barcode,
+          barcode: barcode || null,
           name: name,
           selling_price: sellPrice,
           unit_price: Math.round(unitPrice * 100) / 100,
           cost_price: costPrice,
           pack_units: packUnits,
           stock_packs: stockPacks,
-          stock_units: 0,
-          expiry_date: expiryDate,
-          shelf_location: shelf,
+          stock_units: stockUnits,
+          expiry_date: expiryDate || null,
+          shelf_location: shelf || null,
           is_active: true
         };
       }).filter(it => it.name && (it.internal_code || it.barcode || it.selling_price > 0));
@@ -16595,7 +16637,10 @@ async function startPharmaflyBatchImport() {
       const chunk = pfParsedRows.slice(i, i + CHUNK_SIZE);
       const { error } = await sb.from('items').upsert(chunk, { onConflict: 'internal_code' });
       if (error) {
-        console.warn('Chunk upload notice:', error);
+        console.error('Batch import error:', error);
+        if (error.code === 'PGRST205' || (error.message && error.message.includes('items'))) {
+          throw new Error('جدول الأصناف (items) غير مفعل في Supabase. يرجى تشغيل سكريبت setup_pos_system.sql في Supabase SQL Editor أولاً.');
+        }
       }
       processed += chunk.length;
       const pct = Math.min(100, Math.round((processed / total) * 100));
@@ -16608,7 +16653,7 @@ async function startPharmaflyBatchImport() {
     closePharmaflyImportModal();
     await loadItemsCatalog();
   } catch(err) {
-    toast('❌ تعذر إكمال الرفع: ' + err.message, false);
+    toast('❌ ' + err.message, false);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🚀 بدء الاستيراد والرفع'; }
   }
@@ -17867,10 +17912,10 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="pharmaflyImportModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closePharmaflyImportModal()">
   <div class="modal-box" style="max-width:560px;padding:26px;border-radius:18px;background:var(--bg2);border:1.5px solid rgba(49,130,206,.5);text-align:center;">
     <div style="font-size:2.4rem;margin-bottom:8px;">📦</div>
-    <div style="font-size:1.2rem;font-weight:900;color:var(--text1);margin-bottom:6px;">استيراد أصناف فلاي فارما (Excel)</div>
+    <div style="font-size:1.2rem;font-weight:900;color:var(--text1);margin-bottom:6px;">استيراد أصناف فلاي فارما (Excel / JSON)</div>
     <div style="font-size:.82rem;color:var(--text3);margin-bottom:18px;line-height:1.6;">
-      ارفع ملف الإكسيل المصدّر من برنامج فلاي فارما.<br>
-      يقوم النظام تلقائياً بالتعرف على الأكواد والباركود والأسعار ورصيد العلب والأجزاء ورفعها إلى السحابة.
+      ارفع ملف الإكسيل أو الـ JSON المصدّر من قاعدة بيانات فلاي فارما.<br>
+      يقوم النظام تلقائياً بالتعرف على الأكواد والباركود والأسعار ورصيد العلب والأجزاء ورفعها إلى السحابة فوراً.
     </div>
 
     <!-- Drop Zone -->
@@ -17878,9 +17923,9 @@ document.addEventListener('DOMContentLoaded', () => {
       style="border:2px dashed var(--border2);border-radius:14px;padding:28px 18px;background:var(--bg3);cursor:pointer;margin-bottom:16px;transition:border-color .2s;"
       onclick="document.getElementById('pfExcelFileInput').click()">
       <div style="font-size:1.8rem;margin-bottom:6px;">📂</div>
-      <div style="font-weight:800;color:var(--text1);font-size:.92rem;">اسحب وأفلت ملف Excel هنا أو اضغط للاختيار</div>
-      <div style="font-size:.76rem;color:var(--text3);margin-top:4px;">يدعم صيغ .xlsx و .xls و .csv</div>
-      <input type="file" id="pfExcelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handlePfExcelSelected(this.files)" />
+      <div style="font-weight:800;color:var(--text1);font-size:.92rem;">اسحب وأفلت ملف Excel أو JSON هنا أو اضغط للاختيار</div>
+      <div style="font-size:.76rem;color:var(--text3);margin-top:4px;">يدعم صيغ .xlsx و .xls و .csv و .json فائقة السرعة</div>
+      <input type="file" id="pfExcelFileInput" accept=".xlsx,.xls,.csv,.json" style="display:none;" onchange="handlePfExcelSelected(this.files)" />
     </div>
 
     <!-- Progress & Status -->
