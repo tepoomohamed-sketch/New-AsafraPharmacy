@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- صيدليات دوا العصافرة — سكريبت إنشاء نظام المبيعات والمخازن الجديد (POS System)
+-- صيدليات دوا العصافرة — سكريبت إنشاء وتحديث نظام المبيعات والمخازن الجديد (POS System)
 -- شغّل هذا الكود في: Supabase -> SQL Editor -> New Query -> Run
 -- هذا السكريبت آمن 100% ولا يؤثر ولا يمس أي بيانات قديمة (entries, users, attendance)
 -- ══════════════════════════════════════════════════════════════════
@@ -34,16 +34,25 @@ CREATE TABLE IF NOT EXISTS sales (
   invoice_no      TEXT UNIQUE NOT NULL,          -- رقم الفاتورة المتسلسل (مثال: INV-1001)
   type            TEXT NOT NULL DEFAULT 'sale',  -- 'sale' (بيع) أو 'return' (مرتجع)
   payment_method  TEXT DEFAULT 'cash',           -- 'cash' (نقدي) | 'wallet' (محفظة) | 'credit' (آجل) | 'delivery' (توصيل)
+  status          TEXT DEFAULT 'completed',      -- 'completed' | 'delivery_pending' | 'credit_pending' | 'returned'
   cashier_name    TEXT,
   cashier_uid     TEXT,
+  sold_by_code    TEXT,                          -- كود الصيدلي البائع (101, 102...)
   customer_name   TEXT,
+  customer_phone  TEXT,
+  delivery_address TEXT,
   subtotal        NUMERIC DEFAULT 0,             -- الإجمالي قبل الخصم
   discount        NUMERIC DEFAULT 0,             -- قيمة الخصم
   tax             NUMERIC DEFAULT 0,             -- ضريبة القيمة المضافة
   total           NUMERIC NOT NULL DEFAULT 0,    -- الصافي النهائي
+  cost_total      NUMERIC DEFAULT 0,             -- إجمالي تكلفة الأصناف
+  realized_profit NUMERIC DEFAULT 0,             -- الربح الحقيقي المحقق
   paid            NUMERIC DEFAULT 0,             -- المبلغ المدفوع
   change          NUMERIC DEFAULT 0,             -- الباقي للعميل
   shift_id        TEXT,                          -- معرف الشيفت الحالي للربط المالي
+  settled_at      TIMESTAMPTZ,
+  settled_discount NUMERIC DEFAULT 0,
+  settled_amount   NUMERIC DEFAULT 0,
   date            TEXT NOT NULL,                 -- YYYY-MM-DD
   time            TEXT NOT NULL,                 -- HH:MM
   ts              BIGINT DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
@@ -52,12 +61,49 @@ CREATE TABLE IF NOT EXISTS sales (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- تحديث الأعمدة في حال كان الجدول موجوداً مسبقاً
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS status           TEXT DEFAULT 'completed';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS sold_by_code     TEXT;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_phone   TEXT;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS delivery_address TEXT;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cost_total       NUMERIC DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS realized_profit  NUMERIC DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS settled_at       TIMESTAMPTZ;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS settled_discount NUMERIC DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS settled_amount   NUMERIC DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_sales_date     ON sales(date);
 CREATE INDEX IF NOT EXISTS idx_sales_type     ON sales(type);
 CREATE INDEX IF NOT EXISTS idx_sales_payment  ON sales(payment_method);
+CREATE INDEX IF NOT EXISTS idx_sales_status   ON sales(status);
 CREATE INDEX IF NOT EXISTS idx_sales_shift    ON sales(shift_id);
 
--- 3. جدول فواتير المشتريات والموردين (Purchases & Invoices)
+-- 3. جدول تسليم وجرد الشيفتات (Shift Handovers)
+CREATE TABLE IF NOT EXISTS shift_handovers (
+  id                     BIGSERIAL PRIMARY KEY,
+  shift_id               TEXT UNIQUE,
+  shift_type             TEXT DEFAULT 'standard',
+  user_name              TEXT NOT NULL,
+  user_uid               TEXT,
+  start_at               TIMESTAMPTZ NOT NULL,
+  end_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  cash_sales             NUMERIC DEFAULT 0,
+  wallet_sales           NUMERIC DEFAULT 0,
+  delivery_sales         NUMERIC DEFAULT 0,
+  credit_sales           NUMERIC DEFAULT 0,
+  expected_cash          NUMERIC DEFAULT 0,
+  actual_cash            NUMERIC DEFAULT 0,
+  discrepancy            NUMERIC DEFAULT 0,
+  transferred_to_custody NUMERIC DEFAULT 0,
+  notes                  TEXT,
+  status                 TEXT DEFAULT 'closed',
+  created_at             TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_shifts_user ON shift_handovers(user_name);
+CREATE INDEX IF NOT EXISTS idx_shifts_date ON shift_handovers(end_at);
+
+-- 4. جدول فواتير المشتريات والموردين (Purchases & Invoices)
 CREATE TABLE IF NOT EXISTS purchases (
   id                   TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   supplier_invoice_no  TEXT,
@@ -71,16 +117,18 @@ CREATE TABLE IF NOT EXISTS purchases (
   created_at           TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. إتاحة الوصول للجداول مع الحفاظ على البيانات
-ALTER TABLE items     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE sales     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE purchases DISABLE ROW LEVEL SECURITY;
+-- 5. إتاحة الوصول للجداول مع الحفاظ على الأمان
+ALTER TABLE items           DISABLE ROW LEVEL SECURITY;
+ALTER TABLE sales           DISABLE ROW LEVEL SECURITY;
+ALTER TABLE shift_handovers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE purchases       DISABLE ROW LEVEL SECURITY;
 
--- 5. تفعيل البث اللحظي (Realtime) لتزامن الأرصدة والمبيعات بين جميع شاشات الصيدلية
+-- 6. تفعيل البث اللحظي (Realtime)
 ALTER PUBLICATION supabase_realtime ADD TABLE items;
 ALTER PUBLICATION supabase_realtime ADD TABLE sales;
+ALTER PUBLICATION supabase_realtime ADD TABLE shift_handovers;
 
--- 6. دالة معالجة البيع وخصم المخزون ذرياً (Atomic POS Sale Engine)
+-- 7. دالة معالجة البيع وخصم المخزون ذرياً (Atomic POS Sale Engine)
 CREATE OR REPLACE FUNCTION pos_process_sale_atomic(sale_payload JSONB)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -111,21 +159,28 @@ BEGIN
 
   -- 1. تسجيل الفاتورة في جدول المبيعات
   INSERT INTO sales (
-    id, invoice_no, type, payment_method, cashier_name, cashier_uid,
-    customer_name, subtotal, discount, tax, total, paid, change,
-    shift_id, date, time, ts, items_count, items_data
+    id, invoice_no, type, payment_method, status, cashier_name, cashier_uid,
+    sold_by_code, customer_name, customer_phone, delivery_address,
+    subtotal, discount, tax, total, cost_total, realized_profit,
+    paid, change, shift_id, date, time, ts, items_count, items_data
   ) VALUES (
     v_sale_id,
     v_inv_no,
     v_type,
     COALESCE(sale_payload->>'payment_method', 'cash'),
+    COALESCE(sale_payload->>'status', 'completed'),
     sale_payload->>'cashier_name',
     sale_payload->>'cashier_uid',
+    sale_payload->>'sold_by_code',
     sale_payload->>'customer_name',
+    sale_payload->>'customer_phone',
+    sale_payload->>'delivery_address',
     COALESCE((sale_payload->>'subtotal')::NUMERIC, 0),
     COALESCE((sale_payload->>'discount')::NUMERIC, 0),
     COALESCE((sale_payload->>'tax')::NUMERIC, 0),
     COALESCE((sale_payload->>'total')::NUMERIC, 0),
+    COALESCE((sale_payload->>'cost_total')::NUMERIC, 0),
+    COALESCE((sale_payload->>'realized_profit')::NUMERIC, 0),
     COALESCE((sale_payload->>'paid')::NUMERIC, 0),
     COALESCE((sale_payload->>'change')::NUMERIC, 0),
     sale_payload->>'shift_id',
@@ -137,7 +192,7 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
 
-  -- 2. تحديث رصيد كل صنف في المخزن (خصم عند البيع وإضافة عند المرتجع)
+  -- 2. تحديث رصيد كل صنف في المخزن (خصم عند البيع والتوصيل والآجل، وإضافة عند المرتجع)
   FOR v_item IN SELECT * FROM jsonb_array_elements(v_items)
   LOOP
     v_item_id := v_item->>'item_id';
@@ -145,7 +200,6 @@ BEGIN
     v_units   := COALESCE((v_item->>'qty_units')::INT, 0);
 
     IF v_item_id IS NOT NULL THEN
-      -- قفل سطر الصنف لمنع التضارب
       SELECT stock_packs, stock_units, COALESCE(pack_units, 1)
       INTO v_curr_packs, v_curr_units, v_pack_units
       FROM items
@@ -153,12 +207,9 @@ BEGIN
       FOR UPDATE;
 
       IF FOUND THEN
-        -- تحويل الرصيد الحالي بالكامل إلى أجزاء/شرائط
         v_tot_units := (v_curr_packs * v_pack_units) + v_curr_units;
-        -- كمية العملية بالأجزاء
         v_delta_units := (v_packs * v_pack_units) + v_units;
 
-        -- لو بيع نخصم، لو مرتجع نضيف
         IF v_type = 'sale' THEN
           v_new_units := v_tot_units - v_delta_units;
         ELSE
@@ -166,7 +217,6 @@ BEGIN
         END IF;
 
         IF v_new_units < 0 THEN
-          -- السماح بالرصيد السالب لو رغب الصيدلي مع التنبيه
           v_new_p := - ( (abs(v_new_units) + v_pack_units - 1) / v_pack_units );
           v_new_u := 0;
         ELSE

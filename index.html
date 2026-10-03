@@ -1456,11 +1456,24 @@ function ensureXLSX() {
         </button>
       </div>
 
-      <!-- ── صندوق العهدة الحالية ── -->
-      <div class="bal-box" style="padding:6px 20px;">
+      <!-- ── الصندوق الأول: خزنة النقدية (درج الكاشير / الشيفت الحالي) ── -->
+      <div class="bal-box bal-box-shift" id="boxShiftCash" onclick="openShiftHandoverModal()" style="cursor:pointer;padding:6px 16px;background:rgba(16,185,129,0.12);border:1.5px solid rgba(16,185,129,0.38);border-radius:14px;min-width:170px;transition:all .25s;" title="انقر لجرد وتسليم شيفت النقدية وترحيل الإيراد للعهدة الحالية [Ctrl+D]">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;">
+          <span class="bal-lbl" style="color:#6ee7b7;font-weight:800;font-size:0.75rem;">💵 خزنة النقدية (الدرج)</span>
+          <span id="badgeActiveShift" style="font-size:0.64rem;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.25);color:#a7f3d0;font-weight:800;">شيفت جاري</span>
+        </div>
+        <div class="bal-amt" id="hShiftCash" style="color:#34d399;font-size:1.45rem;line-height:1.2;">0</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:.65rem;color:#a7f3d0;opacity:.9;margin-top:2px;">
+          <span id="shiftCashierName">الموظف: جاري التحميل</span>
+          <span style="color:#fcd34d;font-weight:800;text-decoration:underline;">تسليم [Ctrl+D]</span>
+        </div>
+      </div>
+
+      <!-- ── الصندوق الثاني: العهدة الحالية (الخزينة العامة للصيدلية) ── -->
+      <div class="bal-box" style="padding:6px 20px;border-radius:14px;min-width:170px;">
         <div class="bal-lbl">💼 العهدة الحالية</div>
         <div class="bal-amt" id="hBal">0</div>
-        <div style="font-size:.65rem;opacity:.8;">جنيه مصري</div>
+        <div style="font-size:.65rem;opacity:.8;">الخزينة العامة (جنيه)</div>
       </div>
     </div>
   </div>
@@ -1763,6 +1776,19 @@ function ensureXLSX() {
 <div class="pane" id="pane-pos">
   <div class="pos-wrap">
     <!-- POS Top Header Bar -->
+    
+    <!-- Outgoing Pending Deliveries Bar -->
+    <div id="posPendingDeliveryBar" style="display:none;background:rgba(49,130,206,0.12);border:1.5px solid rgba(49,130,206,0.35);border-radius:12px;padding:9px 14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="font-size:1.15rem;">🛵</span>
+          <strong style="color:#90cdf4;font-size:0.86rem;">طلبات التوصيل المعلقة في الطريق (<span id="posPendingDeliveryCount">0</span>)</strong>
+          <span style="font-size:0.7rem;color:var(--text3);">المخزون مخصوم — اضغط لتحصيل الأوردر أو عمل مرتجع فوري</span>
+        </div>
+      </div>
+      <div id="posPendingDeliveryItems" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+
     <div class="pos-top-bar">
       <div class="pos-top-right">
         <div class="pos-title">🛒 كاشير المبيعات</div>
@@ -16173,23 +16199,35 @@ async function finishPosSale(printReceipt = true) {
     toast('⚠️ الفاتورة فارغة — يرجى إضافة أصناف أولاً', false);
     return;
   }
+  // فتح نافذة اختيار/كود الصيدلي البائع أولاً قبل الإتمام
+  openPosStaffPinModal((staff) => {
+    executePosCheckoutFinal(staff, printReceipt);
+  });
+}
+
+async function executePosCheckoutFinal(staff, printReceipt = true) {
+  if (!posCart.length) return;
 
   const btnFinish = document.getElementById('btnPosFinish');
   if (btnFinish) { btnFinish.disabled = true; btnFinish.textContent = '⏳ جاري الحفظ...'; }
 
   let subtotal = 0;
   let totalDiscount = 0;
+  let costTotal = 0;
+
   posCart.forEach(row => {
     const raw = row.qty * row.price;
     subtotal += raw;
     totalDiscount += raw * (row.discount_pct / 100);
+    costTotal += (row.qty * (row.cost_price || 0));
   });
+
   const total = Math.max(0, subtotal - totalDiscount);
   const paidInp = document.getElementById('posPaidInp');
   const paid = parseFloat(paidInp?.value) || total;
   const change = Math.max(0, paid - total);
 
-  // إعداد بيانات بنود الفاتورة وحساب كميات العلب والأجزاء بدقة
+  // إعداد بيانات بنود الفاتورة
   const itemsData = posCart.map(r => {
     const isStrip = r.unit_type === 'unit';
     return {
@@ -16202,24 +16240,49 @@ async function finishPosSale(printReceipt = true) {
       qty_packs: isStrip ? 0 : Math.floor(r.qty),
       qty_units: isStrip ? Math.round(r.qty) : 0,
       price: r.price,
+      cost_price: r.cost_price || 0,
       total: r.qty * r.price * (1 - r.discount_pct / 100)
     };
   });
+
+  // تحديد حالة الفاتورة والأرباح المحققة
+  let saleStatus = 'completed';
+  let realizedProfit = 0;
+
+  if (posPayMethod === 'credit') {
+    saleStatus = 'credit_pending';
+    realizedProfit = 0; // الأرباح معلقة لحين السداد الفعلي
+  } else if (posPayMethod === 'delivery') {
+    saleStatus = 'delivery_pending';
+    realizedProfit = (total - costTotal); // محتسب لحين تسليم الطيار
+  } else {
+    // كاش أو محفظة
+    realizedProfit = (total - costTotal);
+  }
+
+  const staffName = staff?.name || me?.name || 'كاشير';
+  const staffCode = staff?.code || '101';
 
   const salePayload = {
     id: crypto.randomUUID(),
     invoice_no: posCurrentInvNo,
     type: posMode,
     payment_method: posPayMethod,
-    cashier_name: me?.name || 'كاشير',
+    status: saleStatus,
+    cashier_name: staffName,
     cashier_uid: me?.uid || '',
-    customer_name: 'نقدي',
+    sold_by_code: staffCode,
+    customer_name: (posPayMethod === 'delivery') ? (document.getElementById('posCustNameInp')?.value || 'عميل توصيل') : 'نقدي',
+    customer_phone: document.getElementById('posCustPhoneInp')?.value || '',
+    delivery_address: document.getElementById('posCustAddressInp')?.value || '',
     subtotal: subtotal,
     discount: totalDiscount,
+    cost_total: costTotal,
+    realized_profit: realizedProfit,
     total: total,
     paid: paid,
     change: change,
-    shift_id: todayStr(),
+    shift_id: currentActiveShift?.id || todayStr(),
     date: todayStr(),
     time: new Date().toTimeString().slice(0, 5),
     ts: Date.now(),
@@ -16236,17 +16299,24 @@ async function finishPosSale(printReceipt = true) {
       }
     } catch(e) {}
 
-    // Fallback في حالة عدم إنشاء دالة RPC بعد في سوبابيز
+    // Fallback
     if (!rpcSuccess) {
       const { error: insErr } = await sb.from('sales').insert({
         id: salePayload.id,
         invoice_no: salePayload.invoice_no,
         type: salePayload.type,
         payment_method: salePayload.payment_method,
+        status: salePayload.status,
         cashier_name: salePayload.cashier_name,
         cashier_uid: salePayload.cashier_uid,
+        sold_by_code: salePayload.sold_by_code,
+        customer_name: salePayload.customer_name,
+        customer_phone: salePayload.customer_phone,
+        delivery_address: salePayload.delivery_address,
         subtotal: salePayload.subtotal,
         discount: salePayload.discount,
+        cost_total: salePayload.cost_total,
+        realized_profit: salePayload.realized_profit,
         total: salePayload.total,
         paid: salePayload.paid,
         change: salePayload.change,
@@ -16276,28 +16346,28 @@ async function finishPosSale(printReceipt = true) {
       }
     });
 
-    // 3. ربط النقدية بالخزينة أو المحفظة
+    // 3. توجيه المبالغ المالية بناءً على طريقة الدفع
     if (posPayMethod === 'cash') {
-      const delta = posMode === 'sale' ? total : -total;
-      await sbUpdateBalance(delta);
+      // كاش بالدرج: يضاف فوراً لخزنة النقدية بالشيفت الجاري
+      currentActiveShift.cash_sales = (Number(currentActiveShift.cash_sales) || 0) + total;
+      await saveActiveShift();
     } else if (posPayMethod === 'wallet') {
-      // تسجيل كـ ذمة في المحفظة
-      await sb.from('entries').insert({
-        id: crypto.randomUUID(),
-        date: todayStr(),
-        type: 'ذمم اونلاين',
-        company: 'محفظة الصيدلية',
-        invoice: 'POS:' + salePayload.invoice_no,
-        amount: total,
-        notes: `مبيعات POS فاتورة ${salePayload.invoice_no}`,
-        uid: me?.uid,
-        uname: me?.name,
-        time: salePayload.time,
-        ts: Date.now()
-      });
+      // محفظة إلكترونية: تضاف لمحفظة الشيفت
+      currentActiveShift.wallet_sales = (Number(currentActiveShift.wallet_sales) || 0) + total;
+      await saveActiveShift();
+    } else if (posPayMethod === 'delivery') {
+      // دليفري معلق: يضاف لقائمة التوصيل
+      currentActiveShift.delivery_sales = (Number(currentActiveShift.delivery_sales) || 0) + total;
+      await saveActiveShift();
+      pendingDeliveriesList.unshift(salePayload);
+      renderPendingDeliveries();
+    } else if (posPayMethod === 'credit') {
+      // آجل معلق: يضاف لحساب الآجل
+      currentActiveShift.credit_sales = (Number(currentActiveShift.credit_sales) || 0) + total;
+      await saveActiveShift();
     }
 
-    toast(`✅ تم حفظ الفاتورة (${salePayload.invoice_no}) بنجاح`);
+    toast(`✅ تم حفظ الفاتورة (${salePayload.invoice_no}) باسم: ${staffName}`);
     playPosBeep(true);
 
     // 4. طباعة الفاتورة الحرارية
@@ -16315,7 +16385,6 @@ async function finishPosSale(printReceipt = true) {
   }
 }
 
-// ── إلغاء أو تفريغ الفاتورة ──
 function cancelPosSale() {
   posCart = [];
   renderPosCart();
@@ -16808,6 +16877,614 @@ function closePosHistoryModal() {
 // ── تشغيل النظام عند الإقلاع ──
 setTimeout(initPosSystem, 1000);
 
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// 🌟 منظومة الخزنتين والشيفتات والجرد الأعمى واختصارات فارما فلاي 🌟
+// ════════════════════════════════════════════════════════════════════════════
+
+// كود الموظف لتسجيل القيود (مجهز ومغلق بـ Flag لحين الإطلاق الرسمي بحسب الطلب)
+const REQUIRE_ENTRY_PIN = false;
+
+// كود الصيدلي البائع للفاتورة الحالية
+let currentSaleStaff = null;
+
+// الشيفت النشط الحالي
+let currentActiveShift = {
+  id: 'SHIFT-' + Date.now(),
+  cashier_name: 'الكاشير',
+  cashier_uid: '',
+  start_at: new Date().toISOString(),
+  cash_sales: 0,
+  wallet_sales: 0,
+  delivery_sales: 0,
+  credit_sales: 0,
+  status: 'open'
+};
+
+// طلبات الدليفري المعلقة
+let pendingDeliveriesList = [];
+
+// ── 1. تحميل الشيفت النشط من Supabase ──
+async function loadActiveShift() {
+  try {
+    const shiftData = await sbGetMeta('active_shift');
+    if (shiftData && shiftData.id && shiftData.status === 'open') {
+      currentActiveShift = shiftData;
+    } else {
+      currentActiveShift = {
+        id: 'SHIFT-' + Date.now(),
+        cashier_name: me?.name || 'الكاشير',
+        cashier_uid: me?.uid || '',
+        start_at: new Date().toISOString(),
+        cash_sales: 0,
+        wallet_sales: 0,
+        delivery_sales: 0,
+        credit_sales: 0,
+        status: 'open'
+      };
+      await sbSetMeta('active_shift', currentActiveShift);
+    }
+  } catch(e) {
+    console.warn('loadActiveShift notice:', e);
+  }
+  renderShiftCashBox();
+  loadPendingDeliveries();
+}
+
+async function saveActiveShift() {
+  try {
+    await sbSetMeta('active_shift', currentActiveShift);
+  } catch(e) {
+    console.error('saveActiveShift error:', e);
+  }
+  renderShiftCashBox();
+}
+
+// ── 2. تحديث صندوق خزنة النقدية (الدرج) في الهيدر العلوي ──
+function renderShiftCashBox() {
+  const elAmt = document.getElementById('hShiftCash');
+  const elCashier = document.getElementById('shiftCashierName');
+  const elBadge = document.getElementById('badgeActiveShift');
+  if (!elAmt) return;
+
+  const isAdmin = (me?.role === 'admin');
+  const cashVal = Number(currentActiveShift?.cash_sales) || 0;
+
+  if (isAdmin) {
+    // المدير يرى رصيد الدرج الفعلي لحظياً
+    elAmt.textContent = fmt(cashVal) + ' ج';
+    elAmt.style.fontSize = '1.45rem';
+    elAmt.title = `كاش: ${fmt(cashVal)} ج | محفظة: ${fmt(currentActiveShift.wallet_sales || 0)} ج`;
+  } else {
+    // الموظف: جرد أعمى لحماية الخزينة ومنع التلاعب
+    elAmt.textContent = '🔒 جرد أعمى';
+    elAmt.style.fontSize = '1.05rem';
+    elAmt.title = 'الرصيد محمي ومخفي — يظهر بعد العد الفعلي وتقفيل الشيفت';
+  }
+
+  if (elCashier) {
+    elCashier.textContent = 'الموظف: ' + (currentActiveShift?.cashier_name || me?.name || 'الكاشير');
+  }
+  if (elBadge) {
+    elBadge.textContent = 'شيفت جاري';
+  }
+}
+
+// ── 3. مودال تسليم وتقفيل الشيفت (الجرد الأعمى) ──
+function openShiftHandoverModal() {
+  const modal = document.getElementById('shiftHandoverModal');
+  if (!modal) return;
+
+  document.getElementById('shModalCashierName').textContent = currentActiveShift.cashier_name || me?.name || 'الكاشير';
+  const startD = new Date(currentActiveShift.start_at || Date.now());
+  document.getElementById('shModalStartTime').textContent = startD.toLocaleDateString('ar-EG') + ' ' + startD.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+  
+  // حساب مدة العمل
+  const diffHours = Math.max(0.1, ((Date.now() - startD.getTime()) / (1000 * 3600))).toFixed(1);
+  document.getElementById('shModalDuration').textContent = `${diffHours} ساعة عمل`;
+
+  const cashExp = Number(currentActiveShift.cash_sales) || 0;
+  const walletTot = Number(currentActiveShift.wallet_sales) || 0;
+
+  const isAdmin = (me?.role === 'admin');
+  const expEl = document.getElementById('shModalCashExpected');
+  if (isAdmin) {
+    expEl.textContent = fmt(cashExp) + ' ج';
+  } else {
+    expEl.textContent = '🔒 محمي (أعمى)';
+  }
+
+  document.getElementById('shModalWalletTotal').textContent = fmt(walletTot) + ' ج';
+  
+  const inpActual = document.getElementById('inpActualShiftCash');
+  if (inpActual) {
+    inpActual.value = '';
+    setTimeout(() => inpActual.focus(), 150);
+  }
+  document.getElementById('shDiscrepancyBox').style.display = 'none';
+
+  modal.classList.add('on');
+}
+
+function closeShiftHandoverModal() {
+  const modal = document.getElementById('shiftHandoverModal');
+  if (modal) modal.classList.remove('on');
+}
+
+function calcShiftDiscrepancyLive() {
+  const inp = document.getElementById('inpActualShiftCash');
+  const box = document.getElementById('shDiscrepancyBox');
+  const txt = document.getElementById('shDiscrepancyText');
+  if (!inp || !box) return;
+
+  const actual = parseFloat(inp.value);
+  if (isNaN(actual)) {
+    box.style.display = 'none';
+    return;
+  }
+
+  const expected = Number(currentActiveShift.cash_sales) || 0;
+  const diff = actual - expected;
+  const isAdmin = (me?.role === 'admin');
+
+  box.style.display = 'block';
+  if (Math.abs(diff) < 0.05) {
+    box.style.background = 'rgba(16,185,129,0.15)';
+    box.style.border = '1px solid rgba(16,185,129,0.4)';
+    box.style.color = '#34d399';
+    txt.textContent = '✨ العد مطابق تماماً للنقدية المتوقعة (0.00 ج)';
+  } else if (diff < 0) {
+    box.style.background = 'rgba(239,68,68,0.15)';
+    box.style.border = '1px solid rgba(239,68,68,0.4)';
+    box.style.color = '#fc8181';
+    txt.textContent = isAdmin 
+      ? `⚠️ عجز بالدرج بقيمة ${fmt(Math.abs(diff))} ج (المتوقع: ${fmt(expected)} ج | الفعلي: ${fmt(actual)} ج)`
+      : `⚠️ تم تسجيل فارق عجز بقيمة ${fmt(Math.abs(diff))} ج`;
+  } else {
+    box.style.background = 'rgba(49,130,206,0.15)';
+    box.style.border = '1px solid rgba(49,130,206,0.4)';
+    box.style.color = '#63b3ed';
+    txt.textContent = isAdmin 
+      ? `📈 زيادة بالدرج بقيمة +${fmt(diff)} ج (المتوقع: ${fmt(expected)} ج | الفعلي: ${fmt(actual)} ج)`
+      : `📈 تم تسجيل زيادة بالدرج بقيمة +${fmt(diff)} ج`;
+  }
+}
+
+// ── تأكيد تسليم الشيفت وترحيل الكاش للعهدة الحالية ──
+async function confirmShiftHandoverAction() {
+  const inp = document.getElementById('inpActualShiftCash');
+  const notesInp = document.getElementById('inpShiftNotes');
+  const btn = document.getElementById('btnConfirmShiftHandover');
+
+  const actual = parseFloat(inp?.value);
+  if (isNaN(actual) || actual < 0) {
+    toast('⚠️ يرجى إدخال المبلغ الفعلي المعدود بالدرج قبل التقفيل', false);
+    inp?.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري ترحيل الكاش وتقفيل الشيفت...';
+
+  try {
+    const expected = Number(currentActiveShift.cash_sales) || 0;
+    const diff = actual - expected;
+    const notes = notesInp?.value?.trim() || '';
+
+    // 1. ترحيل الكاش الفعلي فوراً إلى "العهدة الحالية" (الخزينة العامة)
+    if (actual > 0) {
+      await sbUpdateBalance(actual);
+    }
+
+    // 2. تسجيل قيد إيراد تلقائي في جدول القيود entries للحفاظ على الحسابات السنوية
+    const entryId = 'e_' + Date.now();
+    const handoverNotes = `تسليم وتقفيل شيفت كاش بواسطة: ${currentActiveShift.cashier_name || me?.name}. المتوقع: ${fmt(expected)} ج، الفعلي: ${fmt(actual)} ج، الفارق: ${diff >= 0 ? '+' : ''}${fmt(diff)} ج. ${notes ? 'ملاحظات: ' + notes : ''}`;
+
+    await sb.from('entries').insert({
+      id: entryId,
+      date: todayStr(),
+      type: 'ايرادات',
+      company: 'شيفت كاش',
+      invoice: currentActiveShift.id,
+      amount: actual,
+      notes: handoverNotes,
+      uid: me?.uid,
+      uname: me?.name,
+      time: new Date().toTimeString().slice(0, 5),
+      ts: Date.now()
+    }).catch(err => console.warn('handover entry notice:', err));
+
+    // 3. حفظ سجل التقفيل في جدول shift_handovers
+    await sb.from('shift_handovers').insert({
+      shift_id: currentActiveShift.id,
+      user_name: currentActiveShift.cashier_name || me?.name || 'كاشير',
+      user_uid: me?.uid,
+      start_at: currentActiveShift.start_at,
+      end_at: new Date().toISOString(),
+      cash_sales: expected,
+      wallet_sales: currentActiveShift.wallet_sales || 0,
+      delivery_sales: currentActiveShift.delivery_sales || 0,
+      credit_sales: currentActiveShift.credit_sales || 0,
+      expected_cash: expected,
+      actual_cash: actual,
+      discrepancy: diff,
+      transferred_to_custody: actual,
+      notes: notes,
+      status: 'closed'
+    }).catch(() => {});
+
+    // 4. تصفير خزنة النقدية وبدء الشيفت الجديد
+    currentActiveShift = {
+      id: 'SHIFT-' + Date.now(),
+      cashier_name: me?.name || 'الكاشير',
+      cashier_uid: me?.uid || '',
+      start_at: new Date().toISOString(),
+      cash_sales: 0,
+      wallet_sales: 0,
+      delivery_sales: 0,
+      credit_sales: 0,
+      status: 'open'
+    };
+    await saveActiveShift();
+
+    closeShiftHandoverModal();
+    fireFlyingParticles(document.getElementById('boxShiftCash') || document.body, ['🎉', '💵', '✨', '🪙'], 25);
+    toast(`🎉 تم تقفيل الشيفت بنجاح وترحيل ${fmt(actual)} ج إلى العهدة الحالية!`);
+
+    // تحديث العرض في الهيدر
+    if (typeof renderBalances === 'function') renderBalances();
+
+  } catch(err) {
+    toast('❌ خطأ أثناء ترحيل الشيفت: ' + (err.message || err), false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ اعتماد التسليم وترحيل الإيراد للعهدة الحالية';
+  }
+}
+
+// ── 4. نافذة كود الصيدلي البائع عند إنهاء البيعة (Staff PIN Attribution) ──
+let onStaffPinResolvedCallback = null;
+
+function openPosStaffPinModal(callback) {
+  onStaffPinResolvedCallback = callback;
+  const modal = document.getElementById('posStaffPinModal');
+  const btnWrap = document.getElementById('posStaffQuickButtons');
+  const inpPin = document.getElementById('inpPosStaffPin');
+  if (!modal) return;
+
+  // جلب قائمة الموظفين
+  const staffList = (typeof users !== 'undefined' && users.length) 
+    ? users 
+    : [
+        { name: me?.name || 'أدمن', code: '101' },
+        { name: 'حسين', code: '102' },
+        { name: 'حبيبه', code: '103' }
+      ];
+
+  if (btnWrap) {
+    btnWrap.innerHTML = staffList.map((u, i) => {
+      const code = u.code || (101 + i);
+      return `
+        <button type="button" onclick="selectStaffMember('${esc(code)}', '${esc(u.name)}')"
+          class="btn" style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:10px;padding:9px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .15s;">
+          <span style="font-weight:900;color:var(--text1);font-size:.86rem;">${esc(u.name)}</span>
+          <span style="font-size:.7rem;color:var(--teal);font-family:monospace;font-weight:700;">كود: ${code}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  if (inpPin) {
+    inpPin.value = '';
+    setTimeout(() => inpPin.focus(), 150);
+  }
+
+  modal.classList.add('on');
+}
+
+function closePosStaffPinModal() {
+  const modal = document.getElementById('posStaffPinModal');
+  if (modal) modal.classList.remove('on');
+  onStaffPinResolvedCallback = null;
+}
+
+function selectStaffMember(code, name) {
+  currentSaleStaff = { code, name };
+  closePosStaffPinModal();
+  if (typeof onStaffPinResolvedCallback === 'function') {
+    onStaffPinResolvedCallback(currentSaleStaff);
+  }
+}
+
+function confirmStaffPinByInput() {
+  const inpPin = document.getElementById('inpPosStaffPin');
+  const code = inpPin?.value?.trim();
+  if (!code) {
+    toast('⚠️ يرجى كتابة كود الموظف أو اختياره من القائمة', false);
+    return;
+  }
+  const foundUser = (typeof users !== 'undefined') ? users.find(u => String(u.code) === code || u.name.includes(code)) : null;
+  const staffName = foundUser ? foundUser.name : (me?.name || 'موظف ' + code);
+  selectStaffMember(code, staffName);
+}
+
+// ── 5. مبيعات التوصيل (الدليفري) وتتبعها والمرتجع السريع ──
+async function loadPendingDeliveries() {
+  try {
+    const { data, error } = await sb.from('sales')
+      .select('*')
+      .eq('status', 'delivery_pending')
+      .order('ts', { ascending: false });
+    if (!error && data) {
+      pendingDeliveriesList = data;
+      renderPendingDeliveries();
+    }
+  } catch(e) {
+    console.warn('loadPendingDeliveries error:', e);
+  }
+}
+
+function renderPendingDeliveries() {
+  const bar = document.getElementById('posPendingDeliveryBar');
+  const countEl = document.getElementById('posPendingDeliveryCount');
+  const itemsWrap = document.getElementById('posPendingDeliveryItems');
+  if (!bar) return;
+
+  if (!pendingDeliveriesList.length) {
+    bar.style.display = 'none';
+    return;
+  }
+
+  bar.style.display = 'block';
+  if (countEl) countEl.textContent = pendingDeliveriesList.length;
+
+  if (itemsWrap) {
+    itemsWrap.innerHTML = pendingDeliveriesList.map(ord => `
+      <div style="background:var(--bg2);border:1px solid rgba(99,179,237,.3);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:10px;font-size:.82rem;">
+        <div>
+          <strong style="color:var(--text1);">${esc(ord.customer_name || 'عميل توصيل')}</strong>
+          <span style="color:#63b3ed;font-weight:900;margin-right:6px;">${fmt(ord.total)} ج</span>
+          <span style="font-size:.7rem;color:var(--text3);">${esc(ord.customer_phone || '')}</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button type="button" onclick="openCollectDeliveryModal('${ord.id}')" class="btn btn-sm btn-green" style="padding:3px 9px;font-weight:800;" title="تحصيل المبلغ من الطيار">
+            ✅ تحصيل
+          </button>
+          <button type="button" onclick="cancelDeliveryQuickReturn('${ord.id}')" class="btn btn-sm btn-ghost" style="padding:3px 7px;color:#fc8181;border:1px solid rgba(239,68,68,.3);" title="العميل رفض أو لم يستلم — رد المخزون فوراً">
+            ↩️ مرتجع فوري
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+let activeDeliveryCollectingId = null;
+
+function openCollectDeliveryModal(saleId) {
+  activeDeliveryCollectingId = saleId;
+  const ord = pendingDeliveriesList.find(d => d.id === saleId);
+  if (!ord) return;
+
+  const infoEl = document.getElementById('deliveryModalOrderInfo');
+  if (infoEl) {
+    infoEl.innerHTML = `
+      <div style="font-weight:900;font-size:1rem;color:var(--text1);">${esc(ord.customer_name || 'عميل توصيل')} (${fmt(ord.total)} ج)</div>
+      <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">هاتف: ${esc(ord.customer_phone || '—')} | فاتورة: ${esc(ord.invoice_no)}</div>
+    `;
+  }
+
+  const modal = document.getElementById('posDeliveryModal');
+  if (modal) modal.classList.add('on');
+}
+
+function closePosDeliveryModal() {
+  const modal = document.getElementById('posDeliveryModal');
+  if (modal) modal.classList.remove('on');
+  activeDeliveryCollectingId = null;
+}
+
+// تحصيل أوردر التوصيل (كاش في الدرج أو محفظة)
+async function finalizeDeliveryCollection(method) {
+  if (!activeDeliveryCollectingId) return;
+  const ord = pendingDeliveriesList.find(d => d.id === activeDeliveryCollectingId);
+  if (!ord) return;
+
+  try {
+    const amt = Number(ord.total) || 0;
+    if (method === 'cash') {
+      currentActiveShift.cash_sales = (Number(currentActiveShift.cash_sales) || 0) + amt;
+    } else {
+      currentActiveShift.wallet_sales = (Number(currentActiveShift.wallet_sales) || 0) + amt;
+    }
+    await saveActiveShift();
+
+    // تحديث حالة الفاتورة
+    await sb.from('sales').update({
+      status: 'completed',
+      payment_method: method,
+      settled_at: new Date().toISOString(),
+      settled_amount: amt
+    }).eq('id', activeDeliveryCollectingId);
+
+    pendingDeliveriesList = pendingDeliveriesList.filter(d => d.id !== activeDeliveryCollectingId);
+    renderPendingDeliveries();
+    closePosDeliveryModal();
+
+    toast(`✅ تم تحصيل أوردر التوصيل بنجاح (${fmt(amt)} ج — ${method === 'cash' ? 'كاش بالدرج' : 'محفظة'})`);
+    playPosBeep(true);
+  } catch(e) {
+    toast('❌ خطأ في تحصيل الأوردر: ' + (e.message || e), false);
+  }
+}
+
+// مرتجع فوري وإلغاء أوردر التوصيل ورد المخزون فوراً
+async function cancelDeliveryQuickReturn(saleId) {
+  const ord = pendingDeliveriesList.find(d => d.id === saleId);
+  if (!ord) return;
+
+  if (!confirm(`هل أنت متأكد من إلغاء أوردر ${ord.customer_name || 'التوصيل'} ورد كامل أصنافه للمخزن فوراً؟`)) {
+    return;
+  }
+
+  try {
+    // 1. رد كميات الأصناف للمخزن
+    const itemsData = ord.items_data || [];
+    for (const item of itemsData) {
+      const target = cachedItems.find(it => it.id === item.item_id);
+      if (target) {
+        const packUnits = target.pack_units || 1;
+        let totUnits = (target.stock_packs * packUnits) + target.stock_units;
+        const delta = (item.qty_packs * packUnits) + item.qty_units;
+        totUnits += delta; // رد للمخزون
+        target.stock_packs = Math.floor(totUnits / packUnits);
+        target.stock_units = totUnits % packUnits;
+
+        await sb.from('items').update({
+          stock_packs: target.stock_packs,
+          stock_units: target.stock_units,
+          updated_at: new Date().toISOString()
+        }).eq('id', target.id).catch(()=>{});
+      }
+    }
+
+    // 2. تحديث الفاتورة كـ ملغاة / مرتجعة
+    await sb.from('sales').update({
+      status: 'returned',
+      type: 'return',
+      notes: 'تم إلغاء التوصيل ومرتجع فوري للمخزن'
+    }).eq('id', saleId);
+
+    pendingDeliveriesList = pendingDeliveriesList.filter(d => d.id !== saleId);
+    renderPendingDeliveries();
+    renderItemsTable();
+
+    toast('↩️ تم إلغاء الأوردر ورد كافة الأصناف لرصيد المخزن بنجاح');
+  } catch(e) {
+    toast('❌ خطأ أثناء المرتجع: ' + (e.message || e), false);
+  }
+}
+
+// ── 6. ربط اختصارات فارما فلاي السريعة بالكيبورد (Muscle Memory) ──
+function setupPharmaflyShortcuts() {
+  window.addEventListener('keydown', function(e) {
+    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+    const isInput = (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select');
+
+    // الاختصارات العامة مع Ctrl (تعمل من أي مكان)
+    if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+      const key = e.key.toLowerCase();
+      if (key === 's') {
+        e.preventDefault();
+        swTab('pos');
+        setPosMode('sale');
+        return;
+      }
+      if (key === 'r') {
+        e.preventDefault();
+        swTab('pos');
+        setPosMode('return');
+        return;
+      }
+      if (key === 'i') {
+        e.preventDefault();
+        swTab('items');
+        return;
+      }
+      if (key === 'd') {
+        e.preventDefault();
+        openShiftHandoverModal();
+        return;
+      }
+      if (key === 'm') {
+        e.preventDefault();
+        openPosHistoryModal();
+        return;
+      }
+    }
+
+    // اختصارات داخل شاشة الكاشير فقط
+    const posPane = document.getElementById('pane-pos');
+    if (!posPane || !posPane.classList.contains('on')) return;
+
+    // إذا كان المستخدم لا يكتب نصاً في خانة بحث
+    const searchInp = document.getElementById('posBarcodeInput');
+    const isTypingBarcode = (document.activeElement === searchInp && searchInp.value.trim().length > 0);
+
+    if (!isInput || document.activeElement === searchInp) {
+      // إنهاء كاش [C]
+      if ((e.key === 'c' || e.key === 'C' || e.key === 'ؤ') && !isTypingBarcode && !e.ctrlKey) {
+        e.preventDefault();
+        setPosPayMethod('cash');
+        triggerPosSaleWithStaffPin();
+        return;
+      }
+      // إنهاء دليفري [H]
+      if ((e.key === 'h' || e.key === 'H' || e.key === 'ا') && !isTypingBarcode && !e.ctrlKey) {
+        e.preventDefault();
+        setPosPayMethod('delivery');
+        triggerPosSaleWithStaffPin();
+        return;
+      }
+      // إنهاء آجل [R]
+      if ((e.key === 'r' || e.key === 'R' || e.key === 'ق') && !isTypingBarcode && !e.ctrlKey) {
+        e.preventDefault();
+        setPosPayMethod('credit');
+        triggerPosSaleWithStaffPin();
+        return;
+      }
+      // تحويل الصنف الأخير لشريط / علبة [+]
+      if (e.key === '+' || e.code === 'NumpadAdd') {
+        if (posCart.length > 0) {
+          e.preventDefault();
+          posToggleUnit(posCart.length - 1);
+          return;
+        }
+      }
+      // حذف الصنف الأخير [-]
+      if ((e.key === '-' || e.code === 'NumpadSubtract') && !isTypingBarcode) {
+        if (posCart.length > 0) {
+          e.preventDefault();
+          posRemoveItem(posCart.length - 1);
+          return;
+        }
+      }
+      // إلغاء الفاتورة بالكامل [Shift + X]
+      if (e.shiftKey && (e.key === 'X' || e.key === 'x' || e.key === 'ء')) {
+        e.preventDefault();
+        cancelPosSale();
+        toast('🗑 تم إلغاء الفاتورة وتفريغ السلة [Shift+X]');
+        return;
+      }
+      // حفظ سريع [F10] أو [F12]
+      if (e.key === 'F10' || e.key === 'F12') {
+        e.preventDefault();
+        triggerPosSaleWithStaffPin();
+        return;
+      }
+    }
+  });
+}
+
+function triggerPosSaleWithStaffPin() {
+  if (!posCart.length) {
+    toast('⚠️ الفاتورة فارغة — امسح صنفاً أولاً', false);
+    return;
+  }
+  openPosStaffPinModal((staff) => {
+    executePosCheckoutFinal(staff);
+  });
+}
+
+// تشغيل التهيئة عند الإقلاع
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    loadActiveShift();
+    setupPharmaflyShortcuts();
+  }, 1200);
+});
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -17287,6 +17964,140 @@ setTimeout(initPosSystem, 1000);
 <!-- ══════════════════════════════════════════════════════════
      MODAL: THERMAL RECEIPT PREVIEW (معاينة وطباعة الفاتورة)
 ══════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: SHIFT HANDOVER & DRAWER AUDIT (تسليم وجرد خزينة النقدية)
+══════════════════════════════════════════════════════════ -->
+<div id="shiftHandoverModal" class="modal-overlay" style="z-index:9999;" onclick="if(event.target===this)closeShiftHandoverModal()">
+  <div class="modal-box" style="max-width:520px;padding:26px;border-radius:20px;background:var(--bg2);border:1.5px solid rgba(16,185,129,.4);box-shadow:0 25px 60px rgba(0,0,0,.6);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1.6rem;">🔒</span>
+        <div>
+          <div style="font-size:1.15rem;font-weight:900;color:var(--text1);">تسليم وجرد خزينة النقدية (الشيفت)</div>
+          <div style="font-size:.75rem;color:var(--text3);">نظام الجرد الأعمى وترحيل الإيرادات للعهدة الحالية</div>
+        </div>
+      </div>
+      <button onclick="closeShiftHandoverModal()" style="background:none;border:none;color:var(--text3);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+
+    <!-- Shift Info Card -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.84rem;">
+        <span style="color:var(--text3);">الموظف المسؤول:</span>
+        <strong id="shModalCashierName" style="color:var(--text1);">—</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.84rem;">
+        <span style="color:var(--text3);">توقيت بدء الشيفت:</span>
+        <span id="shModalStartTime" style="color:var(--text2);">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.84rem;">
+        <span style="color:var(--text3);">فترة العمل المستمرة:</span>
+        <span id="shModalDuration" style="color:#68d391;font-weight:700;">—</span>
+      </div>
+    </div>
+
+    <!-- Payments Breakdown -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:.72rem;color:#a7f3d0;font-weight:700;">💵 كاش بالدرج (يُعد باليد)</div>
+        <div id="shModalCashExpected" style="font-size:1.25rem;font-weight:900;color:#34d399;margin-top:2px;">—</div>
+      </div>
+      <div style="background:rgba(99,179,237,0.1);border:1px solid rgba(99,179,237,0.3);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:.72rem;color:#90cdf4;font-weight:700;">📱 محفظة إلكترونية</div>
+        <div id="shModalWalletTotal" style="font-size:1.25rem;font-weight:900;color:#63b3ed;margin-top:2px;">0 ج</div>
+      </div>
+    </div>
+
+    <!-- Blind Count Input -->
+    <div style="background:rgba(217,119,6,0.08);border:1.5px solid rgba(217,119,6,0.35);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <label style="display:block;font-size:.88rem;font-weight:800;color:#fcd34d;margin-bottom:6px;">
+        🔢 العد الفعلي للنقدية بالدرج (جنيه) *
+      </label>
+      <div style="font-size:.74rem;color:var(--text3);margin-bottom:8px;">
+        قُم بعدّ كافة الأوراق النقدية بالدرج بيدك واكتب المبلغ الفعلي بدقة:
+      </div>
+      <input type="number" id="inpActualShiftCash" class="fel" step="any" min="0" placeholder="اكتب المبلغ الفعلي المعدود..." 
+        style="width:100%;font-size:1.3rem;font-weight:900;text-align:center;color:#fff;background:var(--bg1);border-color:rgba(217,119,6,0.6);"
+        oninput="calcShiftDiscrepancyLive()" />
+
+      <!-- Discrepancy Indicator -->
+      <div id="shDiscrepancyBox" style="display:none;margin-top:10px;padding:10px;border-radius:8px;text-align:center;font-weight:800;font-size:.9rem;">
+        <span id="shDiscrepancyText"></span>
+      </div>
+    </div>
+
+    <!-- Shift Notes -->
+    <div class="fg" style="margin-bottom:18px;">
+      <label style="font-size:.8rem;color:var(--text2);">📝 ملاحظات على تسليم الشيفت (اختياري)</label>
+      <input type="text" id="inpShiftNotes" class="fel" placeholder="أي عجز أو زيادة مبررة أو تعليمات للشيفت القادم..." />
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button id="btnConfirmShiftHandover" onclick="confirmShiftHandoverAction()" class="btn btn-green" style="padding:10px 22px;font-weight:900;font-size:.92rem;">
+        ✅ اعتماد التسليم وترحيل الإيراد للعهدة الحالية
+      </button>
+      <button onclick="closeShiftHandoverModal()" class="btn btn-ghost" style="padding:10px 16px;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: STAFF PIN ATTRIBUTION (كود الصيدلي البائع)
+══════════════════════════════════════════════════════════ -->
+<div id="posStaffPinModal" class="modal-overlay" style="z-index:9999;" onclick="if(event.target===this)closePosStaffPinModal()">
+  <div class="modal-box" style="max-width:440px;padding:24px;border-radius:20px;background:var(--bg2);border:1.5px solid var(--accent);text-align:center;">
+    <div style="font-size:2rem;margin-bottom:6px;">🔑</div>
+    <div style="font-size:1.2rem;font-weight:900;color:var(--text1);margin-bottom:4px;">كود الصيدلي / الموظف البائع</div>
+    <div style="font-size:.78rem;color:var(--text3);margin-bottom:16px;">اختر اسمك أو أدخل كودك الشخصي لإسناد البيعة لك فوراً</div>
+
+    <!-- Fast Staff Buttons -->
+    <div id="posStaffQuickButtons" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:16px;">
+      <!-- Populated dynamically from users -->
+    </div>
+
+    <!-- Direct PIN Input -->
+    <div style="margin-bottom:18px;">
+      <input type="text" id="inpPosStaffPin" class="fel" placeholder="أو اكتب الكود (101, 102...) واضغط Enter" 
+        style="width:100%;text-align:center;font-size:1.15rem;font-weight:800;letter-spacing:2px;"
+        onkeydown="if(event.key==='Enter')confirmStaffPinByInput()" />
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="confirmStaffPinByInput()" class="btn btn-primary" style="padding:8px 24px;font-weight:800;">تأكيد وحفظ الفاتورة [Enter]</button>
+      <button onclick="closePosStaffPinModal()" class="btn btn-ghost" style="padding:8px 16px;">إلغاء [Esc]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: DELIVERY SETTLEMENT (تحصيل أوردر الدليفري)
+══════════════════════════════════════════════════════════ -->
+<div id="posDeliveryModal" class="modal-overlay" style="z-index:9999;" onclick="if(event.target===this)closePosDeliveryModal()">
+  <div class="modal-box" style="max-width:440px;padding:24px;border-radius:20px;background:var(--bg2);border:1.5px solid rgba(99,179,237,.5);text-align:center;">
+    <div style="font-size:2.2rem;margin-bottom:6px;">🛵</div>
+    <div style="font-size:1.2rem;font-weight:900;color:var(--text1);margin-bottom:4px;">تحصيل أوردر التوصيل (الدليفري)</div>
+    <div id="deliveryModalOrderInfo" style="font-size:.85rem;color:var(--text2);margin-bottom:18px;background:var(--bg3);padding:10px;border-radius:10px;"></div>
+    
+    <div style="font-size:.88rem;font-weight:800;color:var(--text1);margin-bottom:10px;">كيف استلم الطيار المبلغ من العميل؟</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+      <button onclick="finalizeDeliveryCollection('cash')" class="btn" style="background:rgba(16,185,129,0.15);border:1.5px solid #10b981;color:#6ee7b7;padding:14px;border-radius:12px;font-weight:900;font-size:1rem;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:1.4rem;">💵</span>
+        <span>كاش بالدرج</span>
+        <span style="font-size:.7rem;opacity:.8;">يُضاف لدرج الشيفت</span>
+      </button>
+      <button onclick="finalizeDeliveryCollection('wallet')" class="btn" style="background:rgba(99,179,237,0.15);border:1.5px solid #3182ce;color:#90cdf4;padding:14px;border-radius:12px;font-weight:900;font-size:1rem;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:1.4rem;">📱</span>
+        <span>محفظة إلكترونية</span>
+        <span style="font-size:.7rem;opacity:.8;">فودافون كاش / إنستاباي</span>
+      </button>
+    </div>
+
+    <button onclick="closePosDeliveryModal()" class="btn btn-ghost" style="width:100%;justify-content:center;">إلغاء</button>
+  </div>
+</div>
+
 <div id="posReceiptModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closePosReceiptModal()">
   <div class="modal-box" style="max-width:380px;padding:18px;border-radius:14px;background:#fff;color:#000;text-align:center;">
     <div id="posReceiptModalContent"></div>
