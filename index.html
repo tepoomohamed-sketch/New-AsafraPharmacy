@@ -1133,19 +1133,35 @@
   }
 
 /* ══════════════════════════════════════════════════════════════════
-   POS CASHIER & PHARMACY INVENTORY SYSTEM STYLES
+   PHARMAFLY CLASSIC POS CASHIER & INVENTORY STYLES
 ══════════════════════════════════════════════════════════════════ */
-.pos-wrap { display: flex; flex-direction: column; gap: 14px; }
+.pos-wrap { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── PharmaFly Iconic Top Header & Banner ── */
+.pf-window-header {
+  display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; margin-bottom: 2px;
+}
+.pf-callout-mode {
+  font-size: 2.2rem; font-weight: 900; color: #e53e3e; letter-spacing: -1px;
+  font-family: 'Tajawal', sans-serif; text-shadow: 0 2px 10px rgba(229,62,62,.25);
+  min-width: 140px;
+}
+.pf-3d-banner {
+  background: linear-gradient(180deg, #f6e05e 0%, #d69e2e 60%, #b7791f 100%);
+  color: #1a202c; font-weight: 900; font-size: 1.15rem; padding: 6px 42px;
+  border-radius: 999px; box-shadow: 0 4px 14px rgba(214,158,46,.45), inset 0 2px 3px rgba(255,255,255,.6), inset 0 -2px 3px rgba(0,0,0,.25);
+  border: 1.5px solid #d69e2e; text-align: center;
+}
 .pos-top-bar {
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
-  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 12px 18px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 10px 16px;
   box-shadow: var(--shadow-sm);
 }
-.pos-top-right, .pos-top-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.pos-title { font-size: 1.25rem; font-weight: 900; color: var(--text1); display: flex; align-items: center; gap: 8px; }
-.pos-mode-pills, .pos-pay-pills { display: flex; background: var(--bg2); padding: 4px; border-radius: 12px; border: 1px solid var(--border); gap: 4px; }
+.pos-top-right, .pos-top-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pos-title { font-size: 1.15rem; font-weight: 900; color: var(--text1); display: flex; align-items: center; gap: 8px; }
+.pos-mode-pills, .pos-pay-pills { display: flex; background: var(--bg2); padding: 3px; border-radius: 10px; border: 1px solid var(--border); gap: 3px; }
 .pos-mode-btn, .pos-pay-btn {
-  padding: 6px 14px; border-radius: 8px; border: none; font-size: .84rem; font-weight: 800; cursor: pointer;
+  padding: 5px 12px; border-radius: 7px; border: none; font-size: .82rem; font-weight: 800; cursor: pointer;
   background: transparent; color: var(--text3); transition: all .18s; font-family: 'Tajawal', sans-serif;
 }
 .pos-mode-btn.on-sale.active { background: #2d6a4f; color: #fff; box-shadow: 0 2px 10px rgba(45,106,79,.4); }
@@ -1156,96 +1172,134 @@
 .pos-search-container { position: relative; width: 100%; }
 .pos-search-inner {
   display: flex; align-items: center; background: var(--card2); border: 2px solid var(--accent);
-  border-radius: 14px; padding: 4px 14px; box-shadow: 0 0 16px var(--accent-glow);
+  border-radius: 12px; padding: 2px 12px; box-shadow: 0 0 14px var(--accent-glow);
 }
-.pos-search-icon { font-size: 1.25rem; color: var(--teal); margin-left: 10px; }
+.pos-search-icon { font-size: 1.2rem; color: var(--teal); margin-left: 8px; }
 .pos-search-input {
-  flex: 1; background: transparent; border: none; outline: none; font-size: 1.15rem; font-weight: 800;
+  flex: 1; background: transparent; border: none; outline: none; font-size: 1.1rem; font-weight: 800;
   color: var(--text1); font-family: 'Tajawal', sans-serif; padding: 8px 4px;
 }
-.pos-search-input::placeholder { color: var(--text3); font-weight: 600; font-size: .95rem; }
+.pos-search-input::placeholder { color: var(--text3); font-weight: 600; font-size: .9rem; }
 .btn-clear-search { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.1rem; padding: 4px 8px; }
 
 .pos-auto-dropdown {
-  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card);
-  border: 1.5px solid var(--accent); border-radius: 14px; max-height: 320px; overflow-y: auto;
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--card);
+  border: 1.5px solid var(--accent); border-radius: 12px; max-height: 320px; overflow-y: auto;
   z-index: 1000; box-shadow: var(--shadow-lg); backdrop-filter: blur(14px);
 }
 .pos-auto-item {
-  display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+  display: flex; justify-content: space-between; align-items: center; padding: 9px 14px;
   border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s;
 }
 .pos-auto-item:hover, .pos-auto-item.selected { background: rgba(124,58,237,.2); }
-.pos-auto-name { font-weight: 800; font-size: .95rem; color: var(--text1); }
-.pos-auto-meta { font-size: .78rem; color: var(--text3); display: flex; gap: 10px; margin-top: 2px; }
+.pos-auto-name { font-weight: 800; font-size: .92rem; color: var(--text1); }
+.pos-auto-meta { font-size: .76rem; color: var(--text3); display: flex; gap: 8px; margin-top: 2px; }
 .pos-auto-price { font-weight: 900; font-size: 1.05rem; color: #68d391; }
 
+/* ── PharmaFly Iconic Emerald Green Table Grid ── */
 .pos-grid-wrap {
   background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r);
-  overflow-x: auto; min-height: 280px; max-height: 440px; overflow-y: auto;
+  overflow-x: auto; min-height: 280px; max-height: 420px; overflow-y: auto;
 }
-.pos-table { width: 100%; border-collapse: collapse; min-width: 750px; }
+.pos-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 .pos-table th {
-  background: var(--bg2); padding: 12px 14px; text-align: right; font-weight: 800;
-  font-size: .82rem; color: var(--text2); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border2);
+  background: linear-gradient(180deg, #279677 0%, #168367 100%) !important;
+  color: #ffffff !important; padding: 10px 12px; text-align: right; font-weight: 900;
+  font-size: .83rem; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #146c55;
+  border-left: 1px solid rgba(255,255,255,.15);
 }
-.pos-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--text1); vertical-align: middle; }
-.pos-table tr:hover td { background: var(--card2); }
+.pos-table th:first-child { border-top-right-radius: 12px; }
+.pos-table th:last-child { border-top-left-radius: 12px; }
+.pos-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: .88rem; color: var(--text1); vertical-align: middle; border-left: 1px solid rgba(255,255,255,.04); }
+.pos-table tr:hover td { background: rgba(45,106,79,.12); }
 
 .pos-unit-btn {
-  padding: 4px 10px; border-radius: 8px; border: 1.5px solid; font-size: .78rem; font-weight: 800;
+  padding: 3px 8px; border-radius: 6px; border: 1px solid; font-size: .74rem; font-weight: 800;
   cursor: pointer; background: transparent; transition: all .15s; font-family: 'Tajawal', sans-serif;
 }
 .pos-unit-btn.pack { border-color: rgba(6,182,212,.4); color: var(--teal); background: rgba(6,182,212,.1); }
-.pos-unit-btn.strip { border-color: rgba(246,173,85,.4); color: #f6ad55; background: rgba(246,173,85,.1); }
+.pos-unit-btn.strip { border-color: rgba(246,173,85,.5); color: #f6ad55; background: rgba(246,173,85,.15); }
 
-.pos-qty-ctrl { display: inline-flex; align-items: center; gap: 4px; background: var(--bg3); border-radius: 8px; padding: 2px 4px; border: 1px solid var(--border); }
-.pos-qty-btn { width: 24px; height: 24px; border: none; background: var(--card2); color: var(--text); border-radius: 6px; cursor: pointer; font-weight: 900; }
-.pos-qty-inp { width: 44px; text-align: center; border: none; background: transparent; color: var(--text1); font-weight: 900; font-size: .95rem; }
+.pos-qty-ctrl { display: inline-flex; align-items: center; gap: 3px; background: var(--bg3); border-radius: 7px; padding: 2px 3px; border: 1px solid var(--border); }
+.pos-qty-btn { width: 22px; height: 22px; border: none; background: var(--card2); color: var(--text); border-radius: 5px; cursor: pointer; font-weight: 900; }
+.pos-qty-inp { width: 40px; text-align: center; border: none; background: transparent; color: var(--text1); font-weight: 900; font-size: .9rem; }
 
+/* ── PharmaFly Quick Actions Strip ── */
+.pf-table-action-bar {
+  display: flex; gap: 10px; align-items: center; justify-content: space-around;
+  background: rgba(22,131,103,.08); border: 1.5px dashed rgba(22,131,103,.35);
+  border-radius: 10px; padding: 8px 12px; margin-top: 4px; flex-wrap: wrap;
+}
+.pf-tab-btn {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--text1);
+  padding: 5px 14px; border-radius: 8px; font-weight: 800; font-size: .82rem;
+  cursor: pointer; transition: all .15s; font-family: 'Tajawal', sans-serif;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.pf-tab-btn:hover { background: var(--bg3); border-color: var(--teal); transform: translateY(-1px); }
+.pf-tab-btn.pf-star-btn {
+  background: linear-gradient(135deg, #d69e2e, #dd6b20); color: #fff; border-color: #dd6b20;
+  box-shadow: 0 2px 10px rgba(221,107,32,.35);
+}
+
+/* ── PharmaFly Bottom Panels & 7-Segment LED ── */
 .pos-footer-bar {
-  display: grid; grid-template-columns: 1fr 1.6fr; gap: 14px;
+  display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; margin-top: 4px;
 }
 @media (max-width: 900px) { .pos-footer-bar { grid-template-columns: 1fr; } }
 
 .pos-item-details-box {
-  background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 18px;
-  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+  background: var(--card); border: 1.5px dashed rgba(255,255,255,.2); border-radius: var(--r);
+  padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
 }
-.pos-id-title { font-weight: 900; font-size: 1.05rem; color: var(--teal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pos-id-specs { display: flex; flex-wrap: wrap; gap: 8px; }
-.pos-spec-chip { background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 8px; font-size: .78rem; color: var(--text2); }
+.pos-id-title { font-weight: 900; font-size: 1.05rem; color: #63b3ed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .pos-checkout-box {
-  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 14px 18px;
-  display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 16px; align-items: center;
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 12px 16px;
+  display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 14px; align-items: center;
 }
 @media (max-width: 760px) { .pos-checkout-box { grid-template-columns: 1fr; } }
 
-.pos-calc-col { display: flex; flex-direction: column; gap: 5px; font-size: .84rem; }
-.pos-calc-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.pos-paid-inp { width: 75px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text1); font-weight: 800; text-align: center; }
+.pos-calc-col { display: flex; flex-direction: column; gap: 4px; font-size: .83rem; }
+.pos-calc-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pos-paid-inp { width: 75px; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text1); font-weight: 900; text-align: center; }
 
 .pos-giant-screen {
-  background: #060a12; border: 2px solid #22c55e; border-radius: 12px; padding: 10px 16px;
-  text-align: center; box-shadow: 0 0 20px rgba(34,197,94,.25); position: relative;
+  background: #000; border: 2px dashed rgba(229,62,62,.6); border-radius: 12px; padding: 8px 14px;
+  text-align: center; box-shadow: inset 0 0 15px rgba(0,0,0,.9); min-width: 160px;
 }
-.pos-giant-screen.is-return { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,.25); }
-.pos-screen-lbl { font-size: .72rem; color: #a0aec0; letter-spacing: 1px; }
-.pos-screen-val { font-size: 2.3rem; font-weight: 900; color: #22c55e; font-family: 'Inter', monospace; line-height: 1.1; }
-.pos-giant-screen.is-return .pos-screen-val { color: #ef4444; }
-.pos-screen-cur { font-size: .72rem; color: #68d391; font-weight: 700; }
+.pos-giant-screen.is-return { border-color: #ef4444; }
+.pos-screen-lbl { font-size: .7rem; color: #a0aec0; }
+.pos-screen-val {
+  font-size: 2.6rem; font-weight: 900; color: #ff3333; font-family: 'Courier New', monospace;
+  line-height: 1; letter-spacing: 1px; text-shadow: 0 0 12px rgba(255,51,51,.6);
+}
+.pos-giant-screen.is-return .pos-screen-val { color: #fc8181; }
+.pos-screen-cur { font-size: .72rem; color: #a0aec0; font-weight: 700; margin-top: 2px; }
 
 .pos-action-btns { display: flex; flex-direction: column; gap: 6px; }
-.btn-pos-finish {
-  background: linear-gradient(135deg, #15803d, #22c55e); color: #fff; padding: 12px 18px;
-  border-radius: 12px; border: none; font-weight: 900; font-size: .95rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  box-shadow: 0 4px 15px rgba(34,197,94,.4); transition: transform .15s; font-family: 'Tajawal', sans-serif;
+.btn-pf-finish {
+  background: linear-gradient(180deg, #ecc94b 0%, #d69e2e 60%, #b7791f 100%);
+  color: #1a202c !important; font-weight: 900; font-size: 1.05rem; padding: 10px 22px;
+  border-radius: 12px; border: 1.5px solid #b7791f; cursor: pointer;
+  box-shadow: 0 4px 15px rgba(214,158,46,.45), inset 0 2px 3px rgba(255,255,255,.5);
+  transition: all .15s; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-family: 'Tajawal', sans-serif;
 }
-.btn-pos-finish:hover { transform: translateY(-2px); }
-.btn-pos-save-only { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
-.btn-pos-cancel { background: rgba(239,68,68,.12); color: #fc8181; border: 1px solid rgba(239,68,68,.3); padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+.btn-pf-finish:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(214,158,46,.6); }
+.btn-pos-save-only { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+.btn-pos-cancel { background: rgba(239,68,68,.12); color: #fc8181; border: 1px solid rgba(239,68,68,.3); padding: 6px 12px; border-radius: 8px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+
+/* ── PharmaFly Bottom Shortcuts Strip ── */
+.pf-shortcuts-strip {
+  display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;
+  font-size: .76rem; color: var(--text3); padding: 6px 12px; border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.pf-key-chip {
+  background: var(--bg3); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px;
+  color: var(--text2); font-weight: 700;
+}
 
 /* ── Thermal Receipt Print Styling ── */
 @media print {
@@ -1800,14 +1854,23 @@ function ensureXLSX() {
       <div id="posPendingDeliveryItems" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
 
-    <div class="pos-top-bar">
+    <!-- ── PharmaFly Iconic Top Title Banner & Mode Callout ── -->
+    <div class="pf-window-header">
+      <div class="pf-callout-mode" id="posPfModeTitle">مبيعات</div>
+      <div class="pf-3d-banner" id="posPfBanner">تسجيل المبيعات</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="pos-inv-tag" id="posInvTag">فاتورة: #---</span>
+        <button type="button" class="btn btn-xs btn-ghost" onclick="openPosHistoryModal()" title="سجل فواتير اليوم" style="padding:4px 10px;font-size:.76rem;">📜 فواتير اليوم</button>
+      </div>
+    </div>
+
+    <!-- Quick Control Bar (Mode & Payment Methods) -->
+    <div class="pos-top-bar" style="padding:8px 14px;">
       <div class="pos-top-right">
-        <div class="pos-title">🛒 كاشير المبيعات</div>
         <div class="pos-mode-pills">
           <button type="button" class="pos-mode-btn on-sale active" id="posModeSale" onclick="setPosMode('sale')">🟢 بيع [F1]</button>
           <button type="button" class="pos-mode-btn on-return" id="posModeReturn" onclick="setPosMode('return')">🔴 مرتجع [F2]</button>
         </div>
-        <span class="pos-inv-tag" id="posInvTag">فاتورة: #---</span>
       </div>
 
       <div class="pos-top-left">
@@ -1817,7 +1880,6 @@ function ensureXLSX() {
           <button type="button" class="pos-pay-btn" data-pay="delivery" onclick="setPosPayMethod('delivery')">🛵 دليفري [H]</button>
           <button type="button" class="pos-pay-btn" data-pay="credit" onclick="setPosPayMethod('credit')">⏳ آجل [R]</button>
         </div>
-        <button type="button" class="btn btn-sm btn-ghost" onclick="openPosHistoryModal()" title="سجل فواتير اليوم">📜 فواتير اليوم</button>
         <button type="button" class="btn btn-sm btn-primary" onclick="openPosHandyItemsModal()" style="background:linear-gradient(135deg,#d69e2e,#dd6b20);color:white;font-weight:900;border:none;box-shadow:0 3px 12px rgba(221,107,32,.35);" title="الأصناف السريعة والبيع بالقرص [*]">⚡ أصناف سريعة [*]</button>
       </div>
     </div>
@@ -1827,7 +1889,7 @@ function ensureXLSX() {
       <div class="pos-search-inner">
         <span class="pos-search-icon">⚡</span>
         <input type="text" id="posSearchInp" class="pos-search-input"
-          placeholder="امسح الباركود بالسكانر أو اكتب كود الصنف أو اسمه..."
+          placeholder="امسح الباركود بالسكانر أو اكتب كود الصنف أو اسمه (أو اضغط * للأصناف السريعة)..."
           autocomplete="off"
           onkeydown="handlePosSearchKeydown(event)"
           oninput="handlePosSearchInput(this.value)" />
@@ -1837,44 +1899,65 @@ function ensureXLSX() {
       <div id="posAutoDropdown" class="pos-auto-dropdown" style="display:none;"></div>
     </div>
 
-    <!-- Cart Table -->
+    <!-- Cart Table (PharmaFly 11-column Emerald Green Grid) -->
     <div class="pos-grid-wrap">
       <table class="pos-table" id="posTable">
         <thead>
           <tr>
-            <th style="width:36px;">#</th>
-            <th style="width:110px;">الكود</th>
+            <th style="width:36px;text-align:center;">م</th>
+            <th style="width:105px;">الكود</th>
             <th>اسم الصنف</th>
-            <th style="width:115px;text-align:center;">الوحدة</th>
-            <th style="width:130px;text-align:center;">الكمية</th>
-            <th style="width:100px;text-align:center;">سعر البيع</th>
-            <th style="width:85px;text-align:center;">خصم %</th>
+            <th style="width:105px;text-align:center;">الكمية (علب)</th>
+            <th style="width:115px;text-align:center;">أجزاء (أقراص/شريط)</th>
+            <th style="width:95px;text-align:center;">سعر البيع</th>
+            <th style="width:75px;text-align:center;">خصم %</th>
+            <th style="width:95px;text-align:center;">تاريخ الصلاحية</th>
+            <th style="width:50px;text-align:center;">Vat</th>
             <th style="width:110px;text-align:center;">المجموع</th>
-            <th style="width:45px;text-align:center;">حذف</th>
+            <th style="width:40px;text-align:center;">✕</th>
           </tr>
         </thead>
         <tbody id="posItemsBody">
           <tr id="posEmptyRow">
-            <td colspan="9" style="text-align:center;padding:45px 20px;color:var(--text3);">
+            <td colspan="11" style="text-align:center;padding:45px 20px;color:var(--text3);">
               <div style="font-size:2.2rem;margin-bottom:8px;opacity:.6;">🛒</div>
               <div style="font-weight:700;font-size:1.05rem;">الفاتورة فارغة</div>
-              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه لإضافته فوراً</div>
+              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه، أو اضغط [*] للأصناف السريعة</div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Bottom Status Bar & Giant Digital Total -->
+    <!-- ── شريط اختصارات فارما فلاي السريعة أسفل الجدول مباشرة ── -->
+    <div class="pf-table-action-bar">
+      <button type="button" class="pf-tab-btn" onclick="posToggleUnit(posCart.length ? posCart.length - 1 : 0)" title="بيع بالوحدات والشرائط والأقراص [ + ]">
+        <span>➕ بيع ( + ) بالوحدات</span>
+      </button>
+      <button type="button" class="pf-tab-btn" onclick="posRemoveItem(posCart.length ? posCart.length - 1 : 0)" title="حذف الصنف الأخير أو المحدد [ - ]">
+        <span>➖ حذف صنف ( - )</span>
+      </button>
+      <button type="button" class="pf-tab-btn pf-star-btn" onclick="openPosHandyItemsModal()" title="فتح الأصناف السريعة والبيع بالقرص [ * ]">
+        <span>⭐ أصناف سريعة البيع ( * )</span>
+      </button>
+      <button type="button" class="pf-tab-btn" onclick="openPosUncodedItemModal()" title="مبيعات غير مكودة وخدمات [ / ]">
+        <span>🏷️ مبيعات غير مكودة ( / )</span>
+      </button>
+    </div>
+
+    <!-- Bottom Status Bar & Giant Digital Total (PharmaFly Style) -->
     <div class="pos-footer-bar">
-      <!-- Active Item Details -->
+      <!-- Active Item Details (PharmaFly Dotted Box) -->
       <div class="pos-item-details-box" id="posActiveItemBox">
-        <div class="pos-id-title" id="posItemDetailName">لم يتم تحديد صنف</div>
-        <div class="pos-id-specs">
-          <span class="pos-spec-chip">📦 الرصيد: <strong id="posItemDetailStock">—</strong></span>
-          <span class="pos-spec-chip">💊 شريط/علبة: <strong id="posItemDetailUnits">—</strong></span>
-          <span class="pos-spec-chip">🏷️ الرف: <strong id="posItemDetailShelf">—</strong></span>
-          <span class="pos-spec-chip">⏳ الصلاحية: <strong id="posItemDetailExpiry">—</strong></span>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.15);padding-bottom:5px;">
+          <span style="font-size:.8rem;color:var(--text3);">اسم الصنف:</span>
+          <strong class="pos-id-title" id="posItemDetailName">لم يتم تحديد صنف</strong>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.82rem;line-height:1.6;">
+          <div>الأجزاء بالعلبة: <strong id="posItemDetailUnits" style="color:var(--text1);">—</strong></div>
+          <div>له تاريخ صلاحية: <strong id="posItemDetailHasExp" style="color:#68d391;">Yes</strong></div>
+          <div>الكمية الموجودة: <strong id="posItemDetailStock" style="color:#f6ad55;font-weight:900;font-family:monospace;font-size:1rem;">—</strong></div>
+          <div>مكان الرف / الصلاحية: <strong id="posItemDetailShelf" style="color:var(--text2);">—</strong></div>
         </div>
       </div>
 
@@ -1890,6 +1973,10 @@ function ensureXLSX() {
             <strong id="posDiscountText" style="color:#f6ad55;">0.00 ج</strong>
           </div>
           <div class="pos-calc-row">
+            <span>ضريبة القيمة المضافة:</span>
+            <strong style="color:var(--text3);">0.00 ج</strong>
+          </div>
+          <div class="pos-calc-row">
             <span>المدفوع:</span>
             <input type="number" id="posPaidInp" class="pos-paid-inp" value="0" step="any" oninput="calcPosChange()" />
           </div>
@@ -1899,7 +1986,7 @@ function ensureXLSX() {
           </div>
         </div>
 
-        <!-- Giant LED Display -->
+        <!-- Giant LED Display (PharmaFly 7-Segment Digital) -->
         <div class="pos-giant-screen" id="posGiantScreen">
           <div class="pos-screen-lbl" id="posScreenLabel">الصافي المطلوب</div>
           <div class="pos-screen-val" id="posGiantTotal">0.00</div>
@@ -1908,18 +1995,32 @@ function ensureXLSX() {
 
         <!-- Actions -->
         <div class="pos-action-btns">
-          <button type="button" class="btn btn-pos-finish" id="btnPosFinish" onclick="finishPosSale(true)">
-            <span>💾 إنهاء وطباعة</span>
-            <kbd style="background:rgba(0,0,0,.25);padding:2px 6px;border-radius:4px;font-size:.7rem;">[F10]</kbd>
+          <button type="button" class="btn-pf-finish" id="btnPosFinish" onclick="finishPosSale(true)">
+            <span>انهاء</span>
+            <kbd style="background:rgba(0,0,0,.25);color:#fff;padding:2px 6px;border-radius:4px;font-size:.7rem;">[F10]</kbd>
           </button>
           <button type="button" class="btn btn-pos-save-only" onclick="finishPosSale(false)">
             <span>حفظ فقط [S]</span>
           </button>
           <button type="button" class="btn btn-pos-cancel" onclick="cancelPosSale()">
-            <span>إلغاء [Esc]</span>
+            <span>إلغاء [Shift+X]</span>
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- PharmaFly Bottom Keyboard Shortcuts Strip -->
+    <div class="pf-shortcuts-strip">
+      <span><span class="pf-key-chip">[C]</span> مبيعات نقدية</span>
+      <span><span class="pf-key-chip">[W]</span> محفظة</span>
+      <span><span class="pf-key-chip">[H]</span> توصيل طلبات</span>
+      <span><span class="pf-key-chip">[R]</span> مبيعات آجلة</span>
+      <span><span class="pf-key-chip">[*]</span> أصناف سريعة</span>
+      <span><span class="pf-key-chip">[+]</span> بيع بالوحدات</span>
+      <span><span class="pf-key-chip">[-]</span> حذف صنف</span>
+      <span><span class="pf-key-chip">[/]</span> غير مكود</span>
+      <span><span class="pf-key-chip">[F10]</span> إنهاء الفاتورة</span>
+      <span><span class="pf-key-chip">[Shift+X]</span> إلغاء</span>
     </div>
   </div>
 </div>
@@ -16073,6 +16174,21 @@ function setPosMode(mode) {
   posMode = mode;
   document.getElementById('posModeSale')?.classList.toggle('active', mode === 'sale');
   document.getElementById('posModeReturn')?.classList.toggle('active', mode === 'return');
+  
+  const pfTitle = document.getElementById('posPfModeTitle');
+  const pfBanner = document.getElementById('posPfBanner');
+  if (pfTitle) {
+    pfTitle.textContent = (mode === 'sale' ? 'مبيعات' : 'مرتجعات');
+    pfTitle.style.color = (mode === 'sale' ? '#e53e3e' : '#c53030');
+  }
+  if (pfBanner) {
+    pfBanner.textContent = (mode === 'sale' ? 'تسجيل المبيعات' : 'تسجيل المرتجعات');
+    pfBanner.style.background = (mode === 'sale'
+      ? 'linear-gradient(180deg, #f6e05e 0%, #d69e2e 60%, #b7791f 100%)'
+      : 'linear-gradient(180deg, #feb2b2 0%, #e53e3e 60%, #9b2c2c 100%)');
+    pfBanner.style.color = (mode === 'sale' ? '#1a202c' : '#ffffff');
+  }
+
   const screen = document.getElementById('posGiantScreen');
   const screenLbl = document.getElementById('posScreenLabel');
   if (screen) screen.classList.toggle('is-return', mode === 'return');
@@ -16217,21 +16333,21 @@ function posAddToCart(item, unitType = 'pack', qty = 1) {
   renderPosCart();
 }
 
-// ── تحديث تفاصيل الصنف النشط بالشريط السفلي ──
+// ── تحديث تفاصيل الصنف النشط بالشريط السفلي (صندوق فارما فلاي) ──
 function updateActiveItemDetails(item) {
   const nameEl = document.getElementById('posItemDetailName');
   const stockEl = document.getElementById('posItemDetailStock');
   const unitsEl = document.getElementById('posItemDetailUnits');
   const shelfEl = document.getElementById('posItemDetailShelf');
-  const expEl = document.getElementById('posItemDetailExpiry');
+  const hasExpEl = document.getElementById('posItemDetailHasExp');
   if (nameEl) nameEl.textContent = item ? item.name : 'لم يتم تحديد صنف';
-  if (stockEl) stockEl.textContent = item ? `${item.stock_packs} علبة : ${item.stock_units} أجزاء` : '—';
-  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1} جزء/قرص بالعلبة` : '—';
-  if (shelfEl) shelfEl.textContent = item ? (item.shelf_location || 'غير محدد') : '—';
-  if (expEl) expEl.textContent = item ? (item.expiry_date || 'غير محدد') : '—';
+  if (stockEl) stockEl.textContent = item ? `${item.stock_packs || 0} : ${item.stock_units || 0}` : '—';
+  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1}` : '—';
+  if (hasExpEl) hasExpEl.textContent = (item && item.expiry_date) ? 'Yes' : 'No';
+  if (shelfEl) shelfEl.textContent = item ? `${item.shelf_location || 'A-1'} / ${item.expiry_date || '—'}` : '—';
 }
 
-// ── تبديل الوحدة (علبة 📦 / قرص وشريط 💊) ──
+// ── تبديل الوحدة (علبة 📦 / قرص وشريط 💊) [+] ──
 function posToggleUnit(idx) {
   const row = posCart[idx];
   if (!row) return;
@@ -16246,6 +16362,36 @@ function posToggleUnit(idx) {
     row.price = row.pack_price;
   }
   renderPosCart();
+  toast(row.unit_type === 'unit' ? `💊 تم تحويل ${row.name} للبيع بالقرص/الشريط` : `📦 تم تحويل ${row.name} للبيع بالعلبة`);
+}
+
+// ── فتح نافذة إضافة صنف غير مكود [/] ──
+function openPosUncodedItemModal() {
+  const name = prompt('🏷️ اسم الصنف غير المكود أو الخدمة (مثال: قياس ضغط / حقنة عضل / شاش وطوارئ):');
+  if (!name || !name.trim()) return;
+  const priceStr = prompt(`سعر بيع "${name.trim()}" بالجنيه:`, '10');
+  if (!priceStr) return;
+  const price = parseFloat(priceStr);
+  if (isNaN(price) || price <= 0) {
+    toast('⚠️ يرجى إدخال سعر صحيح', false);
+    return;
+  }
+  posAddToCart({
+    id: 'uncoded-' + Date.now(),
+    internal_code: 'UNC-' + Math.floor(Math.random() * 9000 + 1000),
+    barcode: '',
+    name: name.trim(),
+    selling_price: price,
+    unit_price: price,
+    cost_price: 0,
+    pack_units: 1,
+    stock_packs: 999,
+    stock_units: 0,
+    expiry_date: '',
+    shelf_location: 'غير مكود'
+  }, 'pack', 1);
+  playPosBeep(true);
+  toast(`⚡ تمت إضافة صنف غير مكود: ${name.trim()} (${fmt(price)} ج)`);
 }
 
 // ── تعديل الكمية ──
@@ -16281,24 +16427,29 @@ function posChangeDiscount(idx, val) {
 }
 
 function posRemoveItem(idx) {
-  posCart.splice(idx, 1);
-  renderPosCart();
+  if (idx >= 0 && idx < posCart.length) {
+    const itName = posCart[idx]?.name || '';
+    posCart.splice(idx, 1);
+    renderPosCart();
+    toast(`🗑 تم حذف الصنف: ${itName}`);
+  }
 }
 
-// ── رسم جدول السلة ──
+// ── رسم جدول السلة بنظام فارما فلاي 11 عمود ──
 function renderPosCart() {
   const body = document.getElementById('posItemsBody');
   if (!body) return;
   if (!posCart.length) {
     body.innerHTML = `
       <tr id="posEmptyRow">
-        <td colspan="9" style="text-align:center;padding:45px 20px;color:var(--text3);">
+        <td colspan="11" style="text-align:center;padding:45px 20px;color:var(--text3);">
           <div style="font-size:2.2rem;margin-bottom:8px;opacity:.6;">🛒</div>
           <div style="font-weight:700;font-size:1.05rem;">الفاتورة فارغة</div>
-          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه لإضافته فوراً</div>
+          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه، أو اضغط [*] للأصناف السريعة</div>
         </td>
       </tr>
     `;
+    updateActiveItemDetails(null);
     calcPosTotals();
     return;
   }
@@ -16308,40 +16459,56 @@ function renderPosCart() {
     const disc = rawTotal * (row.discount_pct / 100);
     const lineTotal = Math.max(0, rawTotal - disc);
     const isStrip = row.unit_type === 'unit';
+
     return `
-      <tr onclick="updateActiveItemDetails(${JSON.stringify(row).replace(/"/g, '&quot;')})">
-        <td style="color:var(--text3);font-size:.8rem;">${idx + 1}</td>
+      <tr onclick="updateActiveItemDetails(posCart[${idx}])" style="cursor:pointer;" class="pos-cart-row">
+        <td style="text-align:center;font-weight:700;color:var(--text3);font-size:.82rem;">${idx + 1}</td>
         <td>
-          <span style="font-family:monospace;font-weight:700;color:var(--teal);">${esc(row.internal_code || row.barcode || '—')}</span>
+          <span style="font-family:monospace;font-weight:800;color:var(--teal);">${esc(row.internal_code || row.barcode || '—')}</span>
         </td>
         <td>
-          <div style="font-weight:800;color:var(--text1);">${esc(row.name)}</div>
-          <div style="font-size:.72rem;color:var(--text3);">رصيد: ${row.stock_packs}:${row.stock_units}</div>
+          <div style="font-weight:900;color:var(--text1);">${esc(row.name)}</div>
+          <div style="font-size:.72rem;color:var(--text3);">المخزون: <strong>${row.stock_packs} علبة : ${row.stock_units} أجزاء</strong></div>
         </td>
         <td style="text-align:center;">
-          <button type="button" class="pos-unit-btn ${isStrip ? 'strip' : 'pack'}" onclick="posToggleUnit(${idx})" title="انقر للتبديل بين علبة وقرص/شريط">
-            ${isStrip ? '💊 قرص/شريط' : '📦 علبة'}
-          </button>
+          ${!isStrip ? `
+            <div class="pos-qty-ctrl">
+              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, -1)">-</button>
+              <input type="number" class="pos-qty-inp" value="${row.qty}" min="1" step="any" onclick="event.stopPropagation()" onchange="posSetQty(${idx}, this.value)" />
+              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, 1)">+</button>
+            </div>
+          ` : `<span style="color:var(--text3);font-size:.85rem;font-weight:700;">0</span>`}
         </td>
         <td style="text-align:center;">
-          <div class="pos-qty-ctrl">
-            <button type="button" class="pos-qty-btn" onclick="posChangeQty(${idx}, -1)">-</button>
-            <input type="number" class="pos-qty-inp" value="${row.qty}" min="0.1" step="any" onchange="posSetQty(${idx}, this.value)" />
-            <button type="button" class="pos-qty-btn" onclick="posChangeQty(${idx}, 1)">+</button>
-          </div>
+          ${isStrip ? `
+            <div class="pos-qty-ctrl">
+              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, -1)">-</button>
+              <input type="number" class="pos-qty-inp" value="${row.qty}" min="1" step="any" onclick="event.stopPropagation()" onchange="posSetQty(${idx}, this.value)" />
+              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, 1)">+</button>
+            </div>
+          ` : `
+            <button type="button" class="pos-unit-btn strip" onclick="event.stopPropagation();posToggleUnit(${idx})" title="تحويل لبيع بالقرص أو الشريط [+]">
+              0 (قرص +)
+            </button>
+          `}
         </td>
-        <td style="text-align:center;font-weight:800;">${fmt(row.price)} ج</td>
+        <td style="text-align:center;font-weight:900;color:var(--text1);">${fmt(row.price)} <small style="font-size:.7rem;">ج</small></td>
         <td style="text-align:center;">
-          <input type="number" value="${row.discount_pct || 0}" min="0" max="100" style="width:48px;padding:3px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:#f6ad55;font-weight:800;font-size:.8rem;" onchange="posChangeDiscount(${idx}, this.value)" />
+          <input type="number" value="${row.discount_pct || 0}" min="0" max="100" style="width:48px;padding:3px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:#f6ad55;font-weight:900;font-size:.82rem;" onclick="event.stopPropagation()" onchange="posChangeDiscount(${idx}, this.value)" />
         </td>
-        <td style="text-align:center;font-weight:900;color:#68d391;font-size:.95rem;">${fmt(lineTotal)} ج</td>
+        <td style="text-align:center;font-size:.8rem;color:var(--text2);font-family:monospace;">${esc(row.expiry_date || '—')}</td>
+        <td style="text-align:center;font-size:.8rem;color:var(--text3);">0</td>
+        <td style="text-align:center;font-weight:900;color:#68d391;font-size:1.02rem;">${fmt(lineTotal)} <small style="font-size:.7rem;">ج</small></td>
         <td style="text-align:center;">
-          <button type="button" onclick="posRemoveItem(${idx})" style="background:none;border:none;color:#fc8181;cursor:pointer;font-size:1.1rem;" title="حذف">✕</button>
+          <button type="button" onclick="event.stopPropagation();posRemoveItem(${idx})" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fc8181;cursor:pointer;border-radius:6px;padding:2px 7px;font-size:.85rem;font-weight:900;" title="حذف">✕</button>
         </td>
       </tr>
     `;
   }).join('');
 
+  if (posCart.length > 0) {
+    updateActiveItemDetails(posCart[posCart.length - 1]);
+  }
   calcPosTotals();
 }
 
@@ -17672,7 +17839,7 @@ function openPosHandyItemsModal() {
 function closePosHandyItemsModal() {
   const m = document.getElementById('posHandyItemsModal');
   if (m) m.classList.remove('on');
-  const searchInp = document.getElementById('posBarcodeInput');
+  const searchInp = document.getElementById('posSearchInp');
   if (searchInp) searchInp.focus();
 }
 
@@ -17860,7 +18027,7 @@ function setupPharmaflyShortcuts() {
     if (!posPane || !posPane.classList.contains('on')) return;
 
     // إذا كان المستخدم لا يكتب نصاً في خانة بحث
-    const searchInp = document.getElementById('posBarcodeInput');
+    const searchInp = document.getElementById('posSearchInp') || document.getElementById('posBarcodeInput');
     const isTypingBarcode = (document.activeElement === searchInp && searchInp.value.trim().length > 0);
 
     if (!isInput || document.activeElement === searchInp) {
@@ -17870,10 +18037,23 @@ function setupPharmaflyShortcuts() {
         togglePosHandyItemsModal();
         return;
       }
+      // صنف غير مكود أو خدمة [/]
+      if ((e.key === '/' || e.code === 'NumpadDivide') && !isTypingBarcode && !e.ctrlKey) {
+        e.preventDefault();
+        openPosUncodedItemModal();
+        return;
+      }
       // إنهاء كاش [C]
       if ((e.key === 'c' || e.key === 'C' || e.key === 'ؤ') && !isTypingBarcode && !e.ctrlKey) {
         e.preventDefault();
         setPosPayMethod('cash');
+        triggerPosSaleWithStaffPin();
+        return;
+      }
+      // إنهاء محفظة [W]
+      if ((e.key === 'w' || e.key === 'W' || e.key === 'ص') && !isTypingBarcode && !e.ctrlKey) {
+        e.preventDefault();
+        setPosPayMethod('wallet');
         triggerPosSaleWithStaffPin();
         return;
       }

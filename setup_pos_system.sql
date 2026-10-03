@@ -10,16 +10,16 @@ CREATE TABLE IF NOT EXISTS items (
   internal_code   TEXT UNIQUE,                   -- كود الصيدلية الداخلي (مثال: 16240، 51851)
   barcode         TEXT,                          -- الباركود الدولي المطبوع على العلبة (EAN-13)
   name            TEXT NOT NULL,                 -- اسم الصنف (عربي / إنجليزي)
-  pack_units      INTEGER NOT NULL DEFAULT 1,    -- عدد الأجزاء/الشرائط في العلبة (مثال: 3)
+  pack_units      INTEGER NOT NULL DEFAULT 1,    -- عدد الأجزاء/الشرائط/الأقراص في العلبة (مثال: 3 أشرطة أو 30 قرص)
   selling_price   NUMERIC NOT NULL DEFAULT 0,    -- سعر بيع العلبة للجمهور
-  unit_price      NUMERIC NOT NULL DEFAULT 0,    -- سعر بيع الشريط الواحد
+  unit_price      NUMERIC NOT NULL DEFAULT 0,    -- سعر بيع الشريط / القرص الواحد
   cost_price      NUMERIC DEFAULT 0,             -- سعر التكلفة/الشراء
   stock_packs     INTEGER NOT NULL DEFAULT 0,    -- رصيد العلب
-  stock_units     INTEGER NOT NULL DEFAULT 0,    -- رصيد الأشرطة المتبقية
+  stock_units     INTEGER NOT NULL DEFAULT 0,    -- رصيد الأشرطة / الأقراص المتبقية
   expiry_date     TEXT,                          -- تاريخ الصلاحية (مثال: 12/2028)
   shelf_location  TEXT,                          -- مكان الرف بالصيدلية
-  parent_code     TEXT,                          -- كود العلبة الأصلية في حال كان صنف قرص أو وحدة تابعة
-  unit_ratio      NUMERIC DEFAULT 1,             -- عدد الأقراص المخصومة من الأصل (مثلاً 1)
+  parent_code     TEXT,                          -- كود العلبة الأصلية في حال كان صنف قرص أو وحدة تابعة (للخصم من الأصل)
+  unit_ratio      NUMERIC DEFAULT 1,             -- عدد الوحدات المخصومة من الأصل (مثلاً 1 قرص)
   is_active       BOOLEAN DEFAULT TRUE,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
@@ -124,18 +124,39 @@ CREATE TABLE IF NOT EXISTS purchases (
   created_at           TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. إتاحة الوصول للجداول مع الحفاظ على الأمان
+-- 5. جدول الأصناف السريعة المخصصة (Handy Items Grid)
+CREATE TABLE IF NOT EXISTS handy_items (
+  id              BIGSERIAL PRIMARY KEY,
+  item_code       TEXT NOT NULL,
+  display_name    TEXT NOT NULL,
+  category        TEXT DEFAULT 'مسكنات',
+  unit_type       TEXT DEFAULT 'unit',  -- 'unit' (قرص/شريط) أو 'pack' (علبة) أو 'service' (خدمة)
+  price           NUMERIC DEFAULT 0,
+  parent_code     TEXT,                 -- كود العلبة الأصلية ليخصم منها القرص
+  sort_order      INTEGER DEFAULT 0,
+  is_active       BOOLEAN DEFAULT TRUE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- تحديث الأعمدة لجدول handy_items
+ALTER TABLE handy_items ADD COLUMN IF NOT EXISTS price       NUMERIC DEFAULT 0;
+ALTER TABLE handy_items ADD COLUMN IF NOT EXISTS parent_code TEXT;
+
+-- 6. إتاحة الوصول للجداول مع الحفاظ على الأمان (Disable RLS)
 ALTER TABLE items           DISABLE ROW LEVEL SECURITY;
 ALTER TABLE sales           DISABLE ROW LEVEL SECURITY;
 ALTER TABLE shift_handovers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases       DISABLE ROW LEVEL SECURITY;
+ALTER TABLE handy_items     DISABLE ROW LEVEL SECURITY;
 
--- 6. تفعيل البث اللحظي (Realtime)
+-- 7. تفعيل البث اللحظي (Realtime)
 ALTER PUBLICATION supabase_realtime ADD TABLE items;
 ALTER PUBLICATION supabase_realtime ADD TABLE sales;
 ALTER PUBLICATION supabase_realtime ADD TABLE shift_handovers;
+ALTER PUBLICATION supabase_realtime ADD TABLE handy_items;
 
--- 7. دالة معالجة البيع وخصم المخزون ذرياً (Atomic POS Sale Engine)
+-- 8. دالة معالجة البيع وخصم المخزون ذرياً (Atomic POS Sale Engine)
+-- تدعم خصم الأقراص من العلب الأصلية parent_code وإعادة حساب الأرصدة تلقائياً
 CREATE OR REPLACE FUNCTION pos_process_sale_atomic(sale_payload JSONB)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -217,11 +238,21 @@ BEGIN
       WHERE internal_code = v_parent_code
       FOR UPDATE;
     ELSIF v_item_id IS NOT NULL THEN
-      SELECT id, stock_packs, stock_units, COALESCE(pack_units, 1)
-      INTO v_target_id, v_curr_packs, v_curr_units, v_pack_units
-      FROM items
-      WHERE id = v_item_id
-      FOR UPDATE;
+      -- فحص هل الصنف نفسه مسجل في items ومربوط بـ parent_code
+      SELECT parent_code INTO v_parent_code FROM items WHERE id = v_item_id;
+      IF v_parent_code IS NOT NULL AND v_parent_code <> '' THEN
+        SELECT id, stock_packs, stock_units, COALESCE(pack_units, 1)
+        INTO v_target_id, v_curr_packs, v_curr_units, v_pack_units
+        FROM items
+        WHERE internal_code = v_parent_code
+        FOR UPDATE;
+      ELSE
+        SELECT id, stock_packs, stock_units, COALESCE(pack_units, 1)
+        INTO v_target_id, v_curr_packs, v_curr_units, v_pack_units
+        FROM items
+        WHERE id = v_item_id
+        FOR UPDATE;
+      END IF;
     ELSE
       v_target_id := NULL;
     END IF;
@@ -256,17 +287,19 @@ BEGIN
 END;
 $$;
 
--- 8. جدول الأصناف السريعة المخصصة (Handy Items Grid)
-CREATE TABLE IF NOT EXISTS handy_items (
-  id              BIGSERIAL PRIMARY KEY,
-  item_code       TEXT NOT NULL,
-  display_name    TEXT NOT NULL,
-  category        TEXT DEFAULT 'مسكنات',
-  unit_type       TEXT DEFAULT 'unit',  -- 'unit' (قرص/شريط) أو 'pack' (علبة)
-  sort_order      INTEGER DEFAULT 0,
-  is_active       BOOLEAN DEFAULT TRUE,
-  created_at      TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE handy_items DISABLE ROW LEVEL SECURITY;
-ALTER PUBLICATION supabase_realtime ADD TABLE handy_items;
+-- 9. بذر بيانات الأصناف السريعة الافتراضية (Seed Default Handy Items)
+INSERT INTO handy_items (item_code, display_name, category, unit_type, price, parent_code, sort_order)
+VALUES
+  ('bi_alcofan_tab',   'باي الكوفان (قرص)',          'مسكنات', 'unit',    1.50, '51851',  1),
+  ('cataflam_50_tab',  'كتافلام 50 (قرص)',           'مسكنات', 'unit',    2.50, '13065',  2),
+  ('panadol_extra_tab','بانادول اكسترا (قرص)',       'مسكنات', 'unit',    2.00, '98',     3),
+  ('brufen_400_tab',   'بروفين 400 (قرص)',           'مسكنات', 'unit',    2.00, '13592',  4),
+  ('congestal_tab',    'كونجستال (قرص)',             'مسكنات', 'unit',    1.50, '13077',  5),
+  ('antinal_cap',      'انتينال (كبسولة)',           'مسكنات', 'unit',    2.00, '13041',  6),
+  ('otrivin_adult',    'اوترفين كبار (علبة)',        'مسكنات', 'pack',   20.00, NULL,     7),
+  ('strepsils_honey',  'ستربسيلز عسل وليمون (قرص)',  'مسكنات', 'unit',    5.00, NULL,     8),
+  ('syringe_3cm',      'سرنجة 3 سم',                 'طوارئ',  'pack',    3.00, '16240',  9),
+  ('syringe_5cm',      'سرنجة 5 سم',                 'طوارئ',  'pack',    3.50, NULL,    10),
+  ('bp_check',         'قياس ضغط الدم',              'خدمات',  'service', 10.00, NULL,    11),
+  ('glucose_check',    'قياس سكر بالدم',             'خدمات',  'service', 15.00, NULL,    12)
+ON CONFLICT DO NOTHING;
