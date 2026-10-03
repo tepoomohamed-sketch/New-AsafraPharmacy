@@ -1443,8 +1443,15 @@ function ensureXLSX() {
 
         <!-- ── صندوق ذمم أونلاين المعلقة (تراكمي) ── -->
         <div class="online-box" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة (متاح للموظفين)">
-          <div class="online-lbl">⏳ ذمم أونلاين</div>
+          <div class="online-lbl">⏳ ذمم أونلاين معلقة</div>
           <div class="online-val" id="hOnlineDebts">0 ج</div>
+        </div>
+
+        <!-- ── صندوق إجمالي مبيعات المحفظة ونسبتها من المبيعات (بند تحليلي دائم) ── -->
+        <div class="online-box" id="onlineWalletTotalBox" onclick="openOnlineDebtsModal('all')" style="border-color:rgba(72,187,120,.35);background:rgba(72,187,120,.08);cursor:pointer;" title="إجمالي مبيعات المحفظة الإلكترونية ونسبتها المئوية من المبيعات — اضغط للتحليل المالي">
+          <div class="online-lbl" style="color:#68d391;">📱 إجمالي المحفظة</div>
+          <div class="online-val" id="hWalletTotalVal" style="color:#48bb78;">0 ج</div>
+          <div id="hWalletSharePct" style="font-size:.65rem;color:#a7f3d0;font-weight:800;margin-top:2px;">(0% من المبيعات)</div>
         </div>
 
         <!-- ── سهم تحويل وسيط أنيق بين ذمم المحفظة والعهدة ── -->
@@ -1484,6 +1491,7 @@ function ensureXLSX() {
     <div class="ti"><span class="ti-l">مصاريف اليوم:</span><span class="ti-v c-r" id="tExp">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
     <div class="ti"><span class="ti-l">طلبيات اليوم:</span><span class="ti-v c-b" id="tOrd">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
     <div class="ti"><span class="ti-l">صافي اليوم:</span><span class="ti-v c-o" id="tNet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
+    <div class="ti"><span class="ti-l">📱 محفظة اليوم:</span><span class="ti-v" style="color:#4fd1c5;" id="tWallet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span> <span id="tWalletPct" style="font-size:.72rem;color:#81e6d9;font-weight:800;">(0%)</span></div>
   </div>
 
   <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
@@ -1713,6 +1721,9 @@ function ensureXLSX() {
 
       <!-- ② 8 KPI Cards -->
       <div class="dkpi-grid" id="dKpiGrid"></div>
+
+      <!-- ②.1 تحليل وسائل الدفع والمحافظ الإلكترونية -->
+      <div id="dPayMethodAnalysis"></div>
 
       <!-- ③ Charts Row 1 -->
       <div class="ch-row">
@@ -5183,6 +5194,24 @@ function renderOnlineDebtsModalList() {
     summary.innerHTML = `إجمالي المعلق التراكمي: <strong style="color:#f6ad55;">${fmt(pAmt)} ج</strong>`;
   }
 
+  // ── تحديث كروت التحليل الإحصائي في مودال الذمم ──
+  const elStatTotal = document.getElementById('odStatTotalWallet');
+  const elStatSettled = document.getElementById('odStatSettledWallet');
+  const elStatPending = document.getElementById('odStatPendingWallet');
+  const elStatShare = document.getElementById('odStatWalletShare');
+
+  const allWallets = entries.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company||'').includes('محفظة') || !(e.company||'').includes('انستا')));
+  const wTot = allWallets.reduce((s, e) => s + (parseFloat(e.amount)||0), 0);
+  const wPend = allWallets.filter(e => !isSettled(e)).reduce((s, e) => s + (parseFloat(e.amount)||0), 0);
+  const wSet = Math.max(0, wTot - wPend);
+  const totalRev = entries.filter(e => e.type === 'ايرادات' && !e.deleted).reduce((s, e) => s + (parseFloat(e.amount)||0), 0);
+  const wShare = totalRev > 0 ? (wTot / totalRev * 100).toFixed(1) : 0;
+
+  if (elStatTotal) elStatTotal.textContent = `${fmt(wTot)} ج`;
+  if (elStatSettled) elStatSettled.textContent = `${fmt(wSet)} ج`;
+  if (elStatPending) elStatPending.textContent = `${fmt(wPend)} ج`;
+  if (elStatShare) elStatShare.textContent = `${wShare}%`;
+
   if (!list.length) {
     container.innerHTML = '<div style="text-align:center;padding:35px;color:var(--text3);font-size:.85rem;">لا توجد حركات أونلاين مطابقة لهذا الفلتر</div>';
     return;
@@ -5253,6 +5282,8 @@ function renderOnlineDebtsModalList() {
 function updateOnlineDebtsHeader() {
   const elTotal = document.getElementById('hOnlineDebts');
   const elToday = document.getElementById('hOnlineToday');
+  const elWalletTotal = document.getElementById('hWalletTotalVal');
+  const elWalletShare = document.getElementById('hWalletSharePct');
 
   const td = todayStr();
   const nonDeleted = entries.filter(e => e.type === 'ذمم اونلاين' && !e.deleted);
@@ -5278,6 +5309,22 @@ function updateOnlineDebtsHeader() {
     if (co.includes('انستا')) instaToday += amt;
     else walletToday += amt;
   });
+
+  // 3. حساب إجمالي مبيعات المحفظة التراكمي ونسبتها من المبيعات (بند دائم للتحليل)
+  const allWalletEntries = nonDeleted.filter(e => (e.company || '').includes('محفظة') || !(e.company || '').includes('انستا'));
+  const allWalletTotal = allWalletEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const curMonth = td.slice(0, 7);
+  const monthWalletTotal = allWalletEntries.filter(e => e.date?.startsWith(curMonth)).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const monthRevs = entries.filter(e => e.date?.startsWith(curMonth) && e.type === 'ايرادات' && !e.deleted).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const walletPct = monthRevs > 0 ? ((monthWalletTotal / monthRevs) * 100).toFixed(1) : (allWalletTotal > 0 ? '100' : '0');
+
+  if (elWalletTotal) {
+    elWalletTotal.textContent = `${fmt(allWalletTotal)} ج`;
+    elWalletTotal.title = `إجمالي مبيعات المحفظة التراكمي: ${fmt(allWalletTotal)} ج | مبيعات شهر (${curMonth}): ${fmt(monthWalletTotal)} ج`;
+  }
+  if (elWalletShare) {
+    elWalletShare.textContent = `(${walletPct}% من مبيعات الشهر)`;
+  }
 
   // ── تحديث صندوق المعلق التراكمي (Box 1) ──
   if (elTotal) {
@@ -5357,6 +5404,15 @@ function updToday() {
   document.getElementById('tExp').textContent=fmt(x);
   document.getElementById('tOrd').textContent=fmt(o);
   document.getElementById('tNet').textContent=fmt(r-x-o-p-a-dh);
+
+  // ── تحديث محفظة اليوم ونسبتها في شريط اليوم ──
+  const todayWallet = ts.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company||'').includes('محفظة') || !(e.company||'').includes('انستا'))).reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const todayWalletPct = r > 0 ? ((todayWallet / r) * 100).toFixed(1) : 0;
+  const elTWallet = document.getElementById('tWallet');
+  const elTWalletPct = document.getElementById('tWalletPct');
+  if (elTWallet) elTWallet.textContent = fmt(todayWallet);
+  if (elTWalletPct) elTWalletPct.textContent = `(${todayWalletPct}%)`;
+
   renderTopMonthlySalesChart();
 }
 
@@ -5975,6 +6031,24 @@ function renderSum() {
   const ordCnt = sub.filter(e=>e.type==='طلبيات').length;
   const avgOrd = ordCnt>0 ? o/ordCnt : 0;
 
+  // ── تحليلات مبيعات المحفظة الإلكترونية ووسائل الدفع ──
+  const walletSub = sub.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا')));
+  const walletTotal = walletSub.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const walletPending = walletSub.filter(e => !isSettled(e)).reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const walletSettled = Math.max(0, walletTotal - walletPending);
+  const prWalletSub = prev.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا')));
+  const prWalletTotal = prWalletSub.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const walletSharePct = r > 0 ? (walletTotal / r * 100) : 0;
+
+  const instaSub = sub.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && (e.company || '').includes('انستا'));
+  const instaTotal = instaSub.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const instaSharePct = r > 0 ? (instaTotal / r * 100) : 0;
+
+  const cashShare = Math.max(0, r - walletTotal - instaTotal);
+  const cashSharePct = r > 0 ? (cashShare / r * 100) : 0;
+  const digitalTotal = walletTotal + instaTotal;
+  const digitalSharePct = r > 0 ? (digitalTotal / r * 100) : 0;
+
   // ── أيام الاسترداد ──
   const activeDays = [...new Set(sub.map(e=>e.date).filter(Boolean))].length || 1;
   const dailyRevAvg = r / activeDays;
@@ -6037,8 +6111,21 @@ function renderSum() {
       <div class="dkpi-val" style="color:#81e6d9;">${fmt(a)}<span class="dkpi-unit"> ج</span></div>
       <div class="dkpi-delta">${delta(a,pa)}</div>
     </div>`:''}
+    <div class="dkpi" style="border-color:rgba(72,187,120,.4);background:rgba(72,187,120,.07);">
+      <div class="dkpi-lbl" style="color:#48bb78;display:flex;justify-content:space-between;align-items:center;">
+        <span>📱 مبيعات المحفظة</span>
+        <span style="font-size:.7rem;padding:1px 6px;border-radius:4px;background:rgba(72,187,120,.2);color:#68d391;font-weight:800;">${walletSharePct.toFixed(1)}% من المبيعات</span>
+      </div>
+      <div class="dkpi-val" style="color:#38a169;">${fmt(walletTotal)}<span class="dkpi-unit"> ج</span></div>
+      <div class="dkpi-delta">
+        <span style="font-size:.74rem;color:var(--text2);display:block;margin-bottom:2px;">
+          ${walletPending > 0 ? `⏳ معلق: <strong style="color:#f6ad55;">${fmt(walletPending)} ج</strong> | ` : ''}✅ مصفى للعهدة: <strong style="color:#68d391;">${fmt(walletSettled)} ج</strong>
+        </span>
+        ${delta(walletTotal, prWalletTotal)}
+      </div>
+    </div>
     ${dh>0?`<div class="dkpi" style="border-color:rgba(183,148,244,.35);background:rgba(183,148,244,.06);">
-      <div class="dkpi-lbl" style="color:#b794f4;">⏳ ذمم أونلاين</div>
+      <div class="dkpi-lbl" style="color:#b794f4;">⏳ ذمم أونلاين معلقة</div>
       <div class="dkpi-val" style="color:#b794f4;">${fmt(dhPending)}<span class="dkpi-unit"> ج</span></div>
       <div class="dkpi-delta"><span class="${dhPending>0?'d-dn':'d-up'}">${dhPending>0?`⚠️ ${dhPending===dh?'كل الذمم معلقة':'بعض الذمم معلقة'}`:'✅ كل الذمم مُسوَّاة'}</span></div>
     </div>`:(pendingOnlineAmt()>0?`<div class="dkpi" style="border-color:rgba(183,148,244,.35);background:rgba(183,148,244,.06);">
@@ -6078,6 +6165,69 @@ function renderSum() {
       <div class="dkpi-delta"><span class="d-na">${ordCnt} طلبية</span></div>
     </div>
     ${renderTargetAchievement(sub, prev)}`;
+
+  // ── ② لوحة تحليل وسائل الدفع والمحافظ الإلكترونية ──
+  const elPayAnalysis = document.getElementById('dPayMethodAnalysis');
+  if (elPayAnalysis) {
+    elPayAnalysis.innerHTML = `
+      <div class="card" style="margin-bottom:18px;background:var(--bg1);border:1.5px solid rgba(72,187,120,.25);border-radius:14px;padding:16px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div>
+            <div style="font-weight:900;font-size:1rem;color:var(--text1);display:flex;align-items:center;gap:8px;">
+              <span>💳 تحليل وسائل الدفع والتحصيل الإلكتروني</span>
+              <span style="font-size:.72rem;padding:2px 8px;border-radius:12px;background:rgba(72,187,120,.15);color:#48bb78;font-weight:800;">
+                إجمالي الدفع الإلكتروني: ${fmt(digitalTotal)} ج (${digitalSharePct.toFixed(1)}%)
+              </span>
+            </div>
+            <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">مقارنة نسب المبيعات المدفوعة نقداً (كاش) مقابل المحافظ الإلكترونية وإنستاباي</div>
+          </div>
+          <button type="button" onclick="openOnlineDebtsModal('all')" class="btn btn-sm btn-ghost" style="font-size:.78rem;padding:4px 12px;border:1px solid var(--border);cursor:pointer;">
+            📋 كشف حركات المحفظة
+          </button>
+        </div>
+
+        <!-- شريط التوزيع النسبي التفاعلي -->
+        <div style="height:14px;border-radius:8px;background:rgba(255,255,255,.05);display:flex;overflow:hidden;margin-bottom:14px;border:1px solid var(--border);">
+          <div style="width:${cashSharePct}%;background:#48bb78;transition:width .4s;" title="كاش: ${cashSharePct.toFixed(1)}%"></div>
+          <div style="width:${walletSharePct}%;background:#38b2ac;transition:width .4s;" title="محفظة: ${walletSharePct.toFixed(1)}%"></div>
+          <div style="width:${instaSharePct}%;background:#63b3ed;transition:width .4s;" title="انستا باي: ${instaSharePct.toFixed(1)}%"></div>
+        </div>
+
+        <!-- 3 أعمدة تحليلية -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+          <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;border-right:3px solid #48bb78;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:.8rem;color:var(--text2);font-weight:700;">💵 نقدية / كاش (الدرج)</span>
+              <span style="font-size:.75rem;font-weight:900;color:#48bb78;">${cashSharePct.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:1.15rem;font-weight:900;color:var(--text1);">${fmt(cashShare)} <span style="font-size:.75rem;color:var(--text3);">ج</span></div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">مبيعات نقدية مباشرة بالخزينة</div>
+          </div>
+
+          <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;border-right:3px solid #38b2ac;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:.8rem;color:var(--text2);font-weight:700;">📱 محافظ إلكترونية (فودافون/وي/اتصالات)</span>
+              <span style="font-size:.75rem;font-weight:900;color:#38b2ac;">${walletSharePct.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:1.15rem;font-weight:900;color:#38b2ac;">${fmt(walletTotal)} <span style="font-size:.75rem;color:var(--text3);">ج</span></div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">
+              ${walletPending > 0 ? `<span style="color:#f6ad55;">⏳ معلق: ${fmt(walletPending)} ج</span> | ` : ''}
+              <span style="color:#68d391;">✅ مصفى للعهدة: ${fmt(walletSettled)} ج</span>
+            </div>
+          </div>
+
+          <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;border-right:3px solid #63b3ed;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:.8rem;color:var(--text2);font-weight:700;">⚡ تحويلات بنكية (انستا باي InstaPay)</span>
+              <span style="font-size:.75rem;font-weight:900;color:#63b3ed;">${instaSharePct.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:1.15rem;font-weight:900;color:#63b3ed;">${fmt(instaTotal)} <span style="font-size:.75rem;color:var(--text3);">ج</span></div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">مدفوعات فورية عبر الحساب البنكي</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   // ── ② BAR CHART: يومياً ──
   const dm={};
@@ -7332,6 +7482,48 @@ async function chooseSettleOption(opt) {
   }
 }
 
+async function markEntriesSettledInDbAndMemory(entryIds, revId) {
+  if (!entryIds || !entryIds.length) return;
+  const tag = 'settled:' + revId;
+
+  // 1. تحديث الذاكرة المحلية فوراً لضمان عدم ظهورها كمعلقة في واجهة المستخدم
+  entries.forEach(e => {
+    if (entryIds.includes(e.id)) {
+      e.invoice = tag;
+    }
+  });
+
+  // 2. تحديث قاعدة بيانات Supabase بنظام الدُفعات (Batching) مع الإعادة الفردية في حالة التعثر
+  const chunkSize = 25;
+  for (let i = 0; i < entryIds.length; i += chunkSize) {
+    const chunk = entryIds.slice(i, i + chunkSize);
+    try {
+      const { error: updErr } = await sb.from('entries')
+        .update({ invoice: tag })
+        .in('id', chunk);
+      if (updErr) {
+        console.warn('Batch update chunk failed, retrying individually:', updErr);
+        for (const singleId of chunk) {
+          try {
+            await sb.from('entries').update({ invoice: tag }).eq('id', singleId);
+          } catch (e2) {
+            console.error('Error settling single entry:', singleId, e2);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Chunk exception, fallback to single:', err);
+      for (const singleId of chunk) {
+        try {
+          await sb.from('entries').update({ invoice: tag }).eq('id', singleId);
+        } catch (e2) {
+          console.error('Error settling single entry:', singleId, e2);
+        }
+      }
+    }
+  }
+}
+
 async function settlePartialWalletAmount(targetAmt) {
   const walletDebts = entries.filter(e =>
     !e.deleted &&
@@ -7432,14 +7624,7 @@ async function settlePartialWalletAmount(targetAmt) {
     }
 
     if (fullySettledIds.length > 0) {
-      const { error: updErr } = await sb.from('entries')
-        .update({ invoice: 'settled:' + revId })
-        .in('id', fullySettledIds);
-      if (updErr) throw updErr;
-
-      walletDebts.forEach(d => {
-        if (fullySettledIds.includes(d.id)) d.invoice = 'settled:' + revId;
-      });
+      await markEntriesSettledInDbAndMemory(fullySettledIds, revId);
     }
 
     if (splitEntry) {
@@ -7705,14 +7890,7 @@ async function settleSelectedWalletDebts() {
       if (feeErr) console.warn('fee insert error:', feeErr);
     }
 
-    const { error: updErr } = await sb.from('entries')
-      .update({ invoice: 'settled:' + revId })
-      .in('id', selectedIds);
-    if (updErr) throw updErr;
-
-    selectedEntries.forEach(e => {
-      e.invoice = 'settled:' + revId;
-    });
+    await markEntriesSettledInDbAndMemory(selectedIds, revId);
 
     entries.unshift({
       id: revId,
@@ -7882,16 +8060,8 @@ async function settleAllWalletDebts() {
       if (feeErr) console.warn('fee insert error:', feeErr);
     }
 
-    // 3. تحديث جميع قيود المحفظة في Supabase لتصبح مسواة
-    const { error: updErr } = await sb.from('entries')
-      .update({ invoice: 'settled:' + revId })
-      .in('id', walletIds);
-    if (updErr) throw new Error(updErr.message);
-
-    // 4. تحديث الذاكرة المحلية
-    walletDebts.forEach(e => {
-      e.invoice = 'settled:' + revId;
-    });
+    // 3. تحديث جميع قيود المحفظة في الذاكرة وقاعدة البيانات لتصبح مسواة
+    await markEntriesSettledInDbAndMemory(walletIds, revId);
 
     entries.unshift({
       id: revId,
@@ -18052,6 +18222,26 @@ document.addEventListener('DOMContentLoaded', () => {
           📥 تصفية ذمم المحفظة للعهدة
         </button>
         <button onclick="closeOnlineDebtsModal()" style="background:none;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;">✕</button>
+      </div>
+    </div>
+
+    <!-- شريط الإحصائيات والتحليل المالي للمحفظة -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;">
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">📱 إجمالي مبيعات المحفظة</div>
+        <div id="odStatTotalWallet" style="font-size:1rem;font-weight:900;color:#48bb78;">0 ج</div>
+      </div>
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">✅ مصفى للعهدة (مسوّى)</div>
+        <div id="odStatSettledWallet" style="font-size:1rem;font-weight:900;color:#68d391;">0 ج</div>
+      </div>
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">⏳ رصيد معلق بالمحفظة</div>
+        <div id="odStatPendingWallet" style="font-size:1rem;font-weight:900;color:#f6ad55;">0 ج</div>
+      </div>
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">📊 نسبة مبيعات المحفظة</div>
+        <div id="odStatWalletShare" style="font-size:1rem;font-weight:900;color:#63b3ed;">0%</div>
       </div>
     </div>
 
