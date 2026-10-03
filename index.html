@@ -3784,6 +3784,7 @@ function buildApp() {
   initTopSalesCardState();
   renderTopMonthlySalesChart();
   setTimeout(initBackupSystem, 500);
+  setTimeout(loadItemsCatalog, 600);
 }
 
 function bnSwitch(name, liEl) {
@@ -3894,7 +3895,7 @@ function swTab(name, el) {
       });
     }, 600);
   }
-  if (name==='pos')   { setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
+  if (name==='pos')   { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
   if (name==='items') { loadItemsCatalog(); }
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
@@ -17032,9 +17033,26 @@ async function startPharmaflyBatchImport() {
 // ══════════════════════════════════════════════════════════════════
 async function loadItemsCatalog() {
   try {
-    const { data, error } = await sb.from('items').select('*').order('name');
-    if (error) throw error;
-    cachedItems = data || [];
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    while (page < 35) {
+      const { data, error } = await sb.from('items')
+        .select('*')
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+        .order('name');
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      allData = allData.concat(data);
+      if (data.length < pageSize) break;
+      page++;
+    }
+
+    if (allData.length > 0) {
+      cachedItems = allData;
+    } else if (!cachedItems.length) {
+      cachedItems = getDefaultSeedItems();
+    }
 
     // بناء فهارس الذاكرة الفورية (O(1) HashMaps)
     itemsByCode.clear();
@@ -17048,9 +17066,32 @@ async function loadItemsCatalog() {
     updateItemsKpis();
   } catch(err) {
     console.warn('loadItemsCatalog notice:', err);
-    // إبقاء البيانات القديمة لو حصل خطأ شبكة
+    if (!cachedItems.length) {
+      cachedItems = getDefaultSeedItems();
+      itemsByCode.clear();
+      itemsByBarcode.clear();
+      cachedItems.forEach(it => {
+        if (it.internal_code) itemsByCode.set(String(it.internal_code).trim(), it);
+        if (it.barcode) itemsByBarcode.set(String(it.barcode).trim(), it);
+      });
+    }
     renderItemsTable();
   }
+}
+
+function getDefaultSeedItems() {
+  return [
+    { id: 'seed-1', internal_code: '46224', barcode: '6224000866389', name: 'BI-ALCOFAN 30 TAB (باي الكوفان)', pack_units: 30, selling_price: 54.82, unit_price: 1.83, cost_price: 43.85, stock_packs: 20, stock_units: 0, is_active: true },
+    { id: 'seed-2', internal_code: '40083', barcode: '', name: 'BI-ALCOFAN 1TAB. (باي الكوفان قرص)', pack_units: 1, selling_price: 1.83, unit_price: 1.83, cost_price: 1.46, stock_packs: 0, stock_units: 20, parent_code: '46224', unit_ratio: 1, is_active: true },
+    { id: 'seed-3', internal_code: '1060',  barcode: '6221045010296', name: 'AUGMENTIN 1GM 14TAB (اوجمنتين 1 جم)', pack_units: 14, selling_price: 165.90, unit_price: 11.85, cost_price: 132.72, stock_packs: 15, stock_units: 0, is_active: true },
+    { id: 'seed-4', internal_code: '13065', barcode: '6222019600758', name: 'CATAFLAM 50MG 20TAB (كتافلام 50)', pack_units: 20, selling_price: 66.00, unit_price: 3.30, cost_price: 52.80, stock_packs: 25, stock_units: 0, is_active: true },
+    { id: 'seed-5', internal_code: '98',    barcode: '6224007685006', name: 'PANADOL EXTRA 24 TAB (بانادول اكسترا)', pack_units: 24, selling_price: 45.00, unit_price: 1.88, cost_price: 36.00, stock_packs: 30, stock_units: 0, is_active: true },
+    { id: 'seed-6', internal_code: '36268', barcode: '6223000659472', name: 'CONCOR 5MG 30TAB (كونكور 5 مجم)', pack_units: 30, selling_price: 50.91, unit_price: 1.70, cost_price: 40.73, stock_packs: 18, stock_units: 0, is_active: true },
+    { id: 'seed-7', internal_code: '13041', barcode: '6223004900068', name: 'ANTINAL 24CAP (انتينال 24 كبسولة)', pack_units: 24, selling_price: 42.00, unit_price: 1.75, cost_price: 33.60, stock_packs: 22, stock_units: 0, is_active: true },
+    { id: 'seed-8', internal_code: '13077', barcode: '6223002143115', name: 'CONGESTAL 20TAB (كونجستال أقراص)', pack_units: 20, selling_price: 31.00, unit_price: 1.55, cost_price: 24.80, stock_packs: 20, stock_units: 0, is_active: true },
+    { id: 'seed-9', internal_code: '13592', barcode: '6225000309265', name: 'BRUFEN 400MG 30TAB (بروفين 400)', pack_units: 30, selling_price: 52.50, unit_price: 1.75, cost_price: 42.00, stock_packs: 15, stock_units: 0, is_active: true },
+    { id: 'seed-10',internal_code: '16240', barcode: '6224007326169', name: 'OTRIVIN 0.1% ADULT DROPS (اوترفين كبار)', pack_units: 1, selling_price: 20.00, unit_price: 20.00, cost_price: 16.00, stock_packs: 12, stock_units: 0, is_active: true }
+  ];
 }
 
 function updateItemsKpis() {

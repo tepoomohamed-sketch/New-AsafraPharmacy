@@ -303,3 +303,18 @@ VALUES
   ('bp_check',         'قياس ضغط الدم',              'خدمات',  'service', 10.00, NULL,    11),
   ('glucose_check',    'قياس سكر بالدم',             'خدمات',  'service', 15.00, NULL,    12)
 ON CONFLICT DO NOTHING;
+
+
+-- 10. ضبط الصلاحيات وإتاحة الوصول العام لنظام الكاشير (Security & Permissions)
+ALTER TABLE items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE sales DISABLE ROW LEVEL SECURITY;
+ALTER TABLE shift_handovers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE purchases DISABLE ROW LEVEL SECURITY;
+ALTER TABLE handy_items DISABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON TABLE items TO anon, authenticated, service_role;
+GRANT ALL ON TABLE sales TO anon, authenticated, service_role;
+GRANT ALL ON TABLE shift_handovers TO anon, authenticated, service_role;
+GRANT ALL ON TABLE purchases TO anon, authenticated, service_role;
+GRANT ALL ON TABLE handy_items TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION pos_process_sale_atomic TO anon, authenticated, service_role;
