@@ -86,6 +86,12 @@ CREATE TABLE IF NOT EXISTS items (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- تحديث أعمدة جدول الأصناف في حال كان الجدول موجوداً مسبقاً
+ALTER TABLE items ADD COLUMN IF NOT EXISTS alt_name        TEXT;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS parent_code     TEXT;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS unit_ratio      NUMERIC DEFAULT 1;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS min_order_limit INTEGER DEFAULT 2;
+
 CREATE INDEX IF NOT EXISTS idx_items_barcode       ON items(barcode);
 CREATE INDEX IF NOT EXISTS idx_items_internal_code ON items(internal_code);
 CREATE INDEX IF NOT EXISTS idx_items_parent_code   ON items(parent_code);
@@ -202,8 +208,8 @@ CREATE INDEX IF NOT EXISTS idx_vend_ledger_date ON vendor_ledger(created_at);
 -- ════════════════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS purchases (
   id                   TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  invoice_no           TEXT NOT NULL,                         -- رقم فاتورة المورد
-  vendor_id            TEXT REFERENCES vendors(id) ON DELETE RESTRICT,
+  invoice_no           TEXT,                                  -- رقم فاتورة المورد
+  vendor_id            TEXT REFERENCES vendors(id) ON DELETE SET NULL,
   supplier_name        TEXT,                                  -- الاسم المحفوظ نصياً للمطابقة
   invoice_date         DATE NOT NULL DEFAULT CURRENT_DATE,    -- تاريخ الفاتورة
   due_date             DATE,                                  -- تاريخ الاستحقاق
@@ -223,6 +229,27 @@ CREATE TABLE IF NOT EXISTS purchases (
   created_by           TEXT,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- تحديث أعمدة جدول المشتريات purchases في حال كان الجدول موجوداً مسبقاً
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS invoice_no     TEXT;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS vendor_id      TEXT REFERENCES vendors(id) ON DELETE SET NULL;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS supplier_name  TEXT;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS invoice_date   DATE DEFAULT CURRENT_DATE;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS due_date       DATE;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS subtotal       NUMERIC DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS discount       NUMERIC DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS tax            NUMERIC DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS total_cost     NUMERIC DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS total_selling  NUMERIC DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS paid_amount    NUMERIC DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'paid';
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'safe';
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS safe_id        TEXT;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS status         TEXT DEFAULT 'received';
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS items_count    INTEGER DEFAULT 0;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS items_data     JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS notes          TEXT;
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS created_by     TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_purchases_vendor ON purchases(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_date   ON purchases(invoice_date);
@@ -284,6 +311,15 @@ CREATE TABLE IF NOT EXISTS sales (
   items_data       JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- تحديث أعمدة جدول المبيعات sales في حال كان الجدول موجوداً مسبقاً
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_id      TEXT REFERENCES customers(id) ON DELETE SET NULL;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS shift_id         TEXT REFERENCES shifts(id) ON DELETE SET NULL;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cost_total       NUMERIC DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS realized_profit  NUMERIC DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS delivery_address TEXT;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cashier_uid      TEXT;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS sold_by_code     TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_sales_date     ON sales(date);
 CREATE INDEX IF NOT EXISTS idx_sales_type     ON sales(type);
