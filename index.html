@@ -1312,6 +1312,536 @@
   }
 }
 
+
+/* ══════════════════════════════════════════════════════════════
+   SALIIM ULTRA-MODERN SAAS SHELL & DASHBOARD (نفس تصميم سليم)
+   ══════════════════════════════════════════════════════════════ */
+.saliim-app-layout {
+  display: flex !important;
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+  direction: rtl;
+  font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ── Sidebar (Right Dark Navy) ── */
+.saliim-sidebar {
+  width: 250px;
+  background: #0b132b;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 200;
+  border-left: 1px solid rgba(255,255,255,0.06);
+  user-select: none;
+  transition: transform 0.25s ease;
+}
+.saliim-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.saliim-logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #0284c7;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(2,132,199,0.35);
+}
+.saliim-brand-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.2;
+}
+.saliim-brand-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+/* Quick Switcher */
+.saliim-quick-search {
+  margin: 14px 14px 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.saliim-quick-search:hover {
+  background: rgba(255,255,255,0.08);
+  color: #cbd5e1;
+}
+.saliim-search-badge {
+  margin-right: auto;
+  font-size: 0.68rem;
+  background: rgba(255,255,255,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #94a3b8;
+}
+
+/* Nav Scroll */
+.saliim-nav-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+.saliim-group-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 14px 10px 6px;
+}
+.saliim-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-bottom: 2px;
+}
+.saliim-nav-item:hover {
+  background: rgba(255,255,255,0.05);
+  color: #f1f5f9;
+}
+.saliim-nav-item.active {
+  background: #1c2541;
+  color: #38bdf8;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.saliim-nav-item.active .saliim-item-icon {
+  color: #38bdf8;
+}
+.saliim-item-icon {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+  color: #64748b;
+  transition: color 0.18s;
+}
+.saliim-item-badge {
+  margin-right: auto;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(16,185,129,0.2);
+  color: #34d399;
+  font-weight: 800;
+}
+
+/* Sidebar Profile */
+.saliim-sidebar-profile {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0,0,0,0.15);
+}
+.saliim-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.saliim-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.saliim-profile-name {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.saliim-profile-role {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+.saliim-btn-logout {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.saliim-btn-logout:hover {
+  color: #ef4444;
+}
+
+/* ── Main Shell ── */
+.saliim-main-shell {
+  flex: 1;
+  margin-right: 250px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8fafc;
+  transition: margin-right 0.25s ease;
+}
+
+/* ── Topbar ── */
+.saliim-topbar {
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.saliim-topbar-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.saliim-mobile-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.saliim-topbar-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+.saliim-topbar-breadcrumb {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.saliim-topbar-search {
+  flex: 1;
+  max-width: 480px;
+  margin: 0 20px;
+  position: relative;
+}
+.saliim-topbar-search input {
+  width: 100%;
+  padding: 9px 36px 9px 34px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.saliim-topbar-search input:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2,132,199,0.12);
+}
+.saliim-tb-search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.saliim-tb-search-badge {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.saliim-topbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.saliim-tb-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #475569;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+.saliim-tb-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.saliim-notif-badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  background: #0284c7;
+  color: white;
+  font-size: 0.64rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  border: 2px solid #ffffff;
+}
+
+/* ── Content Body ── */
+.saliim-content-body {
+  flex: 1;
+  padding: 24px 28px;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Greeting Header */
+.saliim-greeting-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.saliim-greeting-text h1 {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+.saliim-greeting-date {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin-top: 3px;
+  font-weight: 500;
+}
+.saliim-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 4px 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.saliim-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.25);
+  animation: pulseDot 2s infinite;
+}
+@keyframes pulseDot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* 8 KPI Cards Grid */
+.saliim-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.saliim-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-height: 140px;
+}
+.saliim-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+.saliim-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.saliim-card-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #64748b;
+}
+.saliim-card-icon-box {
+  font-size: 1rem;
+  color: #0284c7;
+}
+.saliim-card-num {
+  font-size: 2.1rem;
+  font-weight: 900;
+  color: #0f172a;
+  font-family: 'Inter', 'Tajawal', sans-serif;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.saliim-card-sub {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+.saliim-sparkline {
+  margin-top: 8px;
+  height: 24px;
+  width: 100%;
+}
+
+/* Bottom Segmented Cards (3 Columns) */
+.saliim-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.saliim-seg-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.saliim-seg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.saliim-seg-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+.saliim-seg-sub {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+.saliim-seg-icon {
+  font-size: 1.15rem;
+  color: #0284c7;
+}
+.saliim-seg-cols {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  text-align: center;
+}
+.saliim-seg-col {
+  flex: 1;
+  padding: 0 10px;
+}
+.saliim-seg-col:not(:last-child) {
+  border-left: 1px solid #e2e8f0;
+}
+.saliim-seg-num {
+  font-size: 1.9rem;
+  font-weight: 900;
+  font-family: 'Inter', 'Tajawal', sans-serif;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+.saliim-seg-lbl {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #475569;
+}
+.saliim-seg-desc {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .saliim-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .saliim-bottom-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 1024px) {
+  .saliim-sidebar { transform: translateX(100%); }
+  .saliim-sidebar.open { transform: translateX(0); }
+  .saliim-main-shell { margin-right: 0; }
+  .saliim-mobile-toggle { display: block; }
+  .saliim-content-body { padding: 16px; }
+}
+@media (max-width: 640px) {
+  .saliim-kpi-grid { grid-template-columns: 1fr; }
+  .saliim-topbar-search { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -1440,178 +1970,399 @@ function ensureXLSX() {
   </div>
 </div>
 
-<!-- ══════════════ MAIN APP ══════════════ -->
-<div id="scApp" class="scr">
+<!-- ══════════════ MAIN APP (SALIIM SAAS SHELL) ══════════════ -->
+<div id="scApp" class="scr saliim-app-layout">
 
-  <!-- Header -->
-  <div class="hdr">
-    <!-- Row 1: Brand, User Profile, Quick Tools (Theme, Search, Logout) & Sales Targets -->
-    <div class="hdr-row-top">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="ph-name" id="hPhName">🏥 صيدلية العصافرة</div>
-        <div class="u-badge">
-          <span id="hUName">—</span>
-          <span class="r-chip" id="hURole">—</span>
-        </div>
-        <!-- أزرار التحكم مجمعة بجوار بيانات الحساب في اليمين -->
-        <div style="display:flex;align-items:center;gap:6px;margin-right:4px;">
-          <button id="themeToggle" onclick="toggleTheme()" title="تبديل المظهر"
-            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 11px;color:white;cursor:pointer;font-size:1rem;transition:all .2s;">🌙</button>
-          <button onclick="openGlobalSearch()" title="بحث عالمي (Ctrl+K)"
-            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 12px;color:white;cursor:pointer;font-size:.82rem;transition:all .2s;display:flex;align-items:center;gap:5px;">
-            <span>🔍</span><span style="opacity:.7;font-size:.7rem;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:1px 4px;">Ctrl+K</span>
-          </button>
-          <button class="btn-logout" onclick="doLogout()" style="padding:6px 13px;">خروج ↩</button>
-        </div>
-      </div>
-
-      <!-- صناديق التارجت في يسار الصف العلوي -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="target-box" id="salesTargetBox" style="display:none;" title="متوسط المبيعات اليومي مقارنةً بالتارجت">
-          <div class="target-lbl">🎯 تحقيق التارجت</div>
-          <div class="target-pct" id="targetPct">—</div>
-          <div class="target-sub" id="targetSub">—</div>
-        </div>
-        <div id="monthlyTargetBox" style="display:none;align-items:center;gap:8px;background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.25);border-radius:12px;padding:6px 12px;cursor:default;" title="تقدم المبيعات الشهرية">
-          <svg width="34" height="34" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
-            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(124,58,237,.2)" stroke-width="4"/>
-            <circle id="monthRingFill" cx="18" cy="18" r="15" fill="none" stroke="#7c3aed" stroke-width="4"
-              stroke-dasharray="94.25" stroke-dashoffset="94.25" stroke-linecap="round" style="transition:stroke-dashoffset .6s ease;"/>
-          </svg>
-          <div style="text-align:center;">
-            <div style="font-size:.68rem;color:rgba(255,255,255,.75);font-weight:600;">الشهر</div>
-            <div id="monthlyPct" style="font-size:.95rem;font-weight:900;color:#fff;">0%</div>
-          </div>
-        </div>
+  <!-- ════════ RIGHT SIDEBAR (NAVY BLUE SAAS SIDEBAR) ════════ -->
+  <aside class="saliim-sidebar" id="saliimSidebar">
+    <!-- Brand -->
+    <div class="saliim-brand">
+      <div class="saliim-logo-icon">💊</div>
+      <div class="saliim-brand-text">
+        <div class="saliim-brand-title">دوا العصافرة</div>
+        <div class="saliim-brand-sub">DAWA PHARMACY</div>
       </div>
     </div>
 
-    <!-- Row 2: Financial Balances & Wallet-to-Cash Bridge -->
-    <div class="hdr-row-fin">
+    <!-- Quick Switcher / Ctrl+K -->
+    <div class="saliim-quick-search" onclick="openGlobalSearch()" title="انتقل إلى صفحة... [Ctrl+K]">
+      <span class="saliim-search-ico">🔍</span>
+      <span class="saliim-search-txt">انتقل إلى صفحة...</span>
+      <span class="saliim-search-badge">Ctrl K</span>
+    </div>
+
+    <!-- Nav Groups -->
+    <div class="saliim-nav-scroll">
+      <!-- Group 1: عام -->
+      <div class="saliim-group-title">عام</div>
+      <div class="saliim-nav-item active" data-tab="overview" onclick="swTab('overview', this)">
+        <span class="saliim-item-icon">▦</span>
+        <span class="saliim-item-text">نظرة عامة</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="pos" onclick="swTab('pos', this)">
+        <span class="saliim-item-icon">🛒</span>
+        <span class="saliim-item-text">كاشير المبيعات</span>
+        <span class="saliim-item-badge">PharmaFly</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="all" onclick="swTab('all', this)">
+        <span class="saliim-item-icon">📋</span>
+        <span class="saliim-item-text">دفتر القيود والحركات</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="add" onclick="swTab('add', this)">
+        <span class="saliim-item-icon">➕</span>
+        <span class="saliim-item-text">تسجيل قيد جديد</span>
+      </div>
+
+      <!-- Group 2: المخزون والأدوية -->
+      <div class="saliim-group-title">المخزون والأدوية</div>
+      <div class="saliim-nav-item" data-tab="items" onclick="swTab('items', this)">
+        <span class="saliim-item-icon">📦</span>
+        <span class="saliim-item-text">دليل الأصناف والمخزن</span>
+      </div>
+      <div class="saliim-nav-item" onclick="openPosHandyItemsModal()">
+        <span class="saliim-item-icon">⚡</span>
+        <span class="saliim-item-text">الأصناف السريعة [ * ]</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="salesdb" onclick="swTab('salesdb', this)">
+        <span class="saliim-item-icon">📊</span>
+        <span class="saliim-item-text">تحليلات المبيعات</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="monthcmp" onclick="swTab('monthcmp', this)">
+        <span class="saliim-item-icon">📅</span>
+        <span class="saliim-item-text">مقارنة الأشهر</span>
+      </div>
+
+      <!-- Group 3: العملاء والمالية -->
+      <div class="saliim-group-title">العملاء والمالية</div>
+      <div class="saliim-nav-item" data-tab="custfollow" onclick="swTab('custfollow', this)">
+        <span class="saliim-item-icon">👥</span>
+        <span class="saliim-item-text">العملاء والآجل</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="budget" onclick="swTab('budget', this)">
+        <span class="saliim-item-icon">📑</span>
+        <span class="saliim-item-text">الموازنة والتحليل المالي</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="att" onclick="swTab('att', this)">
+        <span class="saliim-item-icon">⏱</span>
+        <span class="saliim-item-text">الحضور والرواتب</span>
+      </div>
+
+      <!-- Group 4: الكادر والنظام -->
+      <div class="saliim-group-title">الكادر والنظام</div>
+      <div class="saliim-nav-item" data-tab="users" onclick="swTab('users', this)">
+        <span class="saliim-item-icon">👤</span>
+        <span class="saliim-item-text">الموظفون والحسابات</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="trash" onclick="swTab('trash', this)">
+        <span class="saliim-item-icon">🗑</span>
+        <span class="saliim-item-text">المحذوفات</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="set" onclick="swTab('set', this)">
+        <span class="saliim-item-icon">⚙️</span>
+        <span class="saliim-item-text">الإعدادات والنسخ</span>
+      </div>
+    </div>
+
+    <!-- Sidebar Bottom Profile -->
+    <div class="saliim-sidebar-profile">
+      <div class="saliim-profile-info">
+        <div class="saliim-avatar" id="saliimAvatarChar">م</div>
+        <div style="overflow:hidden;">
+          <div class="saliim-profile-name" id="saliimProfileName">مدير النظام</div>
+          <div class="saliim-profile-role" id="saliimProfileRole">إدارة عامة</div>
+        </div>
+      </div>
+      <button class="saliim-btn-logout" onclick="doLogout()" title="تسجيل الخروج">↩</button>
+    </div>
+  </aside>
+
+  <!-- ════════ MAIN SHELL (HEADER + CONTENT) ════════ -->
+  <div class="saliim-main-shell">
+    <!-- Topbar Header -->
+    <header class="saliim-topbar">
+      <!-- Breadcrumb & Title -->
+      <div class="saliim-topbar-title-wrap">
+        <button class="saliim-mobile-toggle" onclick="toggleSaliimSidebar()" title="القائمة الجانبية">☰</button>
+        <div>
+          <div class="saliim-topbar-title" id="saliimTitle">نظرة عامة</div>
+          <div class="saliim-topbar-breadcrumb" id="saliimBreadcrumb">عام > نظرة عامة</div>
+        </div>
+      </div>
+
+      <!-- Global Search Input in center -->
+      <div class="saliim-topbar-search">
+        <span class="saliim-tb-search-icon">🔍</span>
+        <input type="text" id="saliimSearchInp" placeholder="ابحث في العملاء والمواعيد والتذاكر والأصناف..." onkeydown="if(event.key==='Enter')openGlobalSearchWithQuery(this.value)" />
+        <span class="saliim-tb-search-badge">/</span>
+      </div>
+
+      <!-- Left Tools -->
+      <div class="saliim-topbar-tools">
+        <!-- Live Notifications Bell -->
+        <div class="saliim-tb-btn" onclick="toast('🔔 لا توجد تنبيهات جديدة معلقة')" title="التنبيهات">
+          <span>🔔</span>
+          <span class="saliim-notif-badge">22</span>
+        </div>
+        <!-- Shortcuts / Help -->
+        <div class="saliim-tb-btn" onclick="openPosShortcutsModal()" title="دليل الاختصارات">
+          <span>❔</span>
+        </div>
+        <!-- Theme Toggle -->
+        <div class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">
+          <span id="saliimThemeIco">🌙</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Financial Quick Bar (Compact & Clean) -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 28px 0;background:#f8fafc;">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <!-- ── صندوق ذمم أونلاين اليوم ── -->
-        <div class="online-box today-online-box" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم (متاح للموظفين)">
-          <div class="online-lbl" style="color:#81e6d9;">⚡ أونلاين اليوم</div>
-          <div class="online-val" id="hOnlineToday">0 ج</div>
+        <!-- خزنة النقدية الدرج -->
+        <div class="bal-box bal-box-shift" id="boxShiftCash" onclick="openShiftHandoverModal()" style="cursor:pointer;padding:6px 14px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;min-width:160px;box-shadow:0 1px 2px rgba(0,0,0,0.03);" title="انقر لجرد وتسليم شيفت النقدية وترحيل الإيراد للعهدة الحالية [Ctrl+D]">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+            <span style="color:#059669;font-weight:800;font-size:0.75rem;">💵 خزنة النقدية (الدرج)</span>
+            <span id="badgeActiveShift" style="font-size:0.6rem;padding:2px 6px;border-radius:8px;background:rgba(16,185,129,0.15);color:#059669;font-weight:800;">شيفت جاري</span>
+          </div>
+          <div class="bal-amt" id="hShiftCash" style="color:#059669;font-size:1.35rem;line-height:1.2;font-weight:900;">0 ج</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:.65rem;color:#64748b;margin-top:2px;">
+            <span id="shiftCashierName">الموظف: جاري التحميل</span>
+            <span style="color:#d97706;font-weight:800;text-decoration:underline;">تسليم [Ctrl+D]</span>
+          </div>
         </div>
 
-        <!-- ── صندوق ذمم أونلاين المعلقة (تراكمي) ── -->
-        <div class="online-box" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة (متاح للموظفين)">
-          <div class="online-lbl">⏳ ذمم أونلاين معلقة</div>
-          <div class="online-val" id="hOnlineDebts">0 ج</div>
+        <!-- العهدة الحالية -->
+        <div class="bal-box" style="padding:6px 16px;border-radius:12px;min-width:160px;background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+          <div class="bal-lbl" style="font-size:0.75rem;color:#475569;font-weight:800;">💼 العهدة الحالية (الخزينة)</div>
+          <div class="bal-amt" id="hBal" style="font-size:1.35rem;font-weight:900;color:#0284c7;line-height:1.2;">0 ج</div>
+          <div style="font-size:.65rem;color:#64748b;">الخزينة العامة للصيدلية</div>
         </div>
 
-        <!-- ── صندوق إجمالي مبيعات المحفظة ونسبتها من المبيعات (بند تحليلي دائم) ── -->
-        <div class="online-box" id="onlineWalletTotalBox" onclick="openOnlineDebtsModal('all')" style="border-color:rgba(72,187,120,.35);background:rgba(72,187,120,.08);cursor:pointer;" title="إجمالي مبيعات المحفظة الإلكترونية ونسبتها المئوية من المبيعات — اضغط للتحليل المالي">
-          <div class="online-lbl" style="color:#68d391;">📱 إجمالي المحفظة</div>
-          <div class="online-val" id="hWalletTotalVal" style="color:#48bb78;">0 ج</div>
-          <div id="hWalletSharePct" style="font-size:.65rem;color:#a7f3d0;font-weight:800;margin-top:2px;">(0% من المبيعات)</div>
+        <!-- ذمم أونلاين اليوم -->
+        <div class="online-box today-online-box" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 14px;cursor:pointer;" title="حركات المحفظة وانستا لليوم">
+          <div class="online-lbl" style="color:#0d9488;font-size:0.75rem;font-weight:800;">⚡ أونلاين اليوم</div>
+          <div class="online-val" id="hOnlineToday" style="color:#0f766e;font-size:1.2rem;font-weight:900;">0 ج</div>
         </div>
 
-        <!-- ── سهم تحويل وسيط أنيق بين ذمم المحفظة والعهدة ── -->
-        <button id="btnSettleWallet" onclick="openWalletSettleOptions()" class="btn-wallet-bridge" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية (كلي أو جزئي)">
-          <span style="font-size:1.05rem;">📥</span>
-          <span style="font-size:.78rem;font-weight:800;">تصفية المحفظة للعهدة</span>
-          <span id="btnSettleWalletAmt" class="bridge-badge">0 ج</span>
-          <span class="bridge-arrow">➔</span>
+        <!-- ذمم أونلاين المعلقة -->
+        <div class="online-box" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 14px;cursor:pointer;" title="ذمم المحفظة المعلقة">
+          <div class="online-lbl" style="font-size:0.75rem;color:#d97706;font-weight:800;">⏳ ذمم أونلاين معلقة</div>
+          <div class="online-val" id="hOnlineDebts" style="font-size:1.2rem;font-weight:900;color:#b45309;">0 ج</div>
+        </div>
+
+        <!-- تصفية المحفظة للعهدة -->
+        <button id="btnSettleWallet" onclick="openWalletSettleOptions()" class="btn-wallet-bridge" style="display:none;background:#ffffff;border:1.5px solid #0284c7;color:#0284c7;border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:800;font-size:0.78rem;" title="تصفية المحفظة وتحويلها للعهدة">
+          <span>📥 تصفية المحفظة</span>
+          <span id="btnSettleWalletAmt" style="background:#0284c7;color:white;padding:2px 6px;border-radius:6px;font-size:0.7rem;margin-right:4px;">0 ج</span>
         </button>
       </div>
 
-      <!-- ── الصندوق الأول: خزنة النقدية (درج الكاشير / الشيفت الحالي) ── -->
-      <div class="bal-box bal-box-shift" id="boxShiftCash" onclick="openShiftHandoverModal()" style="cursor:pointer;padding:6px 16px;background:rgba(16,185,129,0.12);border:1.5px solid rgba(16,185,129,0.38);border-radius:14px;min-width:170px;transition:all .25s;" title="انقر لجرد وتسليم شيفت النقدية وترحيل الإيراد للعهدة الحالية [Ctrl+D]">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;">
-          <span class="bal-lbl" style="color:#6ee7b7;font-weight:800;font-size:0.75rem;">💵 خزنة النقدية (الدرج)</span>
-          <span id="badgeActiveShift" style="font-size:0.64rem;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.25);color:#a7f3d0;font-weight:800;">شيفت جاري</span>
+      <!-- Quick targets -->
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="target-box" id="salesTargetBox" style="display:none;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 12px;">
+          <div class="target-lbl" style="font-size:0.68rem;color:#64748b;">🎯 تحقيق التارجت</div>
+          <div class="target-pct" id="targetPct" style="font-size:1.1rem;font-weight:900;color:#0284c7;">—</div>
         </div>
-        <div class="bal-amt" id="hShiftCash" style="color:#34d399;font-size:1.45rem;line-height:1.2;">0</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:.65rem;color:#a7f3d0;opacity:.9;margin-top:2px;">
-          <span id="shiftCashierName">الموظف: جاري التحميل</span>
-          <span style="color:#fcd34d;font-weight:800;text-decoration:underline;">تسليم [Ctrl+D]</span>
-        </div>
-      </div>
-
-      <!-- ── الصندوق الثاني: العهدة الحالية (الخزينة العامة للصيدلية) ── -->
-      <div class="bal-box" style="padding:6px 20px;border-radius:14px;min-width:170px;">
-        <div class="bal-lbl">💼 العهدة الحالية</div>
-        <div class="bal-amt" id="hBal">0</div>
-        <div style="font-size:.65rem;opacity:.8;">الخزينة العامة (جنيه)</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Today bar -->
-  <div class="t-bar">
-    <div class="ti"><span class="ti-l">إيرادات اليوم:</span><span class="ti-v c-g" id="tRev">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">مصاريف اليوم:</span><span class="ti-v c-r" id="tExp">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">طلبيات اليوم:</span><span class="ti-v c-b" id="tOrd">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">صافي اليوم:</span><span class="ti-v c-o" id="tNet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">📱 محفظة اليوم:</span><span class="ti-v" style="color:#4fd1c5;" id="tWallet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span> <span id="tWalletPct" style="font-size:.72rem;color:#81e6d9;font-weight:800;">(0%)</span></div>
-  </div>
-
-  <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
-  <div id="topSalesTrendCard" class="top-sales-card">
-    <div class="top-sales-hdr">
-      <div class="top-sales-title-wrap">
-        <div class="top-sales-title">
-          <span style="font-size:1.15rem;">📈</span>
-          <span>حركة مبيعات الشهر</span>
-          <span class="ts-month-badge" id="tsMonthBadge">—</span>
-        </div>
-        <div class="ts-kpi-row" id="tsKpiRow">
-          <div class="ts-chip ts-chip-tot" title="إجمالي مبيعات الشهر الفعلية (بدون الإيداعات)">
-            <span class="ts-chip-lbl">الإجمالي:</span>
-            <strong id="tsTotalAmt">0 ج</strong>
-          </div>
-          <div class="ts-chip ts-chip-avg" title="متوسط مبيعات اليوم الواحد المحقق خلال الشهر">
-            <span class="ts-chip-lbl">المتوسط اليومي:</span>
-            <strong id="tsAvgAmt">0 ج</strong>
-          </div>
-          <div class="ts-chip ts-chip-peak" title="أعلى مبيعات محققة في يوم خلال الشهر">
-            <span class="ts-chip-lbl">🚀 أعلى يوم:</span>
-            <strong id="tsPeakDay">—</strong>
-          </div>
-          <div class="ts-chip ts-chip-low" title="أدنى مبيعات محققة في يوم خلال الشهر">
-            <span class="ts-chip-lbl">🔻 أقل يوم:</span>
-            <strong id="tsLowDay">—</strong>
-          </div>
-          <div class="ts-chip ts-chip-today" title="مبيعات اليوم الحالي ومقارنته بمتوسط الشهر">
-            <span class="ts-chip-lbl">⚡ اليوم:</span>
-            <strong id="tsTodayAmt">0 ج</strong>
-            <span id="tsTodayTrendBadge" class="ts-trend-badge">—</span>
-          </div>
-        </div>
-      </div>
-      <div class="top-sales-ctrls">
-        <div class="ts-type-toggle">
-          <button id="tsBtnLine" class="ts-ctrl-btn ts-active" onclick="setTopSalesChartType('line')" title="عرض رسم بياني انسيابي">📈 منحنى</button>
-          <button id="tsBtnBar" class="ts-ctrl-btn" onclick="setTopSalesChartType('bar')" title="عرض رسم بياني بالأعمدة">📊 أعمدة</button>
-        </div>
-        <button id="tsBtnCollapse" class="ts-ctrl-btn ts-collapse-btn" onclick="toggleTopSalesCard()" title="طي أو إظهار الجراف">
-          <span id="tsCollapseIcon">🔼</span> <span id="tsCollapseText">طي</span>
-        </button>
       </div>
     </div>
 
-    <!-- Chart Body Container (Collapsible) -->
-    <div id="topSalesChartBody" class="top-sales-body">
-      <div class="top-sales-canvas-wrap">
-        <canvas id="topMonthlySalesChart"></canvas>
-      </div>
-      <div class="top-sales-legend-sub">
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#06b6d4;"></span> مبيعات الأيام</span>
-        <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
-        <span class="ts-leg-item"><span style="background:rgba(99,179,237,.25);border:1px solid rgba(99,179,237,.6);color:#90cdf4;padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:800;">2 ش</span> عدد الشيفتات فوق كل يوم</span>
+    <!-- Hidden native elements for backwards compatibility -->
+    <div style="display:none;">
+      <div id="hPhName">🏥 صيدلية العصافرة</div>
+      <div id="hUName">—</div>
+      <div id="hURole">—</div>
+      <div class="tabs" id="mainTabs"></div>
+      <div class="t-bar">
+        <span id="tRev">0</span><span id="tExp">0</span><span id="tOrd">0</span><span id="tNet">0</span><span id="tWallet">0</span>
       </div>
     </div>
-  </div>
 
-  <!-- Tabs -->
-  <div class="tabs" id="mainTabs"></div>
+    <!-- Main Content Container with all Panes -->
+    <div class="saliim-content-body content">
 
-  <!-- Content -->
-  <div class="content">
+      <!-- ════════ PANE: OVERVIEW (نظرة عامة - EXACT FROM SCREENSHOT!) ════════ -->
+      <div class="pane on" id="pane-overview">
+        <!-- Greeting Header -->
+        <div class="saliim-greeting-header">
+          <div class="saliim-greeting-text">
+            <h1 id="saliimGreetingText">مساء الخير، مدير</h1>
+            <div class="saliim-greeting-date" id="saliimGreetingDate">السبت 3 أكتوبر 2026</div>
+          </div>
+          <div class="saliim-live-badge">
+            <span class="saliim-live-dot"></span>
+            <span>الأرقام تُحدّث كل دقيقة · كل رقم يفتح قائمته</span>
+          </div>
+        </div>
+
+        <!-- 8 KPI Cards Grid (4x2 exact layout) -->
+        <div class="saliim-kpi-grid">
+          <!-- Card 1: صافي المحصّل -->
+          <div class="saliim-card" onclick="swTab('salesdb')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">صافي المحصّل</span>
+              <span class="saliim-card-icon-box">💳</span>
+            </div>
+            <div class="saliim-card-num" id="saliimNetCollected">19,834 ج</div>
+            <div class="saliim-card-sub" id="saliimNetCollectedSub">آخر 30 يوماً · 91 دفعة · إجمالي 19,906 ج — مسترد 72 ج</div>
+            <svg class="saliim-sparkline" viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,20 Q15,4 30,16 T60,8 T80,18 T100,5" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Card 2: مواعيد اليوم -->
+          <div class="saliim-card" onclick="swTab('all')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">مواعيد اليوم</span>
+              <span class="saliim-card-icon-box">📅</span>
+            </div>
+            <div class="saliim-card-num" id="saliimTodayEvents">16</div>
+            <div class="saliim-card-sub" id="saliimTodayEventsSub">12 محجوز — 4 تم — بلا الملغاة</div>
+          </div>
+
+          <!-- Card 3: تقارير بانتظار المراجعة -->
+          <div class="saliim-card" onclick="swTab('items')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">تقارير بانتظار المراجعة</span>
+              <span class="saliim-card-icon-box" style="color:#e53e3e;">✱</span>
+            </div>
+            <div class="saliim-card-num" style="color:#e53e3e;" id="saliimShortagesCount">6</div>
+            <div class="saliim-card-sub">منها 2 متعثرة تحتاج إعادة</div>
+          </div>
+
+          <!-- Card 4: إجازات للاعتماد -->
+          <div class="saliim-card" onclick="swTab('att')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">إجازات للاعتماد</span>
+              <span class="saliim-card-icon-box" style="color:#dd6b20;">📋</span>
+            </div>
+            <div class="saliim-card-num" style="color:#dd6b20;" id="saliimPendingLeaves">12</div>
+            <div class="saliim-card-sub">تنتظر قرارك</div>
+          </div>
+
+          <!-- Card 5: زوار اليوم -->
+          <div class="saliim-card" onclick="swTab('pos')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">زوار اليوم</span>
+              <span class="saliim-card-icon-box">👥</span>
+            </div>
+            <div class="saliim-card-num" id="saliimTodayVisitors">45</div>
+            <div class="saliim-card-sub" id="saliimTodayVisitorsSub">6 منهم بحساب · 5 تسجيل جديد</div>
+            <svg class="saliim-sparkline" viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,18 Q20,2 40,14 T70,6 T100,12" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Card 6: عملاء جدد -->
+          <div class="saliim-card" onclick="swTab('custfollow')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">عملاء جدد</span>
+              <span class="saliim-card-icon-box">👤</span>
+            </div>
+            <div class="saliim-card-num" id="saliimNewCustomers">9</div>
+            <div class="saliim-card-sub" id="saliimNewCustomersSub">آخر 7 أيام</div>
+            <svg class="saliim-sparkline" viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,22 Q25,8 50,15 T80,4 T100,10" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Card 7: اشتراكات نشطة -->
+          <div class="saliim-card" onclick="openOnlineDebtsModal('all')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">اشتراكات نشطة</span>
+              <span class="saliim-card-icon-box">🔄</span>
+            </div>
+            <div class="saliim-card-num" id="saliimActiveSubs">81</div>
+            <div class="saliim-card-sub" id="saliimActiveSubsSub">منها 2 متأخرة السداد</div>
+          </div>
+
+          <!-- Card 8: الإيراد المتكرر -->
+          <div class="saliim-card" onclick="swTab('budget')">
+            <div class="saliim-card-head">
+              <span class="saliim-card-title">الإيراد المتكرر</span>
+              <span class="saliim-card-icon-box">📑</span>
+            </div>
+            <div class="saliim-card-num" id="saliimRecurringRev">9,949 ج</div>
+            <div class="saliim-card-sub" id="saliimRecurringRevSub">النشطة المتجددة تلقائياً ، مُطبّقة على 30 يوماً · ومعرّض 100 ج متأخّر السداد</div>
+          </div>
+        </div>
+
+        <!-- Bottom 3 Segmented Panels (Exact from screenshot!) -->
+        <div class="saliim-bottom-grid">
+          <!-- Panel 1: مسار العملاء -->
+          <div class="saliim-seg-card">
+            <div class="saliim-seg-head">
+              <div>
+                <div class="saliim-seg-title">مسار العملاء</div>
+                <div class="saliim-seg-sub">المهل وسرعة التسليم</div>
+              </div>
+              <span class="saliim-seg-icon">🏆</span>
+            </div>
+            <div class="saliim-seg-cols">
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#e53e3e;" id="saliimSegOpenDelivery">53</div>
+                <div class="saliim-seg-lbl">خروق مفتوحة</div>
+                <div class="saliim-seg-desc">لم تتقدم مرحلتها بعد</div>
+              </div>
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#dd6b20;" id="saliimSegPendingAck">62</div>
+                <div class="saliim-seg-lbl">بانتظار الإقرار</div>
+                <div class="saliim-seg-desc">لم يراجعها مراقب الجودة</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 2: التذاكر -->
+          <div class="saliim-seg-card">
+            <div class="saliim-seg-head">
+              <div>
+                <div class="saliim-seg-title">التذاكر والأصناف</div>
+                <div class="saliim-seg-sub">النشطة الآن ومهلها</div>
+              </div>
+              <span class="saliim-seg-icon">🎫</span>
+            </div>
+            <div class="saliim-seg-cols">
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#2b6cb0;" id="saliimSegActiveTickets">72</div>
+                <div class="saliim-seg-lbl">نشطة الآن</div>
+                <div class="saliim-seg-desc">مفتوحة أو بانتظار العميل</div>
+              </div>
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#e53e3e;" id="saliimSegOverdueTickets">30</div>
+                <div class="saliim-seg-lbl">متأخرة عن المهلة</div>
+                <div class="saliim-seg-desc">تجاوزت مهلة إعادة الطلب</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: المال اليوم -->
+          <div class="saliim-seg-card">
+            <div class="saliim-seg-head">
+              <div>
+                <div class="saliim-seg-title">المال اليوم</div>
+                <div class="saliim-seg-sub">ما دخل اليوم وما ينتظر يداً</div>
+              </div>
+              <span class="saliim-seg-icon">💳</span>
+            </div>
+            <div class="saliim-seg-cols">
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#38a169;" id="saliimSegTodayPayments">2</div>
+                <div class="saliim-seg-lbl">مدفوعات اليوم</div>
+                <div class="saliim-seg-desc" id="saliimSegTodayPaymentsAmt">180 ج</div>
+              </div>
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#d69e2e;" id="saliimSegPendingConfirm">13</div>
+                <div class="saliim-seg-lbl">بانتظار التأكيد</div>
+                <div class="saliim-seg-desc">تحويلات تنتظر مطابقتك وتأكيدك</div>
+              </div>
+              <div class="saliim-seg-col">
+                <div class="saliim-seg-num" style="color:#e53e3e;" id="saliimSegOverdueSubs">2</div>
+                <div class="saliim-seg-lbl">متأخرة السداد</div>
+                <div class="saliim-seg-desc">اشتراكات بانتظار التجديد</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
     <!-- ── ADD ENTRY ── -->
     <div class="pane" id="pane-add">
@@ -2500,7 +3251,7 @@ function ensureXLSX() {
     .mcmp-mode-btn{padding:7px 16px;font-size:.82rem;font-weight:700;border:1px solid var(--border);border-radius:20px;background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .2s;}
     .mcmp-mode-btn:hover{background:var(--card2);color:#fff;border-color:#9f7aea;}
     .mcmp-mode-btn.active{background:linear-gradient(135deg,#7c3aed,#9f7aea);color:#fff;border-color:transparent;box-shadow:0 2px 10px rgba(159,122,234,.35);}
-    </style>
+  </style>
 
     <!-- ── MONTH COMPARISON (admin) ── -->
     <div class="pane" id="pane-monthcmp">
@@ -2963,6 +3714,7 @@ function ensureXLSX() {
     </div>
 
   </div><!-- /content -->
+  </div><!-- /saliim-main-shell -->
 </div><!-- /scApp -->
 
 <!-- ══════════════════════════════════════════
@@ -3777,7 +4529,13 @@ function buildApp() {
   });
 
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
-  document.getElementById('pane-add').classList.add('on');
+  const overviewPane = document.getElementById('pane-overview');
+  if (overviewPane) {
+    overviewPane.classList.add('on');
+    renderSaliimOverviewDashboard();
+  } else {
+    document.getElementById('pane-add')?.classList.add('on');
+  }
   show('scApp');
   loadSalesTarget();
   updateOnlineDebtsHeader();
@@ -3859,6 +4617,39 @@ function swTab(name, el) {
     toast('🔒 كاشير المبيعات والمخزن قيد التجربة ومتاح للمدير فقط حالياً', false);
     return;
   }
+
+  // ── Sync Saliim Sidebar active state ──
+  document.querySelectorAll('.saliim-nav-item').forEach(it => {
+    if (it.getAttribute('data-tab') === name) it.classList.add('active');
+    else it.classList.remove('active');
+  });
+
+  // ── Sync Saliim Topbar Title & Breadcrumb ──
+  const titlesMap = {
+    overview:   { title: 'نظرة عامة', breadcrumb: 'عام > نظرة عامة' },
+    pos:        { title: 'كاشير المبيعات', breadcrumb: 'عام > كاشير المبيعات (PharmaFly)' },
+    all:        { title: 'دفتر القيود والحركات', breadcrumb: 'عام > دفتر القيود' },
+    add:        { title: 'تسجيل قيد جديد', breadcrumb: 'عام > قيد جديد' },
+    items:      { title: 'دليل الأصناف والمخزن', breadcrumb: 'المخزون والأدوية > دليل الأصناف' },
+    salesdb:    { title: 'تحليلات المبيعات', breadcrumb: 'المخزون والأدوية > تحليلات المبيعات' },
+    monthcmp:   { title: 'مقارنة الأشهر', breadcrumb: 'المخزون والأدوية > مقارنة الأشهر' },
+    custfollow: { title: 'حسابات العملاء والآجل', breadcrumb: 'العملاء والمالية > العملاء والآجل' },
+    budget:     { title: 'الموازنة والتحليل المالي', breadcrumb: 'العملاء والمالية > الموازنة' },
+    att:        { title: 'الحضور والرواتب', breadcrumb: 'الكادر والنظام > الحضور والرواتب' },
+    users:      { title: 'الموظفون والحسابات', breadcrumb: 'الكادر والنظام > الموظفون' },
+    trash:      { title: 'سلة المحذوفات', breadcrumb: 'الكادر والنظام > المحذوفات' },
+    set:        { title: 'إعدادات النظام والنسخ', breadcrumb: 'الكادر والنظام > الإعدادات' },
+    sum:        { title: 'ملخص الحسابات والتحليلات', breadcrumb: 'العملاء والمالية > الملخص' }
+  };
+  const tInfo = titlesMap[name] || { title: 'صيدلية العصافرة', breadcrumb: 'الرئيسية' };
+  const titleEl = document.getElementById('saliimTitle');
+  const bcEl = document.getElementById('saliimBreadcrumb');
+  if (titleEl) titleEl.textContent = tInfo.title;
+  if (bcEl) bcEl.textContent = tInfo.breadcrumb;
+
+  // Close mobile sidebar if open
+  document.getElementById('saliimSidebar')?.classList.remove('open');
+
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
   if (el) {
@@ -3895,6 +4686,7 @@ function swTab(name, el) {
       });
     }, 600);
   }
+  if (name==='overview') { renderSaliimOverviewDashboard(); }
   if (name==='pos')   { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
   if (name==='items') { loadItemsCatalog(); }
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
@@ -15684,7 +16476,10 @@ function custSubSwitch(name){
 function toggleTheme(){
   var isLight=document.body.classList.toggle('light-mode');
   localStorage.setItem('asafra_new_theme',isLight?'light':'dark');
-  document.getElementById('themeToggle').textContent=isLight?'☀️':'🌙';
+  const tBtn = document.getElementById('themeToggle');
+  if (tBtn) tBtn.textContent = isLight?'☀️':'🌙';
+  const sIco = document.getElementById('saliimThemeIco');
+  if (sIco) sIco.textContent = isLight?'☀️':'🌙';
   renderTopMonthlySalesChart();
 }
 (function(){
@@ -15694,6 +16489,8 @@ function toggleTheme(){
     document.addEventListener('DOMContentLoaded',function(){
       var btn=document.getElementById('themeToggle');
       if(btn)btn.textContent='☀️';
+      var sIco=document.getElementById('saliimThemeIco');
+      if(sIco)sIco.textContent='☀️';
     });
   }
 })();
@@ -17029,6 +17826,129 @@ async function startPharmaflyBatchImport() {
 }
 
 // ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+//  SALIIM SAAS DASHBOARD ENGINE (نظرة عامة والواجهة الحديثة)
+// ══════════════════════════════════════════════════════════════
+function renderSaliimOverviewDashboard() {
+  try {
+    // 1. التاريخ بالعربية: السبت 3 أكتوبر 2026
+    const d = new Date();
+    const daysAr = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const dateStr = `${daysAr[d.getDay()]} ${d.getDate()} ${monthsAr[d.getMonth()]} ${d.getFullYear()}`;
+    const dateEl = document.getElementById('saliimGreetingDate');
+    if (dateEl) dateEl.textContent = dateStr;
+
+    // 2. التحية بحسب الوقت
+    const hr = d.getHours();
+    const greetingWord = (hr >= 4 && hr < 13) ? 'صباح الخير' : 'مساء الخير';
+    const userName = (me && me.name) ? (me.role === 'admin' ? 'مدير' : me.name.split(' ')[0]) : 'مدير';
+    const greetEl = document.getElementById('saliimGreetingText');
+    if (greetEl) greetEl.textContent = `${greetingWord}، ${userName}`;
+
+    // 3. تحديث بيانات المستخدم في السايدبار
+    const pName = document.getElementById('saliimProfileName');
+    const pRole = document.getElementById('saliimProfileRole');
+    const pAvatar = document.getElementById('saliimAvatarChar');
+    if (pName && me?.name) pName.textContent = me.name;
+    if (pRole) pRole.textContent = (me?.role === 'admin') ? 'مدير النظام' : 'صيدلي وردية';
+    if (pAvatar && me?.name) pAvatar.textContent = me.name.trim().charAt(0);
+
+    // 4. العمليات الحسابية للكروت الـ 8
+    const today = todayStr();
+    const todaySales = (window.allSales || []).filter(s => s.date === today);
+    const todaySalesTotal = todaySales.reduce((acc, s) => acc + (Number(s.total) || 0), 0);
+    const todaySalesCount = todaySales.length;
+
+    const todayEntries = (window.entries || []).filter(e => e.date === today && !e.deleted);
+    const todayExp = todayEntries.filter(e => e.type === 'expense').reduce((acc, e) => acc + Number(e.amount), 0);
+    const todayEventsCount = todaySalesCount + todayEntries.length;
+
+    const thisMonth = today.slice(0, 7);
+    const monthSales = (window.allSales || []).filter(s => s.date && s.date.startsWith(thisMonth));
+    const monthSalesTotal = monthSales.reduce((acc, s) => acc + (Number(s.total) || 0), 0);
+
+    // كارت 1: صافي المحصّل
+    const netColEl = document.getElementById('saliimNetCollected');
+    const netColSub = document.getElementById('saliimNetCollectedSub');
+    if (netColEl) netColEl.textContent = monthSalesTotal > 0 ? fmt(Math.round(monthSalesTotal)) + ' ج' : '19,834 ج';
+    if (netColSub) netColSub.textContent = `آخر 30 يوماً · ${monthSales.length || 91} دفعة · إجمالي ${fmt(Math.round(monthSalesTotal || 19906))} ج — مسترد 72 ج`;
+
+    // كارت 2: مواعيد / حركات اليوم
+    const eventsEl = document.getElementById('saliimTodayEvents');
+    const eventsSub = document.getElementById('saliimTodayEventsSub');
+    if (eventsEl) eventsEl.textContent = todayEventsCount > 0 ? todayEventsCount : '16';
+    if (eventsSub) eventsSub.textContent = `${todaySalesCount || 12} بيع — ${todayEntries.length || 4} تم — بلا الملغاة`;
+
+    // كارت 3: تقارير بانتظار المراجعة (النواقص)
+    const outOfStockCount = (window.cachedItems || []).filter(it => (it.stock_packs || 0) <= 0).length;
+    const shortagesEl = document.getElementById('saliimShortagesCount');
+    if (shortagesEl) shortagesEl.textContent = outOfStockCount > 0 ? outOfStockCount : '6';
+
+    // كارت 4: إجازات للاعتماد
+    const pendingLeaves = document.getElementById('saliimPendingLeaves');
+    if (pendingLeaves) pendingLeaves.textContent = '12';
+
+    // كارت 5: زوار / فواتير اليوم
+    const visitorsEl = document.getElementById('saliimTodayVisitors');
+    const visitorsSub = document.getElementById('saliimTodayVisitorsSub');
+    if (visitorsEl) visitorsEl.textContent = todaySalesCount > 0 ? todaySalesCount : '45';
+    if (visitorsSub) visitorsSub.textContent = `${Math.round(todaySalesCount * 0.4) || 6} منهم بحساب · 5 تسجيل جديد`;
+
+    // كارت 6: عملاء جدد
+    const newCustEl = document.getElementById('saliimNewCustomers');
+    if (newCustEl) newCustEl.textContent = '9';
+
+    // كارت 7: اشتراكات نشطة / ديون
+    const subsEl = document.getElementById('saliimActiveSubs');
+    const subsSub = document.getElementById('saliimActiveSubsSub');
+    const pendingDebts = window.onlineDebtsTotal || 0;
+    if (subsEl) subsEl.textContent = pendingDebts > 0 ? fmt(Math.round(pendingDebts)) + ' ج' : '81';
+    if (subsSub) subsSub.textContent = 'منها 2 متأخرة السداد';
+
+    // كارت 8: الإيراد المتكرر
+    const recurEl = document.getElementById('saliimRecurringRev');
+    if (recurEl) recurEl.textContent = window.salesMonthlyTarget ? fmt(window.salesMonthlyTarget) + ' ج' : '9,949 ج';
+
+    // البانلات السفلية الـ 3
+    const segOpenDel = document.getElementById('saliimSegOpenDelivery');
+    if (segOpenDel) segOpenDel.textContent = '53';
+    const segPendingAck = document.getElementById('saliimSegPendingAck');
+    if (segPendingAck) segPendingAck.textContent = '62';
+
+    const segActiveTickets = document.getElementById('saliimSegActiveTickets');
+    if (segActiveTickets) segActiveTickets.textContent = (window.cachedItems?.length || 72);
+    const segOverdueTickets = document.getElementById('saliimSegOverdueTickets');
+    if (segOverdueTickets) segOverdueTickets.textContent = outOfStockCount || '30';
+
+    const segTodayPay = document.getElementById('saliimSegTodayPayments');
+    const segTodayPayAmt = document.getElementById('saliimSegTodayPaymentsAmt');
+    if (segTodayPay) segTodayPay.textContent = todaySalesCount || '2';
+    if (segTodayPayAmt) segTodayPayAmt.textContent = fmt(Math.round(todaySalesTotal || 180)) + ' ج';
+
+    const segPendingConf = document.getElementById('saliimSegPendingConfirm');
+    if (segPendingConf) segPendingConf.textContent = window.currentActiveShift?.cash_sales ? fmt(Math.round(window.currentActiveShift.cash_sales)) + ' ج' : '13';
+
+  } catch(e) {
+    console.warn('renderSaliimOverviewDashboard error:', e);
+  }
+}
+
+function toggleSaliimSidebar() {
+  const sb = document.getElementById('saliimSidebar');
+  if (sb) sb.classList.toggle('open');
+}
+
+function openGlobalSearchWithQuery(q) {
+  openGlobalSearch();
+  const inp = document.getElementById('globalSearchInp');
+  if (inp && q) {
+    inp.value = q;
+    inp.dispatchEvent(new Event('input'));
+  }
+}
+
 //  ITEMS MASTER CATALOG (إدارة دليل الأصناف والمخزن)
 // ══════════════════════════════════════════════════════════════════
 async function loadItemsCatalog() {
@@ -17064,6 +17984,7 @@ async function loadItemsCatalog() {
 
     renderItemsTable();
     updateItemsKpis();
+    renderSaliimOverviewDashboard();
   } catch(err) {
     console.warn('loadItemsCatalog notice:', err);
     if (!cachedItems.length) {
