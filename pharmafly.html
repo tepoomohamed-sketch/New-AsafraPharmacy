@@ -996,6 +996,323 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════
+       مودال إضافة فاتورة مشتريات وطلبية واردة [Ctrl+P]
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalNewPurchase">
+    <div class="pf-modal-box" style="width:850px;max-width:96vw;">
+      <div class="pf-modal-header">
+        <span>🚚 تسجيل فاتورة مشتريات وتوريد أدوية جديدة [Ctrl+P]</span>
+        <button class="pf-modal-close" onclick="closeModal('modalNewPurchase')">✕</button>
+      </div>
+      <div class="pf-modal-body" style="padding:12px;">
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">شركة التوزيع / المورد:</label>
+            <select class="pf-select" id="purchVendorSel">
+              <option value="">-- اختر شركة التوزيع أو المورد --</option>
+            </select>
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">رقم فاتورة المورد:</label>
+            <input type="text" class="pf-input" id="purchInvNoInp" placeholder="مثال: 589410">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">تاريخ الفاتورة:</label>
+            <input type="date" class="pf-input" id="purchDateInp">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">طريقة السداد:</label>
+            <select class="pf-select" id="purchPayMethod">
+              <option value="safe">🏛️ خزينة العهدة الرئيسية</option>
+              <option value="cash">💵 درج الكاشير للشيفت</option>
+              <option value="credit">📋 أجل (على الحساب المستحق)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- شريط إضافة صنف للفاتورة -->
+        <div style="background:#f1f5f9;border:1px solid #cbd5e1;padding:8px 10px;border-radius:4px;margin-bottom:10px;">
+          <div style="font-size:11.5px;font-weight:800;color:#1e293b;margin-bottom:6px;">إضافة صنف للفاتورة:</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <div style="flex:2;position:relative;">
+              <input type="text" class="pf-input" id="purchItemSearchInp" placeholder="ابحث باسم الدواء أو الكود أو الباركود..." autocomplete="off">
+              <div class="pf-auto-dropdown" id="purchItemAutoDrop" style="top:36px;"></div>
+            </div>
+            <input type="number" class="pf-input" id="purchPacksInp" placeholder="العلب" style="width:70px;text-align:center;" value="1">
+            <input type="number" class="pf-input" id="purchCostInp" placeholder="سعر الشراء" style="width:85px;text-align:center;">
+            <input type="number" class="pf-input" id="purchSellInp" placeholder="سعر الجمهور" style="width:85px;text-align:center;">
+            <input type="number" class="pf-input" id="purchDiscInp" placeholder="خصم %" style="width:65px;text-align:center;" value="0">
+            <input type="number" class="pf-input" id="purchBonusInp" placeholder="بونص" style="width:65px;text-align:center;" value="0">
+            <button type="button" class="pf-btn pf-btn-primary" onclick="addPurchaseItemRow()">➕ إضافة للبند</button>
+          </div>
+        </div>
+
+        <!-- جدول بنود الفاتورة -->
+        <div class="pf-grid-wrap" style="max-height:240px;">
+          <table class="pf-table">
+            <thead>
+              <tr>
+                <th style="width:30px;">م</th>
+                <th>الصنف</th>
+                <th style="text-align:center;width:60px;">العلب</th>
+                <th style="text-align:center;width:60px;">بونص</th>
+                <th style="text-align:center;width:75px;">سعر الشراء</th>
+                <th style="text-align:center;width:60px;">خصم %</th>
+                <th style="text-align:center;width:75px;">سعر البيع</th>
+                <th style="text-align:center;width:85px;">إجمالي التكلفة</th>
+                <th style="text-align:center;width:40px;">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="purchItemsTbody">
+              <tr><td colspan="9" style="text-align:center;padding:24px;color:#94a3b8;">لم تتم إضافة أصناف بعد</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ملخص الفاتورة المالي -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:8px 12px;border:1px solid #cbd5e1;border-radius:4px;margin-top:8px;">
+          <div style="font-size:12.5px;font-weight:700;">
+            <span>عدد الأصناف: <strong id="purchItemCountLbl" style="color:#2563eb;">0</strong></span> |
+            <span>إجمالي الشراء: <strong id="purchTotalCostLbl" style="color:#16a34a;font-size:15px;">0.00</strong> ج</span> |
+            <span>إجمالي البيع المقابل: <strong id="purchTotalSellLbl">0.00</strong> ج</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="pf-btn" onclick="closeModal('modalNewPurchase')">إلغاء</button>
+            <button class="pf-btn pf-btn-success" onclick="savePurchaseInvoice()">💾 حفظ وترحيل للمخزن وكشف الحساب</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       مودال إضافة أو تعديل بطاقة صنف [Ctrl+I]
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalItem">
+    <div class="pf-modal-box" style="width:580px;">
+      <div class="pf-modal-header">
+        <span id="modalItemTitle">💊 إضافة أو تعديل بطاقة صنف دوائي</span>
+        <button class="pf-modal-close" onclick="closeModal('modalItem')">✕</button>
+      </div>
+      <div class="pf-modal-body">
+        <input type="hidden" id="itemEditId">
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">كود الصنف الداخلي:</label>
+            <input type="text" class="pf-input" id="itemCodeInp" placeholder="مثال: 54120">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">الباركود الدولي (EAN-13):</label>
+            <input type="text" class="pf-input" id="itemBarcodeInp" placeholder="622...">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col" style="flex:2;">
+            <label class="pf-form-label">اسم الصنف الدوائي والتجاري:</label>
+            <input type="text" class="pf-input" id="itemNameInp" placeholder="اسم الدواء بالإنجليزية أو العربي">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">الأقراص/العلبة:</label>
+            <input type="number" class="pf-input" id="itemPackUnitsInp" value="1">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">سعر بيع الجمهور (ج):</label>
+            <input type="number" step="0.01" class="pf-input" id="itemSellPriceInp" placeholder="0.00">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">سعر الشراء والتكلفة (ج):</label>
+            <input type="number" step="0.01" class="pf-input" id="itemCostPriceInp" placeholder="0.00">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">سعر القرص/الشريط (ج):</label>
+            <input type="number" step="0.01" class="pf-input" id="itemUnitPriceInp" placeholder="0.00">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">مكان الرف / التصنيف:</label>
+            <input type="text" class="pf-input" id="itemShelfInp" placeholder="مثال: مسكنات رف A1">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">حد الطلب (تنبيه النواقص):</label>
+            <input type="number" class="pf-input" id="itemMinLimitInp" value="2">
+          </div>
+        </div>
+      </div>
+      <div class="pf-modal-footer">
+        <button class="pf-btn" onclick="closeModal('modalItem')">إلغاء</button>
+        <button class="pf-btn pf-btn-primary" onclick="saveItemCard()">💾 حفظ بطاقة الصنف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       مودال إضافة عميل جديد
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalNewCustomer">
+    <div class="pf-modal-box" style="width:480px;">
+      <div class="pf-modal-header">
+        <span>👥 تسجيل عميل دليفري / حساب آجل جديد</span>
+        <button class="pf-modal-close" onclick="closeModal('modalNewCustomer')">✕</button>
+      </div>
+      <div class="pf-modal-body">
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">اسم العميل:</label>
+            <input type="text" class="pf-input" id="custNameInp" placeholder="مثال: أستاذ أحمد المحامي">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">رقم الموبايل:</label>
+            <input type="text" class="pf-input" id="custPhoneInp" placeholder="010...">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">العنوان التفصيلي (شارع، عمارة، دور):</label>
+            <input type="text" class="pf-input" id="custAddressInp" placeholder="العصافرة بحري شارع جمال عبد الناصر عمارة...">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">المنطقة:</label>
+            <input type="text" class="pf-input" id="custAreaInp" value="العصافرة">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">الحد الائتماني (ج):</label>
+            <input type="number" class="pf-input" id="custLimitInp" value="3000">
+          </div>
+        </div>
+      </div>
+      <div class="pf-modal-footer">
+        <button class="pf-btn" onclick="closeModal('modalNewCustomer')">إلغاء</button>
+        <button class="pf-btn pf-btn-primary" onclick="saveNewCustomer()">💾 حفظ العميل</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       مودال إضافة مورد / شركة توزيع جديدة [Ctrl+O]
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalNewVendor">
+    <div class="pf-modal-box" style="width:480px;">
+      <div class="pf-modal-header">
+        <span>🏭 إضافة شركة توزيع / مورد أدوية جديد [Ctrl+O]</span>
+        <button class="pf-modal-close" onclick="closeModal('modalNewVendor')">✕</button>
+      </div>
+      <div class="pf-modal-body">
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">اسم شركة التوزيع / المورد:</label>
+            <input type="text" class="pf-input" id="vendorNameInp" placeholder="مثال: شركة النور للأدوية">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">رقم الهاتف:</label>
+            <input type="text" class="pf-input" id="vendorPhoneInp" placeholder="01...">
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">اسم المندوب:</label>
+            <input type="text" class="pf-input" id="vendorRepInp" placeholder="اسم المندوب المسؤول">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">العنوان أو المقر:</label>
+            <input type="text" class="pf-input" id="vendorAddressInp" placeholder="الإسكندرية...">
+          </div>
+        </div>
+      </div>
+      <div class="pf-modal-footer">
+        <button class="pf-btn" onclick="closeModal('modalNewVendor')">إلغاء</button>
+        <button class="pf-btn pf-btn-primary" onclick="saveNewVendor()">💾 حفظ المورد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       مودال صرف نثريات ومصروفات
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalAddExpense">
+    <div class="pf-modal-box" style="width:450px;">
+      <div class="pf-modal-header" style="background:#dc2626;">
+        <span>💸 تسجيل سند صرف نثريات ومصروفات</span>
+        <button class="pf-modal-close" onclick="closeModal('modalAddExpense')">✕</button>
+      </div>
+      <div class="pf-modal-body">
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">بند المصروف:</label>
+            <select class="pf-select" id="expCategorySel">
+              <option value="نثريات">نثريات وبوفيه (شاي وسكر)</option>
+              <option value="أكياس">أكياس ومطبوعات الصيدلية</option>
+              <option value="نظافة">مستلزمات نظافة</option>
+              <option value="كهرباء">فاتورة كهرباء</option>
+              <option value="مياه">فاتورة مياه</option>
+              <option value="إيجار">إيجار الصيدلية</option>
+              <option value="مرتبات">مرتبات وعمالة</option>
+              <option value="صيانة">صيانة دليفري وأجهزة</option>
+              <option value="تحويل طبيب">تحويل طبيب / مسحوبات</option>
+            </select>
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">المبلغ (ج):</label>
+            <input type="number" step="0.5" class="pf-input" id="expAmountInp" placeholder="0.00" style="font-weight:900;color:#dc2626;">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">الصرف من خزينة:</label>
+            <select class="pf-select" id="expSafeSel">
+              <option value="shift_cashbox">💵 درج نقدية الكاشير</option>
+              <option value="main_safe">🏛️ خزينة العهدة الرئيسية</option>
+            </select>
+          </div>
+          <div class="pf-form-col">
+            <label class="pf-form-label">المستلم:</label>
+            <input type="text" class="pf-input" id="expPaidToInp" placeholder="اسم المستلم">
+          </div>
+        </div>
+        <div class="pf-form-row">
+          <div class="pf-form-col">
+            <label class="pf-form-label">بيان وتفاصيل المصروف:</label>
+            <input type="text" class="pf-input" id="expDescInp" placeholder="مثال: شاي وسكر وموصلات...">
+          </div>
+        </div>
+      </div>
+      <div class="pf-modal-footer">
+        <button class="pf-btn" onclick="closeModal('modalAddExpense')">إلغاء</button>
+        <button class="pf-btn pf-btn-danger" onclick="saveNewExpense()">💸 تأكيد الصرف وقيد المعاملة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       مودال تحديد عميل للفاتورة [F3]
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalPosCustomer">
+    <div class="pf-modal-box" style="width:520px;">
+      <div class="pf-modal-header">
+        <span>👤 تحديد عميل للفاتورة الحالية [F3]</span>
+        <button class="pf-modal-close" onclick="closeModal('modalPosCustomer')">✕</button>
+      </div>
+      <div class="pf-modal-body">
+        <input type="text" class="pf-input" id="posCustSearchInp" placeholder="ابحث باسم العميل أو رقم الموبايل..." style="margin-bottom:10px;" oninput="filterPosCustomers(this.value)">
+        <div style="max-height:240px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:4px;" id="posCustListContainer">
+          <!-- قائمة العملاء للاختيار -->
+        </div>
+      </div>
+      <div class="pf-modal-footer">
+        <button class="pf-btn pf-btn-primary" onclick="openNewCustomerModal()">➕ عميل جديد</button>
+        <button class="pf-btn" onclick="closeModal('modalPosCustomer')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
        JAVASCRIPT: ENGINE & INTEGRATION WITH SUPABASE & INDEXEDDB
        ══════════════════════════════════════════════════════════════ -->
   <script>
@@ -1838,6 +2155,472 @@
 
     function openPfShortcutsModal() {
       openModal('modalShortcuts');
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // دوال المشتريات والطلبيات الواردة (Purchases Module Functions)
+    // ══════════════════════════════════════════════════════════════
+    let currentPurchaseItems = [];
+    let selectedPurchItem = null;
+
+    function openNewPurchaseModal() {
+      currentPurchaseItems = [];
+      renderPurchaseItemsRows();
+      document.getElementById('purchInvNoInp').value = '';
+      document.getElementById('purchDateInp').value = new Date().toISOString().split('T')[0];
+
+      // ملء قائمة الموردين
+      const sel = document.getElementById('purchVendorSel');
+      if (sel) {
+        sel.innerHTML = '<option value="">-- اختر شركة التوزيع أو المورد --</option>' +
+          cachedVendors.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join('');
+      }
+
+      openModal('modalNewPurchase');
+    }
+
+    // بحث الأصناف في المشتريات
+    const purchSearchInp = document.getElementById('purchItemSearchInp');
+    if (purchSearchInp) {
+      purchSearchInp.addEventListener('input', e => {
+        const q = (e.target.value || '').trim().toLowerCase();
+        const drop = document.getElementById('purchItemAutoDrop');
+        if (q.length < 2) { drop.style.display = 'none'; return; }
+        const matches = cachedItems.filter(it =>
+          (it.name && it.name.toLowerCase().includes(q)) ||
+          (it.internal_code && it.internal_code.includes(q)) ||
+          (it.barcode && it.barcode.includes(q))
+        ).slice(0, 10);
+
+        if (!matches.length) {
+          drop.innerHTML = '<div style="padding:8px;color:#94a3b8;text-align:center;">لا توجد أصناف مطابقة</div>';
+          drop.style.display = 'block';
+          return;
+        }
+
+        drop.innerHTML = matches.map(it => `
+          <div class="pf-auto-row" onclick="selectPurchItem('${it.id}')">
+            <div>
+              <div class="pf-auto-name">${esc(it.name)}</div>
+              <div class="pf-auto-meta">كود: <strong>${esc(it.internal_code||'—')}</strong> | رصيد: ${it.stock_packs||0}</div>
+            </div>
+            <div class="pf-auto-price">${fmt(it.selling_price)} ج</div>
+          </div>
+        `).join('');
+        drop.style.display = 'block';
+      });
+    }
+
+    function selectPurchItem(id) {
+      const it = cachedItems.find(i => i.id === id);
+      if (it) {
+        selectedPurchItem = it;
+        purchSearchInp.value = it.name;
+        document.getElementById('purchCostInp').value = it.cost_price || 0;
+        document.getElementById('purchSellInp').value = it.selling_price || 0;
+        document.getElementById('purchItemAutoDrop').style.display = 'none';
+        document.getElementById('purchPacksInp').focus();
+      }
+    }
+
+    function addPurchaseItemRow() {
+      if (!selectedPurchItem) {
+        alert('اختر الصنف الدوائي أولاً!');
+        return;
+      }
+      const packs = parseInt(document.getElementById('purchPacksInp').value) || 1;
+      const bonus = parseInt(document.getElementById('purchBonusInp').value) || 0;
+      const cost = parseFloat(document.getElementById('purchCostInp').value) || 0;
+      const sell = parseFloat(document.getElementById('purchSellInp').value) || 0;
+      const disc = parseFloat(document.getElementById('purchDiscInp').value) || 0;
+
+      const rowTotal = round2((packs * cost) * (1 - (disc / 100)));
+
+      currentPurchaseItems.push({
+        item: selectedPurchItem,
+        packs: packs,
+        bonus: bonus,
+        cost: cost,
+        sell: sell,
+        disc: disc,
+        total: rowTotal
+      });
+
+      selectedPurchItem = null;
+      purchSearchInp.value = '';
+      document.getElementById('purchCostInp').value = '';
+      document.getElementById('purchSellInp').value = '';
+      document.getElementById('purchPacksInp').value = '1';
+      document.getElementById('purchBonusInp').value = '0';
+      document.getElementById('purchDiscInp').value = '0';
+
+      renderPurchaseItemsRows();
+      purchSearchInp.focus();
+    }
+
+    function renderPurchaseItemsRows() {
+      const tbody = document.getElementById('purchItemsTbody');
+      if (!tbody) return;
+      if (!currentPurchaseItems.length) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:#94a3b8;">لم تتم إضافة أصناف بعد</td></tr>`;
+        updatePurchaseTotals();
+        return;
+      }
+      tbody.innerHTML = currentPurchaseItems.map((r, i) => `
+        <tr>
+          <td style="color:#94a3b8;">${i + 1}</td>
+          <td><strong>${esc(r.item.name)}</strong></td>
+          <td style="text-align:center;">${r.packs}</td>
+          <td style="text-align:center;color:#16a34a;font-weight:700;">${r.bonus}</td>
+          <td style="text-align:center;font-family:monospace;">${fmt(r.cost)}</td>
+          <td style="text-align:center;font-family:monospace;color:#dc2626;">${r.disc}%</td>
+          <td style="text-align:center;font-family:monospace;">${fmt(r.sell)}</td>
+          <td style="text-align:center;font-family:monospace;font-weight:900;color:#16a34a;">${fmt(r.total)}</td>
+          <td style="text-align:center;">
+            <button class="pf-btn pf-btn-danger" style="padding:1px 5px;font-size:10px;" onclick="removePurchRow(${i})">✕</button>
+          </td>
+        </tr>
+      `).join('');
+      updatePurchaseTotals();
+    }
+
+    function removePurchRow(idx) {
+      currentPurchaseItems.splice(idx, 1);
+      renderPurchaseItemsRows();
+    }
+
+    function updatePurchaseTotals() {
+      let totCost = 0;
+      let totSell = 0;
+      currentPurchaseItems.forEach(r => {
+        totCost += r.total;
+        totSell += (r.packs + r.bonus) * r.sell;
+      });
+      document.getElementById('purchItemCountLbl').textContent = currentPurchaseItems.length;
+      document.getElementById('purchTotalCostLbl').textContent = fmt(totCost);
+      document.getElementById('purchTotalSellLbl').textContent = fmt(totSell);
+    }
+
+    async function savePurchaseInvoice() {
+      if (!currentPurchaseItems.length) {
+        alert('الفاتورة لا تحتوي على أصناف!');
+        return;
+      }
+      const vendorId = document.getElementById('purchVendorSel').value;
+      const invNo = document.getElementById('purchInvNoInp').value.trim() || ('PUR-' + Date.now().toString().slice(-6));
+      const invDate = document.getElementById('purchDateInp').value || new Date().toISOString().split('T')[0];
+      const payMethod = document.getElementById('purchPayMethod').value;
+      const totalCost = parseFloat(document.getElementById('purchTotalCostLbl').textContent) || 0;
+      const totalSell = parseFloat(document.getElementById('purchTotalSellLbl').textContent) || 0;
+
+      const vendor = cachedVendors.find(v => v.id === vendorId);
+      const vendorName = vendor ? vendor.name : 'مورد عام';
+
+      try {
+        // 1. تسجيل رأس الفاتورة
+        const { data: purchData, error: purchErr } = await sb.from('purchases').insert({
+          invoice_no: invNo,
+          vendor_id: vendorId || null,
+          supplier_name: vendorName,
+          invoice_date: invDate,
+          total_cost: totalCost,
+          total_selling: totalSell,
+          items_count: currentPurchaseItems.length,
+          payment_status: (payMethod === 'credit' ? 'credit' : 'paid'),
+          payment_method: payMethod,
+          items_data: currentPurchaseItems.map(c => ({
+            item_id: c.item.id,
+            item_code: c.item.internal_code,
+            name: c.item.name,
+            packs: c.packs,
+            bonus: c.bonus,
+            cost: c.cost,
+            sell: c.sell,
+            disc: c.disc,
+            total: c.total
+          }))
+        }).select().single();
+
+        // 2. تحديث أرصدة الأصناف بالمخزن
+        for (const row of currentPurchaseItems) {
+          const addPacks = row.packs + row.bonus;
+          const newStock = (row.item.stock_packs || 0) + addPacks;
+          await sb.from('items').update({
+            stock_packs: newStock,
+            cost_price: row.cost,
+            selling_price: row.sell,
+            updated_at: new Date().toISOString()
+          }).eq('id', row.item.id);
+          row.item.stock_packs = newStock;
+          row.item.cost_price = row.cost;
+          row.item.selling_price = row.sell;
+        }
+
+        // 3. في حالة السداد الآجل للمورد
+        if (payMethod === 'credit' && vendorId) {
+          await sb.from('vendors').update({
+            current_balance: (vendor.current_balance || 0) + totalCost,
+            updated_at: new Date().toISOString()
+          }).eq('id', vendorId);
+          vendor.current_balance = (vendor.current_balance || 0) + totalCost;
+        }
+
+        await idbSaveItems(cachedItems);
+        playBeep(true);
+        alert(`✅ تم حفظ وترحيل فاتورة الشراء بنجاح: ${invNo}
+إجمالي التكلفة: ${fmt(totalCost)} ج`);
+        closeModal('modalNewPurchase');
+        loadPurchases();
+        renderItemsGrid();
+      } catch(e) {
+        alert('حدث خطأ أثناء حفظ الفاتورة: ' + e.message);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // دوال بطاقة الصنف ودليل الأدوية [Ctrl+I]
+    // ══════════════════════════════════════════════════════════════
+    function openItemModal(item = null) {
+      if (item) {
+        document.getElementById('modalItemTitle').textContent = '✏️ تعديل بيانات صنف دوائي';
+        document.getElementById('itemEditId').value = item.id;
+        document.getElementById('itemCodeInp').value = item.internal_code || '';
+        document.getElementById('itemBarcodeInp').value = item.barcode || '';
+        document.getElementById('itemNameInp').value = item.name || '';
+        document.getElementById('itemPackUnitsInp').value = item.pack_units || 1;
+        document.getElementById('itemSellPriceInp').value = item.selling_price || 0;
+        document.getElementById('itemCostPriceInp').value = item.cost_price || 0;
+        document.getElementById('itemUnitPriceInp').value = item.unit_price || 0;
+        document.getElementById('itemShelfInp').value = item.shelf_location || '';
+        document.getElementById('itemMinLimitInp').value = item.min_order_limit || 2;
+      } else {
+        document.getElementById('modalItemTitle').textContent = '➕ إضافة بطاقة صنف دوائي جديد';
+        document.getElementById('itemEditId').value = '';
+        document.getElementById('itemCodeInp').value = '';
+        document.getElementById('itemBarcodeInp').value = '';
+        document.getElementById('itemNameInp').value = '';
+        document.getElementById('itemPackUnitsInp').value = '1';
+        document.getElementById('itemSellPriceInp').value = '';
+        document.getElementById('itemCostPriceInp').value = '';
+        document.getElementById('itemUnitPriceInp').value = '';
+        document.getElementById('itemShelfInp').value = '';
+        document.getElementById('itemMinLimitInp').value = '2';
+      }
+      openModal('modalItem');
+    }
+
+    async function saveItemCard() {
+      const editId = document.getElementById('itemEditId').value;
+      const code = document.getElementById('itemCodeInp').value.trim();
+      const barcode = document.getElementById('itemBarcodeInp').value.trim();
+      const name = document.getElementById('itemNameInp').value.trim();
+      const packUnits = parseInt(document.getElementById('itemPackUnitsInp').value) || 1;
+      const sell = parseFloat(document.getElementById('itemSellPriceInp').value) || 0;
+      const cost = parseFloat(document.getElementById('itemCostPriceInp').value) || 0;
+      let unitPrice = parseFloat(document.getElementById('itemUnitPriceInp').value);
+      if (isNaN(unitPrice) || unitPrice <= 0) unitPrice = round2(sell / packUnits);
+      const shelf = document.getElementById('itemShelfInp').value.trim();
+      const minLimit = parseInt(document.getElementById('itemMinLimitInp').value) || 2;
+
+      if (!name) { alert('اسم الصنف مطلوب!'); return; }
+
+      const payload = {
+        internal_code: code || null,
+        barcode: barcode || null,
+        name: name,
+        pack_units: packUnits,
+        selling_price: sell,
+        cost_price: cost,
+        unit_price: unitPrice,
+        shelf_location: shelf || null,
+        min_order_limit: minLimit,
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        if (editId) {
+          await sb.from('items').update(payload).eq('id', editId);
+          const it = cachedItems.find(i => i.id === editId);
+          if (it) Object.assign(it, payload);
+        } else {
+          payload.stock_packs = 0;
+          payload.stock_units = 0;
+          const { data } = await sb.from('items').insert(payload).select().single();
+          if (data) cachedItems.unshift(data);
+        }
+        buildIndexMaps();
+        await idbSaveItems(cachedItems);
+        renderItemsGrid();
+        playBeep(true);
+        alert('✅ تم حفظ بطاقة الصنف بنجاح!');
+        closeModal('modalItem');
+      } catch(e) {
+        alert('حدث خطأ: ' + e.message);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // دوال العملاء والموردين والمصروفات
+    // ══════════════════════════════════════════════════════════════
+    function openNewCustomerModal() {
+      document.getElementById('custNameInp').value = '';
+      document.getElementById('custPhoneInp').value = '';
+      document.getElementById('custAddressInp').value = '';
+      openModal('modalNewCustomer');
+    }
+
+    async function saveNewCustomer() {
+      const name = document.getElementById('custNameInp').value.trim();
+      const phone = document.getElementById('custPhoneInp').value.trim();
+      const addr = document.getElementById('custAddressInp').value.trim();
+      const area = document.getElementById('custAreaInp').value.trim() || 'العصافرة';
+      const limit = parseFloat(document.getElementById('custLimitInp').value) || 3000;
+
+      if (!name) { alert('اسم العميل مطلوب!'); return; }
+      const code = 'CUST-' + (cachedCustomers.length + 1).toString().padStart(4, '0');
+
+      try {
+        const { data } = await sb.from('customers').insert({
+          code: code,
+          name: name,
+          phone: phone || null,
+          address: addr || null,
+          area: area,
+          credit_limit: limit,
+          current_balance: 0
+        }).select().single();
+
+        if (data) cachedCustomers.unshift(data);
+        renderCustomersTable();
+        playBeep(true);
+        alert(`✅ تم حفظ العميل بنجاح: ${name}`);
+        closeModal('modalNewCustomer');
+      } catch(e) { alert('حدث خطأ: ' + e.message); }
+    }
+
+    function openNewVendorModal() {
+      document.getElementById('vendorNameInp').value = '';
+      document.getElementById('vendorPhoneInp').value = '';
+      document.getElementById('vendorRepInp').value = '';
+      document.getElementById('vendorAddressInp').value = '';
+      openModal('modalNewVendor');
+    }
+
+    async function saveNewVendor() {
+      const name = document.getElementById('vendorNameInp').value.trim();
+      const phone = document.getElementById('vendorPhoneInp').value.trim();
+      const rep = document.getElementById('vendorRepInp').value.trim();
+      const addr = document.getElementById('vendorAddressInp').value.trim();
+
+      if (!name) { alert('اسم المورد مطلوب!'); return; }
+      const code = 'VND-' + (cachedVendors.length + 1).toString().padStart(3, '0');
+
+      try {
+        const { data } = await sb.from('vendors').insert({
+          code: code,
+          name: name,
+          phone: phone || null,
+          contact_person: rep || null,
+          address: addr || null,
+          current_balance: 0
+        }).select().single();
+
+        if (data) cachedVendors.unshift(data);
+        renderVendorsTable();
+        playBeep(true);
+        alert(`✅ تم حفظ شركة التوزيع بنجاح: ${name}`);
+        closeModal('modalNewVendor');
+      } catch(e) { alert('حدث خطأ: ' + e.message); }
+    }
+
+    function openAddExpenseModal() {
+      document.getElementById('expAmountInp').value = '';
+      document.getElementById('expDescInp').value = '';
+      document.getElementById('expPaidToInp').value = '';
+      openModal('modalAddExpense');
+    }
+
+    async function saveNewExpense() {
+      const cat = document.getElementById('expCategorySel').value;
+      const amt = parseFloat(document.getElementById('expAmountInp').value) || 0;
+      const safeCode = document.getElementById('expSafeSel').value;
+      const paidTo = document.getElementById('expPaidToInp').value.trim();
+      const desc = document.getElementById('expDescInp').value.trim();
+
+      if (amt <= 0) { alert('يرجى إدخال مبلغ صحيح!'); return; }
+      if (!desc) { alert('بيان المصروف مطلوب!'); return; }
+
+      try {
+        // جلب معرف الخزينة
+        const { data: safeData } = await sb.from('safes').select('id, current_balance').eq('code', safeCode).single();
+        const safeId = safeData ? safeData.id : null;
+
+        await sb.from('expenses').insert({
+          category: cat,
+          amount: amt,
+          description: desc,
+          paid_to: paidTo || null,
+          safe_id: safeId
+        });
+
+        if (safeId) {
+          await sb.from('safes').update({
+            current_balance: (safeData.current_balance || 0) - amt,
+            updated_at: new Date().toISOString()
+          }).eq('id', safeId);
+        }
+
+        playBeep(true);
+        alert(`✅ تم تسجيل المصروف وخصم (${amt} ج) من الخزينة بنجاح.`);
+        closeModal('modalAddExpense');
+        loadSafesBalances();
+      } catch(e) { alert('حدث خطأ: ' + e.message); }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // تحديد عميل للفاتورة [F3]
+    // ══════════════════════════════════════════════════════════════
+    let posSelectedCustomer = null;
+    function openPosCustomerModal() {
+      filterPosCustomers('');
+      openModal('modalPosCustomer');
+      setTimeout(() => document.getElementById('posCustSearchInp')?.focus(), 100);
+    }
+
+    function filterPosCustomers(q) {
+      const container = document.getElementById('posCustListContainer');
+      if (!container) return;
+      const query = (q || '').trim().toLowerCase();
+      const list = cachedCustomers.filter(c =>
+        !query || (c.name && c.name.toLowerCase().includes(query)) ||
+                  (c.phone && c.phone.includes(query))
+      );
+
+      if (!list.length) {
+        container.innerHTML = '<div style="padding:16px;text-align:center;color:#94a3b8;">لا يوجد عملاء مطابقين</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(c => `
+        <div class="pf-auto-row" onclick="selectPosCustomer('${c.id}', '${esc(c.name)}')">
+          <div>
+            <div style="font-weight:800;color:#0f172a;">${esc(c.name)}</div>
+            <div style="font-size:11px;color:#64748b;">موبايل: <strong>${esc(c.phone||'—')}</strong> | عنوان: ${esc(c.address||'—')}</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:${(c.current_balance||0)>0?'#dc2626':'#16a34a'};">
+            رصيد: ${fmt(c.current_balance||0)} ج
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectPosCustomer(id, name) {
+      posSelectedCustomer = cachedCustomers.find(c => c.id === id);
+      document.getElementById('posCustLabel').textContent = name;
+      closeModal('modalPosCustomer');
+      playBeep(true);
+      posSearchInp.focus();
     }
 
     // ── اختصارات لوحة المفاتيح العامة (Global Keyboard Shortcuts) ──
