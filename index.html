@@ -17931,7 +17931,7 @@ function exportStockCountXLSX() {
 // ══════════════════════════════════════════════════════════════════
 function idbItemsOpen() {
   return new Promise((res, rej) => {
-    const req = indexedDB.open('asafra_items_cache_v2', 1);
+    const req = indexedDB.open('asafra_items_cache_v3', 1);
     req.onupgradeneeded = e => e.target.result.createObjectStore('cache');
     req.onsuccess = e => res(e.target.result);
     req.onerror = () => rej(req.error);
@@ -17962,9 +17962,9 @@ async function idbSaveCachedItems(items) {
 async function loadItemsCatalog(forceRefresh = false) {
   try {
     // 1. سرعة البرق: تحميل فوري من الذاكرة المحلية IndexedDB خلال 50ms
-    if (!forceRefresh && (!cachedItems || !cachedItems.length)) {
+    if (!forceRefresh) {
       const localCached = await idbGetCachedItems();
-      if (localCached && localCached.length > 0) {
+      if (localCached && localCached.length >= 25000) {
         cachedItems = localCached;
         itemsByCode.clear();
         itemsByBarcode.clear();
@@ -17974,28 +17974,39 @@ async function loadItemsCatalog(forceRefresh = false) {
         });
         renderItemsTable();
         updateItemsKpis();
+        return; // الداتا الحقيقية متوفرة محلياً، لا حاجة لانتظار الشبكة
       }
     }
 
-    // 2. مزامنة البيانات الكاملة من Supabase
-    let allData = [];
-    let page = 0;
+    // 2. تحميل البيانات الحقيقية من Supabase بالتوازي فائق السرعة
     const pageSize = 1000;
-    while (page < 35) {
-      const { data, error } = await sb.from('items')
-        .select('*')
-        .range(page * pageSize, (page + 1) * pageSize - 1)
-        .order('name');
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-      allData = allData.concat(data);
-      if (data.length < pageSize) break;
-      page++;
+    const totalBatches = 29; // تغطي حتى 29,000 صنف
+    const concurrency = 6;
+    let allData = [];
+
+    for (let i = 0; i < totalBatches; i += concurrency) {
+      const batchPromises = [];
+      for (let j = i; j < Math.min(i + concurrency, totalBatches); j++) {
+        batchPromises.push(
+          sb.from('items')
+            .select('*')
+            .range(j * pageSize, (j + 1) * pageSize - 1)
+            .order('name')
+            .then(res => res.data || [])
+        );
+      }
+      const batchResults = await Promise.all(batchPromises);
+      batchResults.forEach(rows => {
+        if (rows && rows.length) allData = allData.concat(rows);
+      });
+      if (batchResults.some(rows => !rows || rows.length < pageSize)) {
+        break;
+      }
     }
 
     if (allData.length > 0) {
       cachedItems = allData;
-      idbSaveCachedItems(allData); // حفظ محلي دائم في المتصفح لعدم الانتظار مستقبلاً
+      await idbSaveCachedItems(allData); // حفظ محلي دائم فائق السرعة
     } else if (!cachedItems.length) {
       cachedItems = getDefaultSeedItems();
     }
