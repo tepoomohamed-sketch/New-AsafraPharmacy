@@ -138,6 +138,26 @@ CREATE TABLE IF NOT EXISTS handy_items (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5-ب. جدول عمليات الجرد ومطابقة الأرصدة (Stock Audits & Count Logs)
+CREATE TABLE IF NOT EXISTS stock_counts (
+  id                  TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  item_code           TEXT NOT NULL,
+  item_name           TEXT NOT NULL,
+  system_packs        INTEGER DEFAULT 0,
+  system_units        INTEGER DEFAULT 0,
+  actual_packs        INTEGER DEFAULT 0,
+  actual_units        INTEGER DEFAULT 0,
+  discrepancy_packs   INTEGER DEFAULT 0,
+  discrepancy_units   INTEGER DEFAULT 0,
+  discrepancy_val     NUMERIC DEFAULT 0,
+  adjusted            BOOLEAN DEFAULT FALSE,
+  user_name           TEXT,
+  date                TEXT NOT NULL,
+  time                TEXT NOT NULL,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
+
 -- تحديث الأعمدة لجدول handy_items
 ALTER TABLE handy_items ADD COLUMN IF NOT EXISTS price       NUMERIC DEFAULT 0;
 ALTER TABLE handy_items ADD COLUMN IF NOT EXISTS parent_code TEXT;
@@ -148,6 +168,7 @@ ALTER TABLE sales           DISABLE ROW LEVEL SECURITY;
 ALTER TABLE shift_handovers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases       DISABLE ROW LEVEL SECURITY;
 ALTER TABLE handy_items     DISABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_counts    DISABLE ROW LEVEL SECURITY;
 
 -- 7. تفعيل البث اللحظي (Realtime) بأمان تام بدون أخطاء التكرار
 DO $$
@@ -164,9 +185,16 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'handy_items') THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE handy_items;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'purchases') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE purchases;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'stock_counts') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE stock_counts;
+  END IF;
 EXCEPTION WHEN OTHERS THEN
   NULL;
 END $$;
+
 
 
 -- 8. دالة معالجة البيع وخصم المخزون ذرياً (Atomic POS Sale Engine)
@@ -325,10 +353,13 @@ ALTER TABLE sales DISABLE ROW LEVEL SECURITY;
 ALTER TABLE shift_handovers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases DISABLE ROW LEVEL SECURITY;
 ALTER TABLE handy_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_counts DISABLE ROW LEVEL SECURITY;
 
 GRANT ALL ON TABLE items TO anon, authenticated, service_role;
 GRANT ALL ON TABLE sales TO anon, authenticated, service_role;
 GRANT ALL ON TABLE shift_handovers TO anon, authenticated, service_role;
 GRANT ALL ON TABLE purchases TO anon, authenticated, service_role;
 GRANT ALL ON TABLE handy_items TO anon, authenticated, service_role;
+GRANT ALL ON TABLE stock_counts TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION pos_process_sale_atomic TO anon, authenticated, service_role;
+

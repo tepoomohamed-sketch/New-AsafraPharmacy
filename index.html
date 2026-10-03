@@ -2081,6 +2081,264 @@ function ensureXLSX() {
 <!-- ══════════════════════════════════════════════════════════
      PANE: ITEMS MASTER & PHARMAFLY UPLOADER (الأصناف والمخزن)
 ══════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════════════
+     PANE: PURCHASES (فواتير المشتريات والطلبيات من الموردين)
+══════════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-purchases">
+  <div class="card" style="padding:16px 20px;">
+    <!-- PharmaFly Window Header -->
+    <div class="pf-window-header" style="margin-bottom:14px;">
+      <div class="pf-callout-mode" style="background:#2b6cb0;color:#fff;">وارد شركات</div>
+      <div class="pf-3d-banner" style="background:linear-gradient(180deg,#63b3ed 0%,#3182ce 60%,#2b6cb0 100%);color:#fff;">تسجيل فواتير المشتريات والطلبيات</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="pos-inv-tag" id="purInvTag">فاتورة وارد: #---</span>
+        <button type="button" class="btn btn-xs btn-ghost" onclick="openPurchasesHistoryModal()" title="سجل فواتير الوارد">📜 فواتير سابقة</button>
+      </div>
+    </div>
+
+    <!-- Supplier & Invoice Details Bar -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;background:var(--bg2);padding:14px;border-radius:12px;border:1px solid var(--border);margin-bottom:14px;">
+      <div class="fg" style="margin:0;">
+        <label for="purSupplierInp">🏭 المورد / شركة الأدوية</label>
+        <input type="text" id="purSupplierInp" list="purSupplierList" class="fel" placeholder="اختر أو اكتب اسم المورد..." />
+        <datalist id="purSupplierList">
+          <option value="المتحدة للصيادلة">
+          <option value="ابن سينا فارما">
+          <option value="فارما أوفرسيز">
+          <option value="3N فارما">
+          <option value="الأطباء">
+          <option value="كريم فارما">
+          <option value="عابدين">
+          <option value="نيو ميديسن">
+          <option value="ميديسين">
+          <option value="شراء أدوية 50%">
+          <option value="اليكس واي">
+        </datalist>
+      </div>
+
+      <div class="fg" style="margin:0;">
+        <label for="purInvoiceNoInp">🔢 رقم فاتورة المورد</label>
+        <input type="text" id="purInvoiceNoInp" class="fel" placeholder="مثال: 984512" />
+      </div>
+
+      <div class="fg" style="margin:0;">
+        <label for="purDateInp">📅 تاريخ الفاتورة</label>
+        <input type="date" id="purDateInp" class="fel" />
+      </div>
+
+      <div class="fg" style="margin:0;">
+        <label for="purPayMethod">💳 طريقة السداد</label>
+        <select id="purPayMethod" class="fel">
+          <option value="credit">آجل (سداد لاحق للمورد)</option>
+          <option value="cash">نقدي (تم الخصم من الخزينة)</option>
+          <option value="wallet">محفظة إلكترونية</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Search & Scan Bar for Purchase Items -->
+    <div style="position:relative;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:1.2rem;">📦</span>
+        <input type="text" id="purItemSearchInp" class="fel" placeholder="امسح الباركود بالسكانر أو اكتب كود/اسم الصنف لإضافته لفاتورة الوارد..." style="flex:1;font-size:1rem;padding:12px 14px;" oninput="handlePurSearchInput(this.value)" onkeydown="handlePurSearchKeydown(event)" autocomplete="off" />
+        <button type="button" class="btn btn-sm btn-ghost" onclick="clearPurSearch()">✕</button>
+      </div>
+      <div id="purAutoDropdown" class="pos-auto-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1000;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:280px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Purchases Table (10 Columns) -->
+    <div class="tbl-w" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;">
+      <table class="pos-table" id="purTable" style="margin:0;">
+        <thead>
+          <tr style="background:var(--bg3);">
+            <th style="width:36px;text-align:center;">م</th>
+            <th style="width:95px;">الكود</th>
+            <th>اسم الصنف</th>
+            <th style="width:95px;text-align:center;">كمية (علب)</th>
+            <th style="width:80px;text-align:center;">بونص</th>
+            <th style="width:105px;text-align:center;">سعر الشراء</th>
+            <th style="width:85px;text-align:center;">خصم %</th>
+            <th style="width:105px;text-align:center;">سعر الجمهور</th>
+            <th style="width:100px;text-align:center;">الصلاحية</th>
+            <th style="width:115px;text-align:center;">الإجمالي</th>
+            <th style="width:40px;text-align:center;">✕</th>
+          </tr>
+        </thead>
+        <tbody id="purItemsBody">
+          <tr id="purEmptyRow">
+            <td colspan="11" style="text-align:center;padding:40px 20px;color:var(--text3);">
+              <div style="font-size:2rem;margin-bottom:6px;">🚚</div>
+              <div style="font-weight:700;">لا توجد أصناف في فاتورة الوارد</div>
+              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود الأصناف الواردة من الشركة أو ابحث بالاسم لإضافتها وتحديث المخزن</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Purchases Totals & Action Buttons -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;background:var(--bg2);padding:14px 18px;border-radius:12px;border:1px solid var(--border);">
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+        <div>
+          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي سعر الجمهور:</span>
+          <strong id="purTotalSellingText" style="font-size:1.15rem;color:var(--text1);">0.00 ج</strong>
+        </div>
+        <div>
+          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي الخصم التجاري:</span>
+          <strong id="purTotalDiscText" style="font-size:1.15rem;color:#f6ad55;">0.00 ج</strong>
+        </div>
+        <div style="border-right:2px solid var(--border);padding-right:16px;">
+          <span style="font-size:.76rem;color:var(--text3);display:block;">صافي الفاتورة (المستحق للمورد):</span>
+          <strong id="purTotalCostText" style="font-size:1.45rem;color:#48bb78;font-family:monospace;font-weight:900;">0.00 ج</strong>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-ghost" onclick="clearPurInvoice()">✕ تفريغ الفاتورة</button>
+        <button type="button" class="btn btn-primary" onclick="savePurchaseInvoice()" style="background:linear-gradient(135deg,#2b6cb0,#3182ce);font-size:.95rem;padding:10px 22px;border-radius:8px;">
+          💾 حفظ الفاتورة وإضافة البضاعة للمخزن
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PANE: STOCK COUNT (الجرد المخزني الفعلي ومطابقة الأرصدة)
+══════════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-stockcount">
+  <div class="card" style="padding:16px 20px;">
+    <!-- PharmaFly Window Header -->
+    <div class="pf-window-header" style="margin-bottom:14px;">
+      <div class="pf-callout-mode" style="background:#805ad5;color:#fff;">جرد ومطابقة</div>
+      <div class="pf-3d-banner" style="background:linear-gradient(180deg,#b794f4 0%,#805ad5 60%,#553c9a 100%);color:#fff;">الجرد المخزني الفعلي ومطابقة الأرصدة</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button type="button" class="btn btn-xs btn-ghost" onclick="exportStockCountXLSX()">⬇️ تصدير كشف الجرد</button>
+      </div>
+    </div>
+
+    <!-- Scanner Bar -->
+    <div style="position:relative;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:1.2rem;">🔍</span>
+        <input type="text" id="scSearchInp" class="fel" placeholder="امسح باركود الصنف بالسكانر أو اكتب الكود/الاسم للبدء في جرده..." style="flex:1;font-size:1rem;padding:12px 14px;" oninput="handleScSearchInput(this.value)" onkeydown="handleScSearchKeydown(event)" autocomplete="off" />
+        <button type="button" class="btn btn-sm btn-ghost" onclick="clearScSearch()">✕</button>
+      </div>
+      <div id="scAutoDropdown" class="pos-auto-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1000;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:280px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Active Item Inspection & Count Entry Card -->
+    <div id="scInspectCard" style="display:none;background:var(--bg2);padding:16px 20px;border-radius:14px;border:1.5px solid #805ad5;margin-bottom:14px;animation:fadeUp .2s ease;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+        <div>
+          <span style="font-size:.76rem;color:var(--text3);">الصنف المختار للجرد:</span>
+          <h3 id="scItemName" style="color:var(--text1);margin:2px 0 0;font-size:1.15rem;">—</h3>
+        </div>
+        <div style="display:flex;gap:12px;font-size:.82rem;">
+          <div>كود الصيدلية: <strong id="scItemCode" style="color:var(--text1);">—</strong></div>
+          <div>مكان الرف: <strong id="scItemShelf" style="color:#63b3ed;">—</strong></div>
+          <div>سعر الجمهور: <strong id="scItemPrice" style="color:#48bb78;">—</strong></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:center;">
+        <!-- System Stock (الرصيد الدفتري) -->
+        <div style="background:var(--bg3);padding:10px 14px;border-radius:10px;text-align:center;">
+          <span style="font-size:.74rem;color:var(--text3);display:block;">الرصيد المسجل بالسيستم</span>
+          <div style="font-size:1.3rem;font-weight:900;color:var(--text1);margin-top:2px;">
+            <span id="scSysPacks">0</span> <small style="font-size:.75rem;font-weight:normal;">علبة</small>
+            <span style="font-size:.8rem;color:var(--text3);margin:0 4px;">+</span>
+            <span id="scSysUnits">0</span> <small style="font-size:.75rem;font-weight:normal;">قرص</small>
+          </div>
+        </div>
+
+        <!-- Actual Count Inputs (الرصيد الفعلي) -->
+        <div style="background:rgba(128,90,213,.08);padding:10px 14px;border-radius:10px;border:1px solid rgba(128,90,213,.3);">
+          <span style="font-size:.74rem;color:#b794f4;display:block;font-weight:700;">الرصيد الفعلي على الرف</span>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <input type="number" id="scActPacksInp" class="fel" placeholder="علب فعلية" min="0" style="text-align:center;font-weight:800;font-size:1rem;" oninput="calcScDiscrepancy()" onkeydown="if(event.key==='Enter') addCurrentItemToStockAudit()" />
+            <input type="number" id="scActUnitsInp" class="fel" placeholder="أقراص/أجزاء" min="0" style="text-align:center;font-weight:800;font-size:1rem;" oninput="calcScDiscrepancy()" onkeydown="if(event.key==='Enter') addCurrentItemToStockAudit()" />
+          </div>
+        </div>
+
+        <!-- Discrepancy Indicator (مؤشر الفارق) -->
+        <div style="text-align:center;">
+          <span style="font-size:.74rem;color:var(--text3);display:block;">نتيجة المطابقة</span>
+          <div id="scDiscrepancyBadge" style="margin-top:6px;font-size:.95rem;font-weight:900;padding:6px 12px;border-radius:8px;background:var(--bg3);display:inline-block;">
+            مطابق (0)
+          </div>
+        </div>
+
+        <!-- Add Button -->
+        <div>
+          <button type="button" class="btn btn-primary" onclick="addCurrentItemToStockAudit()" style="width:100%;justify-content:center;background:#805ad5;font-weight:900;padding:12px;border-radius:8px;">
+            ➕ إضافة لكشف الجرد [Enter]
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audited Items Table -->
+    <div class="tbl-w" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;">
+      <table class="pos-table" id="scAuditTable" style="margin:0;">
+        <thead>
+          <tr style="background:var(--bg3);">
+            <th style="width:36px;text-align:center;">م</th>
+            <th style="width:95px;">الكود</th>
+            <th>اسم الصنف</th>
+            <th style="width:90px;text-align:center;">الرف</th>
+            <th style="width:115px;text-align:center;">الرصيد الدفتري</th>
+            <th style="width:115px;text-align:center;">الرصيد الفعلي</th>
+            <th style="width:105px;text-align:center;">الفارق (علب)</th>
+            <th style="width:115px;text-align:center;">قيمة الفارق</th>
+            <th style="width:90px;text-align:center;">الحالة</th>
+            <th style="width:40px;text-align:center;">✕</th>
+          </tr>
+        </thead>
+        <tbody id="scAuditBody">
+          <tr id="scEmptyRow">
+            <td colspan="10" style="text-align:center;padding:40px 20px;color:var(--text3);">
+              <div style="font-size:2rem;margin-bottom:6px;">📋</div>
+              <div style="font-weight:700;">كشف الجرد فارغ حالياً</div>
+              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي دواء أو ابحث عنه لإدخال رصيده الفعلي ومطابقته</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Stock Count Summary & Commitment Bar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;background:var(--bg2);padding:14px 18px;border-radius:12px;border:1px solid var(--border);">
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
+        <div>
+          <span style="font-size:.76rem;color:var(--text3);display:block;">أصناف مجرودة:</span>
+          <strong id="scTotalCountedText" style="font-size:1.15rem;color:var(--text1);">0 صنف</strong>
+        </div>
+        <div>
+          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي قيمة العجز:</span>
+          <strong id="scTotalDeficitText" style="font-size:1.15rem;color:#fc8181;">0.00 ج</strong>
+        </div>
+        <div>
+          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي قيمة الزيادة:</span>
+          <strong id="scTotalSurplusText" style="font-size:1.15rem;color:#63b3ed;">0.00 ج</strong>
+        </div>
+        <div style="border-right:2px solid var(--border);padding-right:16px;">
+          <span style="font-size:.76rem;color:var(--text3);display:block;">صافي فارق الجرد:</span>
+          <strong id="scNetDiscrepancyText" style="font-size:1.35rem;font-family:monospace;font-weight:900;">0.00 ج</strong>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-ghost" onclick="clearStockCountSession()">✕ إلغاء الجلسة</button>
+        <button type="button" class="btn btn-primary" onclick="commitStockCountAdjustments()" style="background:linear-gradient(135deg,#6b46c1,#805ad5);font-size:.95rem;padding:10px 22px;border-radius:8px;">
+          ✅ اعتماد وتسوية الجرد الفعلي في المخزن
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="pane" id="pane-items">
   <div class="card">
     <!-- Header -->
@@ -3765,11 +4023,13 @@ function buildApp() {
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
   document.getElementById('mainTabs').innerHTML = `
     <div class="tab on" onclick="swTab('add',this)">➕ قيد جديد</div>
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'pos\',this)">🛒 كاشير المبيعات (تجريبي)</div>' : ''}
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'pos\',this)">🛒 كاشير المبيعات (PharmaFly)</div>' : ''}
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'purchases\',this)">🚚 المشتريات والطلبيات</div>' : ''}
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'stockcount\',this)">📋 الجرد المخزني</div>' : ''}
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'items\',this)">📦 الأصناف والمخزن</div>' : ''}
     ${isAdmin
       ? '<div class="tab" onclick="swTab(\'all\',this)">📋 كل الحركات</div>'
       : '<div class="tab" onclick="swTab(\'mine\',this)">📋 حركاتي</div>'}
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'items\',this)">📦 الأصناف والمخزن</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'sum\',this)">📊 الملخص</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'budget\',this)">📑 الموازنة المالية</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'salesdb\',this)">📊 داشبورد المبيعات</div>' : ''}
@@ -3888,6 +4148,8 @@ function swTab(name, el) {
     pane.classList.add('on');
   }
   if (name==='pos')   { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
+  if (name==='purchases') { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); initPurchasesPane(); }
+  if (name==='stockcount') { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); initStockCountPane(); }
   if (name==='items') { loadItemsCatalog(); }
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
@@ -17021,6 +17283,650 @@ async function startPharmaflyBatchImport() {
 }
 
 // ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// 🚚  PHARMAFLY PURCHASES ENGINE (فواتير المشتريات والطلبيات الواردة)
+// ══════════════════════════════════════════════════════════════════
+let purCart = [];
+let purInvSeq = 1;
+
+function initPurchasesPane() {
+  const dInp = document.getElementById('purDateInp');
+  if (dInp && !dInp.value) dInp.value = todayStr();
+  const tag = document.getElementById('purInvTag');
+  if (tag) tag.textContent = 'فاتورة وارد: #PUR-' + (Date.now().toString().slice(-4));
+  setTimeout(() => document.getElementById('purItemSearchInp')?.focus(), 200);
+}
+
+function handlePurSearchInput(q) {
+  const dd = document.getElementById('purAutoDropdown');
+  if (!dd) return;
+  q = (q || '').trim().toLowerCase();
+  if (q.length < 2) { dd.style.display = 'none'; return; }
+
+  // Search in cachedItems (30,617 items)
+  const matches = (cachedItems || []).filter(it => {
+    return (it.internal_code && it.internal_code.toLowerCase().includes(q)) ||
+           (it.barcode && it.barcode.toLowerCase().includes(q)) ||
+           (it.name && it.name.toLowerCase().includes(q));
+  }).slice(0, 15);
+
+  if (!matches.length) { dd.style.display = 'none'; return; }
+
+  dd.innerHTML = matches.map(it => `
+    <div class="pos-auto-item" onclick="selectPurItem('${it.id}')" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <strong style="color:var(--text1);font-size:.9rem;">${it.name}</strong>
+        <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">كود: <span style="color:#63b3ed;">${it.internal_code||'—'}</span> | باركود: ${it.barcode||'—'}</div>
+      </div>
+      <div style="text-align:left;">
+        <span style="color:#48bb78;font-weight:800;font-size:.95rem;">${fmt(it.selling_price||0)} ج</span>
+        <div style="font-size:.74rem;color:var(--text3);">المخزن: ${it.stock_packs||0} علبة</div>
+      </div>
+    </div>
+  `).join('');
+  dd.style.display = 'block';
+}
+
+function handlePurSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    const val = (e.target.value || '').trim();
+    if (!val) return;
+    const exact = (itemsByBarcode.get(val) || itemsByCode.get(val));
+    if (exact) {
+      selectPurItem(exact.id);
+      e.target.value = '';
+      clearPurSearch();
+    }
+  }
+}
+
+function clearPurSearch() {
+  const inp = document.getElementById('purItemSearchInp');
+  if (inp) inp.value = '';
+  const dd = document.getElementById('purAutoDropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+function selectPurItem(itemId) {
+  const it = (cachedItems || []).find(x => x.id === itemId);
+  if (!it) return;
+  clearPurSearch();
+
+  // Check if item already in cart
+  const existing = purCart.find(x => x.item_id === it.id);
+  if (existing) {
+    existing.packs += 1;
+  } else {
+    const cost = it.cost_price > 0 ? it.cost_price : (it.selling_price ? Math.round(it.selling_price * 0.75 * 100) / 100 : 0);
+    const discPct = it.selling_price > 0 && cost > 0 ? Math.round((1 - (cost / it.selling_price)) * 100) : 25;
+    purCart.push({
+      item_id: it.id,
+      code: it.internal_code || '',
+      barcode: it.barcode || '',
+      name: it.name || '',
+      packs: 1,
+      bonus: 0,
+      cost_price: cost,
+      discount_pct: discPct,
+      selling_price: it.selling_price || 0,
+      expiry: it.expiry_date || '',
+    });
+  }
+  renderPurTable();
+  setTimeout(() => document.getElementById('purItemSearchInp')?.focus(), 100);
+}
+
+function renderPurTable() {
+  const body = document.getElementById('purItemsBody');
+  if (!body) return;
+
+  if (!purCart.length) {
+    body.innerHTML = `
+      <tr id="purEmptyRow">
+        <td colspan="11" style="text-align:center;padding:40px 20px;color:var(--text3);">
+          <div style="font-size:2rem;margin-bottom:6px;">🚚</div>
+          <div style="font-weight:700;">لا توجد أصناف في فاتورة الوارد</div>
+          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود الأصناف الواردة من الشركة أو ابحث بالاسم لإضافتها وتحديث المخزن</div>
+        </td>
+      </tr>`;
+    calcPurTotals();
+    return;
+  }
+
+  body.innerHTML = purCart.map((row, idx) => {
+    const rowTotal = row.packs * row.cost_price;
+    return `
+      <tr>
+        <td style="text-align:center;color:var(--text3);">${idx + 1}</td>
+        <td><strong style="color:#63b3ed;">${row.code || '—'}</strong></td>
+        <td><strong style="color:var(--text1);">${row.name}</strong></td>
+        <td style="text-align:center;">
+          <input type="number" min="1" value="${row.packs}" class="fel" style="width:70px;text-align:center;padding:4px;" onchange="updatePurItem(${idx}, 'packs', this.value)" />
+        </td>
+        <td style="text-align:center;">
+          <input type="number" min="0" value="${row.bonus}" class="fel" style="width:65px;text-align:center;padding:4px;color:#48bb78;" onchange="updatePurItem(${idx}, 'bonus', this.value)" />
+        </td>
+        <td style="text-align:center;">
+          <input type="number" step="0.01" min="0" value="${row.cost_price}" class="fel" style="width:85px;text-align:center;padding:4px;font-weight:700;" onchange="updatePurItem(${idx}, 'cost_price', this.value)" />
+        </td>
+        <td style="text-align:center;">
+          <input type="number" step="0.5" min="0" max="100" value="${row.discount_pct}" class="fel" style="width:65px;text-align:center;padding:4px;color:#f6ad55;" onchange="updatePurItem(${idx}, 'discount_pct', this.value)" />
+        </td>
+        <td style="text-align:center;">
+          <input type="number" step="0.01" min="0" value="${row.selling_price}" class="fel" style="width:85px;text-align:center;padding:4px;color:#48bb78;font-weight:700;" onchange="updatePurItem(${idx}, 'selling_price', this.value)" />
+        </td>
+        <td style="text-align:center;">
+          <input type="text" value="${row.expiry || ''}" placeholder="MM/YY" class="fel" style="width:80px;text-align:center;padding:4px;" onchange="updatePurItem(${idx}, 'expiry', this.value)" />
+        </td>
+        <td style="text-align:center;font-weight:900;color:var(--text1);font-family:monospace;">${fmt(rowTotal)} ج</td>
+        <td style="text-align:center;">
+          <button type="button" class="btn-del" onclick="removePurItem(${idx})" title="حذف">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  calcPurTotals();
+}
+
+function updatePurItem(idx, field, val) {
+  if (!purCart[idx]) return;
+  const num = parseFloat(val) || 0;
+  if (field === 'packs') purCart[idx].packs = Math.max(1, parseInt(num) || 1);
+  if (field === 'bonus') purCart[idx].bonus = Math.max(0, parseInt(num) || 0);
+  if (field === 'cost_price') {
+    purCart[idx].cost_price = Math.max(0, num);
+    if (purCart[idx].selling_price > 0) {
+      purCart[idx].discount_pct = Math.round((1 - (num / purCart[idx].selling_price)) * 100);
+    }
+  }
+  if (field === 'selling_price') {
+    purCart[idx].selling_price = Math.max(0, num);
+    if (purCart[idx].discount_pct > 0) {
+      purCart[idx].cost_price = Math.round(num * (1 - (purCart[idx].discount_pct / 100)) * 100) / 100;
+    }
+  }
+  if (field === 'discount_pct') {
+    purCart[idx].discount_pct = num;
+    if (purCart[idx].selling_price > 0) {
+      purCart[idx].cost_price = Math.round(purCart[idx].selling_price * (1 - (num / 100)) * 100) / 100;
+    }
+  }
+  if (field === 'expiry') purCart[idx].expiry = (val || '').trim();
+  renderPurTable();
+}
+
+function removePurItem(idx) {
+  purCart.splice(idx, 1);
+  renderPurTable();
+}
+
+function clearPurInvoice() {
+  if (purCart.length && !confirm('هل تريد إلغاء فاتورة المشتريات الحالية وتفريغ الجدول؟')) return;
+  purCart = [];
+  renderPurTable();
+  const supInp = document.getElementById('purSupplierInp');
+  if (supInp) supInp.value = '';
+  const invNo = document.getElementById('purInvoiceNoInp');
+  if (invNo) invNo.value = '';
+}
+
+function calcPurTotals() {
+  let totalSell = 0;
+  let totalCost = 0;
+  purCart.forEach(r => {
+    totalSell += (r.packs * (r.selling_price || 0));
+    totalCost += (r.packs * (r.cost_price || 0));
+  });
+  const totalDisc = Math.max(0, totalSell - totalCost);
+
+  const tSellEl = document.getElementById('purTotalSellingText');
+  const tDiscEl = document.getElementById('purTotalDiscText');
+  const tCostEl = document.getElementById('purTotalCostText');
+
+  if (tSellEl) tSellEl.textContent = fmt(totalSell) + ' ج';
+  if (tDiscEl) tDiscEl.textContent = fmt(totalDisc) + ' ج';
+  if (tCostEl) tCostEl.textContent = fmt(totalCost) + ' ج';
+}
+
+async function savePurchaseInvoice() {
+  if (!purCart.length) {
+    toast('⚠️ الفاتورة فارغة! أضف أصنافاً أولاً', false);
+    return;
+  }
+  const supName = (document.getElementById('purSupplierInp')?.value || '').trim();
+  if (!supName) {
+    toast('⚠️ يرجى اختيار أو كتابة اسم المورد / الشركة', false);
+    document.getElementById('purSupplierInp')?.focus();
+    return;
+  }
+  const invNo = (document.getElementById('purInvoiceNoInp')?.value || '').trim() || ('PUR-' + Date.now().toString().slice(-6));
+  const pDate = document.getElementById('purDateInp')?.value || todayStr();
+  const payMethod = document.getElementById('purPayMethod')?.value || 'credit';
+
+  let totalSell = 0;
+  let totalCost = 0;
+  purCart.forEach(r => {
+    totalSell += (r.packs * (r.selling_price || 0));
+    totalCost += (r.packs * (r.cost_price || 0));
+  });
+
+  try {
+    toast('⏳ جارٍ حفظ الفاتورة وإضافة البضاعة للمخزن...', true);
+
+    // 1. Insert into purchases table
+    const purchasePayload = {
+      id: genId(),
+      supplier_name: supName,
+      supplier_invoice_no: invNo,
+      date: pDate,
+      time: nowTimeStr(),
+      total_cost: totalCost,
+      total_selling: totalSell,
+      items_count: purCart.length,
+      items_data: purCart
+    };
+    await sb.from('purchases').insert([purchasePayload]);
+
+    // 2. Increment stock_packs for each item in Supabase items & local cache
+    for (const it of purCart) {
+      const addedPacks = (it.packs || 0) + (it.bonus || 0);
+      const match = cachedItems.find(x => x.id === it.item_id);
+      if (match) {
+        match.stock_packs = (match.stock_packs || 0) + addedPacks;
+        if (it.cost_price) match.cost_price = it.cost_price;
+        if (it.selling_price) match.selling_price = it.selling_price;
+        if (it.expiry) match.expiry_date = it.expiry;
+      }
+      // Update in Supabase
+      await sb.from('items').update({
+        stock_packs: match ? match.stock_packs : addedPacks,
+        cost_price: it.cost_price,
+        selling_price: it.selling_price,
+        expiry_date: it.expiry || null,
+        updated_at: new Date().toISOString()
+      }).eq('id', it.item_id);
+    }
+
+    // Save updated catalog to local IndexedDB
+    idbSaveCachedItems(cachedItems);
+
+    // 3. Automatically record purchase entry in entries table (type: طلبيات)
+    const entryPayload = {
+      id: genId(),
+      date: pDate,
+      type: 'طلبيات',
+      company: supName,
+      invoice: invNo,
+      amount: totalCost,
+      notes: `فاتورة وارد موردين #${invNo} (${purCart.length} صنف) — بضاعة مضافة للمخزن`,
+      uid: me?.uid || null,
+      uname: me?.name || 'مدير',
+      time: nowTimeStr(),
+      ts: Date.now()
+    };
+    await sb.from('entries').insert([entryPayload]);
+    entries.unshift(entryPayload);
+
+    toast(`✅ تم حفظ فاتورة ${supName} بنجاح وإضافة الكميات للمخزن!`);
+    purCart = [];
+    renderPurTable();
+    updateItemsKpis();
+    renderItemsTable();
+    renderAll();
+  } catch(err) {
+    console.error('savePurchaseInvoice error:', err);
+    toast('❌ خطأ أثناء حفظ الفاتورة: ' + (err.message || err), false);
+  }
+}
+
+async function openPurchasesHistoryModal() {
+  try {
+    const { data, error } = await sb.from('purchases').select('*').order('created_at', { ascending: false }).limit(20);
+    if (error) throw error;
+    if (!data || !data.length) {
+      toast('لا توجد فواتير مشتريات سابقة حتى الآن');
+      return;
+    }
+    const html = `
+      <div style="font-size:1.15rem;font-weight:900;margin-bottom:12px;color:var(--text1);">📜 سجل فواتير المشتريات والطلبيات الواردة</div>
+      <div style="max-height:400px;overflow-y:auto;">
+        <table class="pos-table">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>المورد</th>
+              <th>رقم الفاتورة</th>
+              <th>الأصناف</th>
+              <th>التكلفة الصافية</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(p => `
+              <tr>
+                <td>${p.date} ${p.time||''}</td>
+                <td><strong>${p.supplier_name||'—'}</strong></td>
+                <td>${p.supplier_invoice_no||'—'}</td>
+                <td style="text-align:center;">${p.items_count||0}</td>
+                <td><strong style="color:#48bb78;">${fmt(p.total_cost||0)} ج</strong></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    openCustomModal(html);
+  } catch(e) {
+    toast('خطأ في جلب الفواتير: ' + e.message, false);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 📋  PHARMAFLY STOCK COUNT ENGINE (الجرد المخزني الفعلي ومطابقة الأرصدة)
+// ══════════════════════════════════════════════════════════════════
+let scCurrentItem = null;
+let scAuditList = [];
+
+function initStockCountPane() {
+  setTimeout(() => document.getElementById('scSearchInp')?.focus(), 200);
+}
+
+function handleScSearchInput(q) {
+  const dd = document.getElementById('scAutoDropdown');
+  if (!dd) return;
+  q = (q || '').trim().toLowerCase();
+  if (q.length < 2) { dd.style.display = 'none'; return; }
+
+  const matches = (cachedItems || []).filter(it => {
+    return (it.internal_code && it.internal_code.toLowerCase().includes(q)) ||
+           (it.barcode && it.barcode.toLowerCase().includes(q)) ||
+           (it.name && it.name.toLowerCase().includes(q));
+  }).slice(0, 15);
+
+  if (!matches.length) { dd.style.display = 'none'; return; }
+
+  dd.innerHTML = matches.map(it => `
+    <div class="pos-auto-item" onclick="selectScItem('${it.id}')" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <strong style="color:var(--text1);font-size:.9rem;">${it.name}</strong>
+        <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">كود: <span style="color:#63b3ed;">${it.internal_code||'—'}</span> | رف: ${it.shelf_location||'—'}</div>
+      </div>
+      <div style="text-align:left;">
+        <span style="color:#f6ad55;font-weight:800;">${it.stock_packs||0} علبة</span>
+        <div style="font-size:.74rem;color:var(--text3);">${fmt(it.selling_price||0)} ج</div>
+      </div>
+    </div>
+  `).join('');
+  dd.style.display = 'block';
+}
+
+function handleScSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    const val = (e.target.value || '').trim();
+    if (!val) return;
+    const exact = (itemsByBarcode.get(val) || itemsByCode.get(val));
+    if (exact) {
+      selectScItem(exact.id);
+      e.target.value = '';
+      clearScSearch();
+    }
+  }
+}
+
+function clearScSearch() {
+  const inp = document.getElementById('scSearchInp');
+  if (inp) inp.value = '';
+  const dd = document.getElementById('scAutoDropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+function selectScItem(itemId) {
+  const it = (cachedItems || []).find(x => x.id === itemId);
+  if (!it) return;
+  clearScSearch();
+  scCurrentItem = it;
+
+  const card = document.getElementById('scInspectCard');
+  if (card) card.style.display = 'block';
+
+  document.getElementById('scItemName').textContent = it.name;
+  document.getElementById('scItemCode').textContent = it.internal_code || '—';
+  document.getElementById('scItemShelf').textContent = it.shelf_location || '—';
+  document.getElementById('scItemPrice').textContent = fmt(it.selling_price || 0) + ' ج';
+  document.getElementById('scSysPacks').textContent = it.stock_packs || 0;
+  document.getElementById('scSysUnits').textContent = it.stock_units || 0;
+
+  const actP = document.getElementById('scActPacksInp');
+  const actU = document.getElementById('scActUnitsInp');
+  if (actP) { actP.value = it.stock_packs || 0; actP.select(); actP.focus(); }
+  if (actU) actU.value = it.stock_units || 0;
+
+  calcScDiscrepancy();
+}
+
+function calcScDiscrepancy() {
+  if (!scCurrentItem) return;
+  const sysP = scCurrentItem.stock_packs || 0;
+  const sysU = scCurrentItem.stock_units || 0;
+  const actP = parseInt(document.getElementById('scActPacksInp')?.value) || 0;
+  const actU = parseInt(document.getElementById('scActUnitsInp')?.value) || 0;
+
+  const pu = Math.max(1, scCurrentItem.pack_units || 1);
+  const sysTotalUnits = (sysP * pu) + sysU;
+  const actTotalUnits = (actP * pu) + actU;
+  const diffUnits = actTotalUnits - sysTotalUnits;
+
+  const badge = document.getElementById('scDiscrepancyBadge');
+  if (!badge) return;
+
+  if (diffUnits === 0) {
+    badge.textContent = '✅ مطابق تماماً (0)';
+    badge.style.color = '#48bb78';
+    badge.style.background = 'rgba(72,187,120,.15)';
+  } else if (diffUnits < 0) {
+    const packsDeficit = Math.abs(diffUnits / pu).toFixed(1);
+    const valDeficit = Math.abs(diffUnits * (scCurrentItem.unit_price || (scCurrentItem.selling_price / pu)));
+    badge.textContent = `🔴 عجز: -${packsDeficit} علبة (-${fmt(valDeficit)} ج)`;
+    badge.style.color = '#fc8181';
+    badge.style.background = 'rgba(245,101,101,.15)';
+  } else {
+    const packsSurplus = (diffUnits / pu).toFixed(1);
+    const valSurplus = (diffUnits * (scCurrentItem.unit_price || (scCurrentItem.selling_price / pu)));
+    badge.textContent = `🔵 زيادة: +${packsSurplus} علبة (+${fmt(valSurplus)} ج)`;
+    badge.style.color = '#63b3ed';
+    badge.style.background = 'rgba(99,179,237,.15)';
+  }
+}
+
+function addCurrentItemToStockAudit() {
+  if (!scCurrentItem) return;
+  const sysP = scCurrentItem.stock_packs || 0;
+  const sysU = scCurrentItem.stock_units || 0;
+  const actP = parseInt(document.getElementById('scActPacksInp')?.value) || 0;
+  const actU = parseInt(document.getElementById('scActUnitsInp')?.value) || 0;
+
+  const pu = Math.max(1, scCurrentItem.pack_units || 1);
+  const sysTotalUnits = (sysP * pu) + sysU;
+  const actTotalUnits = (actP * pu) + actU;
+  const diffUnits = actTotalUnits - sysTotalUnits;
+  const diffPacks = diffUnits / pu;
+  const diffVal = diffUnits * (scCurrentItem.unit_price || (scCurrentItem.selling_price / pu));
+
+  // Check if item already in audit list
+  const existingIdx = scAuditList.findIndex(x => x.item_id === scCurrentItem.id);
+  const auditRow = {
+    item_id: scCurrentItem.id,
+    code: scCurrentItem.internal_code || '',
+    name: scCurrentItem.name || '',
+    shelf: scCurrentItem.shelf_location || '—',
+    sys_packs: sysP,
+    sys_units: sysU,
+    act_packs: actP,
+    act_units: actU,
+    diff_packs: diffPacks,
+    diff_val: diffVal,
+    status: diffUnits === 0 ? 'matching' : (diffUnits < 0 ? 'deficit' : 'surplus')
+  };
+
+  if (existingIdx !== -1) {
+    scAuditList[existingIdx] = auditRow;
+  } else {
+    scAuditList.push(auditRow);
+  }
+
+  // Hide inspect card & focus search
+  document.getElementById('scInspectCard').style.display = 'none';
+  scCurrentItem = null;
+  renderScAuditTable();
+  setTimeout(() => document.getElementById('scSearchInp')?.focus(), 150);
+}
+
+function renderScAuditTable() {
+  const body = document.getElementById('scAuditBody');
+  if (!body) return;
+
+  if (!scAuditList.length) {
+    body.innerHTML = `
+      <tr id="scEmptyRow">
+        <td colspan="10" style="text-align:center;padding:40px 20px;color:var(--text3);">
+          <div style="font-size:2rem;margin-bottom:6px;">📋</div>
+          <div style="font-weight:700;">كشف الجرد فارغ حالياً</div>
+          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي دواء أو ابحث عنه لإدخال رصيده الفعلي ومطابقته</div>
+        </td>
+      </tr>`;
+    calcScTotals();
+    return;
+  }
+
+  body.innerHTML = scAuditList.map((r, idx) => {
+    let statusLabel = '<span style="color:#48bb78;font-weight:800;">مطابق</span>';
+    let diffColor = 'color:var(--text3);';
+    if (r.status === 'deficit') {
+      statusLabel = '<span style="color:#fc8181;font-weight:800;">عجز</span>';
+      diffColor = 'color:#fc8181;';
+    } else if (r.status === 'surplus') {
+      statusLabel = '<span style="color:#63b3ed;font-weight:800;">زيادة</span>';
+      diffColor = 'color:#63b3ed;';
+    }
+
+    return `
+      <tr>
+        <td style="text-align:center;color:var(--text3);">${idx + 1}</td>
+        <td><strong style="color:#63b3ed;">${r.code || '—'}</strong></td>
+        <td><strong style="color:var(--text1);">${r.name}</strong></td>
+        <td style="text-align:center;color:var(--text3);">${r.shelf}</td>
+        <td style="text-align:center;">${r.sys_packs} ع | ${r.sys_units} ق</td>
+        <td style="text-align:center;"><strong style="color:var(--text1);">${r.act_packs} ع | ${r.act_units} ق</strong></td>
+        <td style="text-align:center;font-weight:800;${diffColor}">${r.diff_packs > 0 ? '+' : ''}${r.diff_packs.toFixed(1)}</td>
+        <td style="text-align:center;font-weight:800;${diffColor}">${fmt(r.diff_val)} ج</td>
+        <td style="text-align:center;">${statusLabel}</td>
+        <td style="text-align:center;">
+          <button type="button" class="btn-del" onclick="removeScAuditItem(${idx})" title="حذف">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  calcScTotals();
+}
+
+function removeScAuditItem(idx) {
+  scAuditList.splice(idx, 1);
+  renderScAuditTable();
+}
+
+function clearStockCountSession() {
+  if (scAuditList.length && !confirm('هل تريد إلغاء جلسة الجرد الحالية وتفريغ الكشف؟')) return;
+  scAuditList = [];
+  renderScAuditTable();
+}
+
+function calcScTotals() {
+  let deficit = 0;
+  let surplus = 0;
+  scAuditList.forEach(r => {
+    if (r.diff_val < 0) deficit += Math.abs(r.diff_val);
+    else if (r.diff_val > 0) surplus += r.diff_val;
+  });
+  const net = surplus - deficit;
+
+  const cntEl = document.getElementById('scTotalCountedText');
+  const defEl = document.getElementById('scTotalDeficitText');
+  const surEl = document.getElementById('scTotalSurplusText');
+  const netEl = document.getElementById('scNetDiscrepancyText');
+
+  if (cntEl) cntEl.textContent = scAuditList.length + ' صنف';
+  if (defEl) defEl.textContent = fmt(deficit) + ' ج';
+  if (surEl) surEl.textContent = fmt(surplus) + ' ج';
+  if (netEl) {
+    netEl.textContent = (net >= 0 ? '+' : '') + fmt(net) + ' ج';
+    netEl.style.color = (net === 0 ? 'var(--text1)' : (net > 0 ? '#63b3ed' : '#fc8181'));
+  }
+}
+
+async function commitStockCountAdjustments() {
+  if (!scAuditList.length) {
+    toast('⚠️ كشف الجرد فارغ! أضف أصنافاً أولاً', false);
+    return;
+  }
+  if (!confirm(`هل أنت متأكد من اعتماد وتسوية الجرد لـ ${scAuditList.length} صنف؟\nسيتم تحديث أرصدة المخزن الفعلية في قاعدة البيانات فوراً.`)) return;
+
+  try {
+    toast('⏳ جارٍ تسوية الأرصدة وتحديث المخزن...', true);
+
+    for (const r of scAuditList) {
+      const match = cachedItems.find(x => x.id === r.item_id);
+      if (match) {
+        match.stock_packs = r.act_packs;
+        match.stock_units = r.act_units;
+      }
+      await sb.from('items').update({
+        stock_packs: r.act_packs,
+        stock_units: r.act_units,
+        updated_at: new Date().toISOString()
+      }).eq('id', r.item_id);
+    }
+
+    // Save updated catalog to local IndexedDB
+    idbSaveCachedItems(cachedItems);
+
+    toast(`✅ تم اعتماد وتسوية الجرد لـ ${scAuditList.length} صنف بنجاح!`);
+    scAuditList = [];
+    renderScAuditTable();
+    updateItemsKpis();
+    renderItemsTable();
+  } catch(err) {
+    console.error('commitStockCountAdjustments error:', err);
+    toast('❌ خطأ أثناء تسوية الجرد: ' + (err.message || err), false);
+  }
+}
+
+function exportStockCountXLSX() {
+  if (!scAuditList.length) {
+    toast('لا توجد أصناف لتصديرها في كشف الجرد', false);
+    return;
+  }
+  const rows = scAuditList.map((r, i) => ({
+    'م': i + 1,
+    'كود الصيدلية': r.code,
+    'اسم الصنف': r.name,
+    'مكان الرف': r.shelf,
+    'رصيد دفتري علب': r.sys_packs,
+    'رصيد دفتري أقراص': r.sys_units,
+    'رصيد فعلي علب': r.act_packs,
+    'رصيد فعلي أقراص': r.act_units,
+    'الفارق بالعلب': r.diff_packs,
+    'قيمة الفارق بالجنيه': r.diff_val,
+    'الحالة': r.status === 'matching' ? 'مطابق' : (r.status === 'deficit' ? 'عجز' : 'زيادة')
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "كشف_الجرد_الفعلي");
+  XLSX.writeFile(wb, `كشف_جرد_المخزن_${todayStr()}.xlsx`);
+  toast('✅ تم تصدير كشف الجرد إكسيل بنجاح');
+}
+
 //  ITEMS MASTER CATALOG (إدارة دليل الأصناف والمخزن)
 // ══════════════════════════════════════════════════════════════════
 function idbItemsOpen() {
