@@ -18,14 +18,21 @@ CREATE TABLE IF NOT EXISTS items (
   stock_units     INTEGER NOT NULL DEFAULT 0,    -- رصيد الأشرطة المتبقية
   expiry_date     TEXT,                          -- تاريخ الصلاحية (مثال: 12/2028)
   shelf_location  TEXT,                          -- مكان الرف بالصيدلية
+  parent_code     TEXT,                          -- كود العلبة الأصلية في حال كان صنف قرص أو وحدة تابعة
+  unit_ratio      NUMERIC DEFAULT 1,             -- عدد الأقراص المخصومة من الأصل (مثلاً 1)
   is_active       BOOLEAN DEFAULT TRUE,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- تحديث الأعمدة في حال كان الجدول موجوداً مسبقاً
+ALTER TABLE items ADD COLUMN IF NOT EXISTS parent_code TEXT;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS unit_ratio  NUMERIC DEFAULT 1;
+
 -- فهارس فائقة السرعة للأصناف (0ms Indexing للباركود والأكواد والاسم)
 CREATE INDEX IF NOT EXISTS idx_items_barcode       ON items(barcode);
 CREATE INDEX IF NOT EXISTS idx_items_internal_code ON items(internal_code);
+CREATE INDEX IF NOT EXISTS idx_items_parent_code   ON items(parent_code);
 CREATE INDEX IF NOT EXISTS idx_items_name          ON items(name);
 
 -- 2. جدول فواتير المبيعات والمرتجات (Sales & Returns)
@@ -141,6 +148,8 @@ DECLARE
   v_items       JSONB;
   v_item        JSONB;
   v_item_id     TEXT;
+  v_parent_code TEXT;
+  v_target_id   TEXT;
   v_packs       INT;
   v_units       INT;
   v_curr_packs  INT;
@@ -192,47 +201,72 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
 
-  -- 2. تحديث رصيد كل صنف في المخزن (خصم عند البيع والتوصيل والآجل، وإضافة عند المرتجع)
+  -- 2. تحديث رصيد كل صنف في المخزن (مع دعم الأصناف التابعة parent_code وفك العلب التلقائي)
   FOR v_item IN SELECT * FROM jsonb_array_elements(v_items)
   LOOP
-    v_item_id := v_item->>'item_id';
-    v_packs   := COALESCE((v_item->>'qty_packs')::INT, 0);
-    v_units   := COALESCE((v_item->>'qty_units')::INT, 0);
+    v_item_id     := v_item->>'item_id';
+    v_parent_code := v_item->>'parent_code';
+    v_packs       := COALESCE((v_item->>'qty_packs')::INT, 0);
+    v_units       := COALESCE((v_item->>'qty_units')::INT, 0);
 
-    IF v_item_id IS NOT NULL THEN
-      SELECT stock_packs, stock_units, COALESCE(pack_units, 1)
-      INTO v_curr_packs, v_curr_units, v_pack_units
+    -- إذا كان الصنف له parent_code (صنف قرص/شريط تابع)، نوجه الخصم للعلبة الأصلية
+    IF v_parent_code IS NOT NULL AND v_parent_code <> '' THEN
+      SELECT id, stock_packs, stock_units, COALESCE(pack_units, 1)
+      INTO v_target_id, v_curr_packs, v_curr_units, v_pack_units
+      FROM items
+      WHERE internal_code = v_parent_code
+      FOR UPDATE;
+    ELSIF v_item_id IS NOT NULL THEN
+      SELECT id, stock_packs, stock_units, COALESCE(pack_units, 1)
+      INTO v_target_id, v_curr_packs, v_curr_units, v_pack_units
       FROM items
       WHERE id = v_item_id
       FOR UPDATE;
+    ELSE
+      v_target_id := NULL;
+    END IF;
 
-      IF FOUND THEN
-        v_tot_units := (v_curr_packs * v_pack_units) + v_curr_units;
-        v_delta_units := (v_packs * v_pack_units) + v_units;
+    IF v_target_id IS NOT NULL THEN
+      v_tot_units := (v_curr_packs * v_pack_units) + v_curr_units;
+      v_delta_units := (v_packs * v_pack_units) + v_units;
 
-        IF v_type = 'sale' THEN
-          v_new_units := v_tot_units - v_delta_units;
-        ELSE
-          v_new_units := v_tot_units + v_delta_units;
-        END IF;
-
-        IF v_new_units < 0 THEN
-          v_new_p := - ( (abs(v_new_units) + v_pack_units - 1) / v_pack_units );
-          v_new_u := 0;
-        ELSE
-          v_new_p := v_new_units / v_pack_units;
-          v_new_u := v_new_units % v_pack_units;
-        END IF;
-
-        UPDATE items
-        SET stock_packs = v_new_p,
-            stock_units = v_new_u,
-            updated_at = NOW()
-        WHERE id = v_item_id;
+      IF v_type = 'sale' THEN
+        v_new_units := v_tot_units - v_delta_units;
+      ELSE
+        v_new_units := v_tot_units + v_delta_units;
       END IF;
+
+      IF v_new_units < 0 THEN
+        v_new_p := - ( (abs(v_new_units) + v_pack_units - 1) / v_pack_units );
+        v_new_u := 0;
+      ELSE
+        v_new_p := v_new_units / v_pack_units;
+        v_new_u := v_new_units % v_pack_units;
+      END IF;
+
+      UPDATE items
+      SET stock_packs = v_new_p,
+          stock_units = v_new_u,
+          updated_at = NOW()
+      WHERE id = v_target_id;
     END IF;
   END LOOP;
 
   RETURN jsonb_build_object('success', true, 'invoice_no', v_inv_no, 'id', v_sale_id);
 END;
 $$;
+
+-- 8. جدول الأصناف السريعة المخصصة (Handy Items Grid)
+CREATE TABLE IF NOT EXISTS handy_items (
+  id              BIGSERIAL PRIMARY KEY,
+  item_code       TEXT NOT NULL,
+  display_name    TEXT NOT NULL,
+  category        TEXT DEFAULT 'مسكنات',
+  unit_type       TEXT DEFAULT 'unit',  -- 'unit' (قرص/شريط) أو 'pack' (علبة)
+  sort_order      INTEGER DEFAULT 0,
+  is_active       BOOLEAN DEFAULT TRUE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE handy_items DISABLE ROW LEVEL SECURITY;
+ALTER PUBLICATION supabase_realtime ADD TABLE handy_items;

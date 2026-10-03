@@ -1807,6 +1807,7 @@ function ensureXLSX() {
           <button type="button" class="pos-pay-btn" data-pay="credit" onclick="setPosPayMethod('credit')">⏳ آجل [R]</button>
         </div>
         <button type="button" class="btn btn-sm btn-ghost" onclick="openPosHistoryModal()" title="سجل فواتير اليوم">📜 فواتير اليوم</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="openPosHandyItemsModal()" style="background:linear-gradient(135deg,#d69e2e,#dd6b20);color:white;font-weight:900;border:none;box-shadow:0 3px 12px rgba(221,107,32,.35);" title="الأصناف السريعة والبيع بالقرص [*]">⚡ أصناف سريعة [*]</button>
       </div>
     </div>
 
@@ -15965,6 +15966,13 @@ function handlePosSearchInput(val) {
 }
 
 function handlePosSearchKeydown(e) {
+  if (e.key === '*' || e.code === 'NumpadMultiply') {
+    e.preventDefault();
+    e.target.value = '';
+    closePosAutoDropdown();
+    openPosHandyItemsModal();
+    return;
+  }
   if (e.key === 'Enter') {
     e.preventDefault();
     const val = (e.target.value || '').trim();
@@ -16008,21 +16016,24 @@ function posSelectFromAuto(itemId) {
 
 // ── إضافة صنف للسلة ──
 function posAddToCart(item, unitType = 'pack', qty = 1) {
-  const existing = posCart.find(r => r.item_id === item.id && r.unit_type === unitType);
+  const existing = posCart.find(r => (r.item_id === item.id || (item.internal_code && r.internal_code === item.internal_code)) && r.unit_type === unitType);
   if (existing) {
     existing.qty += qty;
   } else {
-    const isStrip = unitType === 'unit' && (item.pack_units || 1) > 1;
-    const price = isStrip ? (item.unit_price || (item.selling_price / item.pack_units)) : item.selling_price;
+    const isStrip = unitType === 'unit' && ((item.pack_units || 1) > 1 || item.parent_code);
+    const price = isStrip ? (item.unit_price || (item.selling_price / (item.pack_units || 1))) : item.selling_price;
+    const cost = isStrip ? (item.cost_price ? item.cost_price / (item.pack_units || 1) : 0) : (item.cost_price || 0);
     posCart.push({
       item_id: item.id,
       internal_code: item.internal_code || '',
+      parent_code: item.parent_code || null,
       barcode: item.barcode || '',
       name: item.name,
       unit_type: unitType, // 'pack' أو 'unit'
       pack_units: item.pack_units || 1,
       pack_price: item.selling_price || 0,
-      unit_price: item.unit_price || 0,
+      unit_price: item.unit_price || (item.selling_price / (item.pack_units || 1)),
+      cost_price: cost,
       price: price || 0,
       qty: qty,
       discount_pct: 0,
@@ -16045,22 +16056,22 @@ function updateActiveItemDetails(item) {
   const expEl = document.getElementById('posItemDetailExpiry');
   if (nameEl) nameEl.textContent = item ? item.name : 'لم يتم تحديد صنف';
   if (stockEl) stockEl.textContent = item ? `${item.stock_packs} علبة : ${item.stock_units} أجزاء` : '—';
-  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1} شريط بالعلبة` : '—';
+  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1} جزء/قرص بالعلبة` : '—';
   if (shelfEl) shelfEl.textContent = item ? (item.shelf_location || 'غير محدد') : '—';
   if (expEl) expEl.textContent = item ? (item.expiry_date || 'غير محدد') : '—';
 }
 
-// ── تبديل الوحدة (علبة 📦 / شريط 💊) ──
+// ── تبديل الوحدة (علبة 📦 / قرص وشريط 💊) ──
 function posToggleUnit(idx) {
   const row = posCart[idx];
   if (!row) return;
-  if ((row.pack_units || 1) <= 1) {
-    toast('ℹ️ هذا الصنف لا يحتوي على أشرطة متعددة بالعلبة');
+  if ((row.pack_units || 1) <= 1 && !row.parent_code) {
+    toast('ℹ️ هذا الصنف لا يحتوي على أشرطة أو أجزاء متعددة بالعلبة');
     return;
   }
   row.unit_type = row.unit_type === 'pack' ? 'unit' : 'pack';
   if (row.unit_type === 'unit') {
-    row.price = row.unit_price || (row.pack_price / row.pack_units);
+    row.price = row.unit_price || (row.pack_price / (row.pack_units || 1));
   } else {
     row.price = row.pack_price;
   }
@@ -16138,8 +16149,8 @@ function renderPosCart() {
           <div style="font-size:.72rem;color:var(--text3);">رصيد: ${row.stock_packs}:${row.stock_units}</div>
         </td>
         <td style="text-align:center;">
-          <button type="button" class="pos-unit-btn ${isStrip ? 'strip' : 'pack'}" onclick="posToggleUnit(${idx})" title="انقر للتبديل بين علبة وشريط">
-            ${isStrip ? '💊 شريط' : '📦 علبة'}
+          <button type="button" class="pos-unit-btn ${isStrip ? 'strip' : 'pack'}" onclick="posToggleUnit(${idx})" title="انقر للتبديل بين علبة وقرص/شريط">
+            ${isStrip ? '💊 قرص/شريط' : '📦 علبة'}
           </button>
         </td>
         <td style="text-align:center;">
@@ -16242,6 +16253,7 @@ async function executePosCheckoutFinal(staff, printReceipt = true) {
     return {
       item_id: r.item_id,
       internal_code: r.internal_code,
+      parent_code: r.parent_code || null,
       barcode: r.barcode,
       name: r.name,
       unit_type: r.unit_type,
@@ -16341,17 +16353,36 @@ async function executePosCheckoutFinal(staff, printReceipt = true) {
       }
     }
 
-    // 2. خصم المخزون المحلي اللحظي في ذاكرة المتصفح
+    // 2. خصم المخزون المحلي اللحظي في ذاكرة المتصفح (مع دعم الأصناف التابعة وفك العلب)
     itemsData.forEach(saleItem => {
-      const target = cachedItems.find(it => it.id === saleItem.item_id);
+      let target = cachedItems.find(it => it.id === saleItem.item_id);
+      // إذا كان الصنف له parent_code (قرص/شريط تابع) يتم توجيه الخصم إلى الصنف الأصل
+      if (saleItem.parent_code) {
+        const parent = cachedItems.find(it => it.internal_code === saleItem.parent_code);
+        if (parent) target = parent;
+      }
       if (target) {
         const packUnits = target.pack_units || 1;
         let totUnits = (target.stock_packs * packUnits) + target.stock_units;
         const delta = (saleItem.qty_packs * packUnits) + saleItem.qty_units;
         if (posMode === 'sale') totUnits -= delta;
         else totUnits += delta;
-        target.stock_packs = Math.floor(totUnits / packUnits);
-        target.stock_units = totUnits % packUnits;
+
+        // فك علبة تلقائياً عند نفاذ الأقراص المفتوحة
+        if (totUnits < 0) {
+          target.stock_packs = -Math.ceil(Math.abs(totUnits) / packUnits);
+          target.stock_units = 0;
+        } else {
+          target.stock_packs = Math.floor(totUnits / packUnits);
+          target.stock_units = totUnits % packUnits;
+        }
+
+        // تحديث السحابة بالرصيد الجديد للصنف
+        sb.from('items').update({
+          stock_packs: target.stock_packs,
+          stock_units: target.stock_units,
+          updated_at: new Date().toISOString()
+        }).eq('id', target.id).catch(()=>{});
       }
     });
 
@@ -17420,9 +17451,205 @@ async function cancelDeliveryQuickReturn(saleId) {
   }
 }
 
+// ── 5.5. منظومة الأصناف السريعة والبيع بالقرص (Handy Items Grid & Tablet Deduction) ──
+let activeHandyCat = 'all';
+
+let defaultHandyItems = [
+  { code: '40083', parent_code: '46224', name: 'باي الكوفان (قرص واحد)', cat: 'مسكنات', unit_type: 'unit', price: 2.70, pack_units: 30 },
+  { code: '46224', parent_code: null, name: 'باي الكوفان 30 (علبة)', cat: 'مسكنات', unit_type: 'pack', price: 81.00, pack_units: 30 },
+  { code: 'PAN-EXT-T', parent_code: 'PAN-EXT', name: 'بنادول إكسترا (قرص)', cat: 'مسكنات', unit_type: 'unit', price: 2.50, pack_units: 24 },
+  { code: 'PAN-EXT', parent_code: null, name: 'بنادول إكسترا (شريط)', cat: 'مسكنات', unit_type: 'unit', price: 17.50, pack_units: 2 },
+  { code: 'CAT-50-T', parent_code: 'CAT-50', name: 'كتافلام 50 (قرص)', cat: 'مسكنات', unit_type: 'unit', price: 3.50, pack_units: 20 },
+  { code: 'CAT-50', parent_code: null, name: 'كتافلام 50 (شريط)', cat: 'مسكنات', unit_type: 'unit', price: 28.00, pack_units: 2 },
+  { code: 'BRU-600', parent_code: null, name: 'بروفين 600 (شريط)', cat: 'مسكنات', unit_type: 'unit', price: 16.00, pack_units: 3 },
+  { code: 'CONG-T', parent_code: 'CONG', name: 'كونجستال (قرص)', cat: 'برد ومغص', unit_type: 'unit', price: 2.00, pack_units: 20 },
+  { code: 'CONG', parent_code: null, name: 'كونجستال (شريط)', cat: 'برد ومغص', unit_type: 'unit', price: 13.00, pack_units: 2 },
+  { code: 'ANTIN', parent_code: null, name: 'انتينال (شريط)', cat: 'برد ومغص', unit_type: 'unit', price: 14.00, pack_units: 2 },
+  { code: 'SPASM', parent_code: null, name: 'سبازموبيرالجون (شريط)', cat: 'برد ومغص', unit_type: 'unit', price: 10.00, pack_units: 2 },
+  { code: 'STR-LOZ', parent_code: null, name: 'ستربسلز (باكت استحلاب)', cat: 'برد ومغص', unit_type: 'unit', price: 35.00, pack_units: 2 },
+  { code: 'SYR-3', parent_code: null, name: 'سرنجة 3 سم', cat: 'مستلزمات', unit_type: 'pack', price: 3.50, pack_units: 1 },
+  { code: 'SYR-5', parent_code: null, name: 'سرنجة 5 سم', cat: 'مستلزمات', unit_type: 'pack', price: 4.00, pack_units: 1 },
+  { code: 'SYR-INS', parent_code: null, name: 'سرنجة أنسولين 100 وحدة', cat: 'مستلزمات', unit_type: 'pack', price: 5.00, pack_units: 1 },
+  { code: 'PLAST', parent_code: null, name: 'بلاستر طبي شريط', cat: 'مستلزمات', unit_type: 'pack', price: 1.00, pack_units: 1 },
+  { code: 'GAUZE', parent_code: null, name: 'شاش معقم كيس', cat: 'مستلزمات', unit_type: 'pack', price: 5.00, pack_units: 1 },
+  { code: 'COTTON', parent_code: null, name: 'قطن طبي صغير', cat: 'مستلزمات', unit_type: 'pack', price: 10.00, pack_units: 1 },
+  { code: 'MASK', parent_code: null, name: 'كمامة طبية معقمة', cat: 'مستلزمات', unit_type: 'pack', price: 2.00, pack_units: 1 },
+  { code: 'BP-SRV', parent_code: null, name: 'قياس ضغط الدم', cat: 'خدمات', unit_type: 'service', price: 10.00, pack_units: 1 },
+  { code: 'GLU-SRV', parent_code: null, name: 'قياس سكر (شريط + شكاكة)', cat: 'خدمات', unit_type: 'service', price: 15.00, pack_units: 1 },
+  { code: 'INJ-SRV', parent_code: null, name: 'إعطاء حقنة عضل', cat: 'خدمات', unit_type: 'service', price: 10.00, pack_units: 1 }
+];
+
+let handyItemsList = [];
+
+function initHandyItems() {
+  const saved = localStorage.getItem('asafra_handy_items');
+  if (saved) {
+    try { handyItemsList = JSON.parse(saved); } catch(e) { handyItemsList = defaultHandyItems; }
+  } else {
+    handyItemsList = defaultHandyItems;
+  }
+}
+
+function openPosHandyItemsModal() {
+  initHandyItems();
+  const m = document.getElementById('posHandyItemsModal');
+  if (m) m.classList.add('on');
+  const inp = document.getElementById('posHandySearchInp');
+  if (inp) { inp.value = ''; inp.focus(); }
+  renderHandyItemsGrid();
+}
+
+function closePosHandyItemsModal() {
+  const m = document.getElementById('posHandyItemsModal');
+  if (m) m.classList.remove('on');
+  const searchInp = document.getElementById('posBarcodeInput');
+  if (searchInp) searchInp.focus();
+}
+
+function togglePosHandyItemsModal() {
+  const m = document.getElementById('posHandyItemsModal');
+  if (m && m.classList.contains('on')) {
+    closePosHandyItemsModal();
+  } else {
+    openPosHandyItemsModal();
+  }
+}
+
+function setHandyCat(cat, btn) {
+  activeHandyCat = cat;
+  document.querySelectorAll('.handy-tab-btn').forEach(b => {
+    b.classList.remove('on', 'btn-primary');
+    b.classList.add('btn-ghost');
+  });
+  if (btn) {
+    btn.classList.add('on', 'btn-primary');
+    btn.classList.remove('btn-ghost');
+  }
+  renderHandyItemsGrid();
+}
+
+function renderHandyItemsGrid() {
+  const grid = document.getElementById('posHandyItemsGrid');
+  if (!grid) return;
+  const q = (document.getElementById('posHandySearchInp')?.value || '').trim().toLowerCase();
+
+  const filtered = handyItemsList.filter(it => {
+    const matchCat = (activeHandyCat === 'all' || it.cat === activeHandyCat);
+    const matchSearch = (!q || it.name.toLowerCase().includes(q) || it.code.toLowerCase().includes(q));
+    return matchCat && matchSearch;
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3);">لا توجد أصناف سريعة مطابقة</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map((it, idx) => {
+    const isUnit = it.unit_type === 'unit';
+    const isService = it.unit_type === 'service';
+    const unitBadge = isService ? '🩺 خدمة' : isUnit ? '💊 قرص/شريط' : '📦 علبة';
+    const unitBg = isService ? 'rgba(72,187,120,.2)' : isUnit ? 'rgba(237,137,54,.2)' : 'rgba(49,130,206,.2)';
+    const unitColor = isService ? '#68d391' : isUnit ? '#f6ad55' : '#63b3ed';
+    const shortcutNum = (idx < 9) ? (idx + 1) : '';
+
+    return `
+      <div onclick="selectHandyItem(${idx})" class="handy-card"
+        style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;gap:8px;transition:all .15s;position:relative;user-select:none;"
+        onmouseenter="this.style.borderColor='var(--accent)';this.style.transform='translateY(-2px)';"
+        onmouseleave="this.style.borderColor='var(--border2)';this.style.transform='none';">
+        
+        ${shortcutNum ? `<span style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,.08);color:var(--text3);font-size:.7rem;font-weight:900;border-radius:6px;padding:1px 6px;">[${shortcutNum}]</span>` : ''}
+
+        <div style="font-weight:900;font-size:.9rem;color:var(--text1);line-height:1.35;padding-left:${shortcutNum ? '24px' : '0'};">
+          ${esc(it.name)}
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <span style="font-size:.72rem;background:${unitBg};color:${unitColor};border-radius:6px;padding:2px 7px;font-weight:800;">
+            ${unitBadge}
+          </span>
+          <span style="font-weight:900;font-size:1.05rem;color:#68d391;">
+            ${fmt(it.price)} <small style="font-size:.75rem;">ج</small>
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectHandyItem(filteredIdx) {
+  const q = (document.getElementById('posHandySearchInp')?.value || '').trim().toLowerCase();
+  const filtered = handyItemsList.filter(it => {
+    const matchCat = (activeHandyCat === 'all' || it.cat === activeHandyCat);
+    const matchSearch = (!q || it.name.toLowerCase().includes(q) || it.code.toLowerCase().includes(q));
+    return matchCat && matchSearch;
+  });
+
+  const handy = filtered[filteredIdx];
+  if (!handy) return;
+
+  // فحص هل الصنف موجود بالفعل في قاعدة الأصناف المستوردة (cachedItems)
+  let matchedItem = cachedItems.find(it => it.internal_code === handy.code || it.internal_code === handy.parent_code);
+
+  if (matchedItem) {
+    posAddToCart({
+      id: matchedItem.id,
+      internal_code: handy.code || matchedItem.internal_code,
+      parent_code: handy.parent_code || null,
+      barcode: matchedItem.barcode || '',
+      name: handy.name,
+      selling_price: handy.price,
+      unit_price: handy.price,
+      cost_price: matchedItem.cost_price || (handy.price * 0.75),
+      pack_units: handy.pack_units || matchedItem.pack_units || 1,
+      stock_packs: matchedItem.stock_packs || 0,
+      stock_units: matchedItem.stock_units || 0,
+      expiry_date: matchedItem.expiry_date || '',
+      shelf_location: matchedItem.shelf_location || ''
+    }, handy.unit_type, 1);
+  } else {
+    posAddToCart({
+      id: 'quick-' + handy.code + '-' + Date.now(),
+      internal_code: handy.code,
+      parent_code: handy.parent_code || null,
+      barcode: '',
+      name: handy.name,
+      selling_price: handy.price,
+      unit_price: handy.price,
+      cost_price: handy.unit_type === 'service' ? 0 : (handy.price * 0.75),
+      pack_units: handy.pack_units || 1,
+      stock_packs: 99,
+      stock_units: 0,
+      expiry_date: '',
+      shelf_location: handy.cat
+    }, handy.unit_type, 1);
+  }
+
+  playPosBeep(true);
+  toast(`⚡ تم إضافة: ${handy.name} (${fmt(handy.price)} ج)`);
+  closePosHandyItemsModal();
+}
+
 // ── 6. ربط اختصارات فارما فلاي السريعة بالكيبورد (Muscle Memory) ──
 function setupPharmaflyShortcuts() {
   window.addEventListener('keydown', function(e) {
+    // 0. إذا كانت نافذة الأصناف السريعة مفتوحة
+    const handyModal = document.getElementById('posHandyItemsModal');
+    if (handyModal && handyModal.classList.contains('on')) {
+      if (e.key === 'Escape' || e.key === '*' || e.code === 'NumpadMultiply') {
+        e.preventDefault();
+        closePosHandyItemsModal();
+        return;
+      }
+      const handySearch = document.getElementById('posHandySearchInp');
+      if (document.activeElement !== handySearch && e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        selectHandyItem(parseInt(e.key) - 1);
+        return;
+      }
+      return;
+    }
+
     const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
     const isInput = (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select');
 
@@ -17467,6 +17694,12 @@ function setupPharmaflyShortcuts() {
     const isTypingBarcode = (document.activeElement === searchInp && searchInp.value.trim().length > 0);
 
     if (!isInput || document.activeElement === searchInp) {
+      // فتح الأصناف السريعة [*]
+      if ((e.key === '*' || e.code === 'NumpadMultiply') && !e.ctrlKey) {
+        e.preventDefault();
+        togglePosHandyItemsModal();
+        return;
+      }
       // إنهاء كاش [C]
       if ((e.key === 'c' || e.key === 'C' || e.key === 'ؤ') && !isTypingBarcode && !e.ctrlKey) {
         e.preventDefault();
@@ -17942,6 +18175,49 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="display:flex;gap:10px;justify-content:center;">
       <button id="btnStartPfImport" onclick="startPharmaflyBatchImport()" class="btn btn-blue" style="padding:9px 24px;font-weight:900;" disabled>🚀 بدء الاستيراد والرفع</button>
       <button onclick="closePharmaflyImportModal()" class="btn btn-ghost" style="padding:9px 18px;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: HANDY ITEMS GRID (الأصناف السريعة والبيع بالقرص [ * ])
+══════════════════════════════════════════════════════════ -->
+<div id="posHandyItemsModal" class="modal-overlay" style="z-index:9999;" onclick="if(event.target===this)closePosHandyItemsModal()">
+  <div class="modal-box" style="max-width:860px;width:95vw;padding:22px 24px;border-radius:20px;background:var(--bg2);border:2px solid #ed8936;box-shadow:0 12px 40px rgba(237,137,54,.25);max-height:88vh;display:flex;flex-direction:column;">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.8rem;background:rgba(237,137,54,.15);border-radius:12px;padding:6px 12px;border:1px solid rgba(237,137,54,.4);">⚡</span>
+        <div>
+          <div style="font-size:1.25rem;font-weight:900;color:var(--text1);">الأصناف السريعة والبيع بالقرص [ * ]</div>
+          <div style="font-size:.78rem;color:var(--text3);">اضغط على رقم الصنف (1..9) أو انقر عليه للإضافة الفورية للفاتورة</div>
+        </div>
+      </div>
+      <button onclick="closePosHandyItemsModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:6px 12px;color:var(--text2);cursor:pointer;font-weight:800;">✕ [Esc]</button>
+    </div>
+
+    <!-- Filter bar & Fast Search -->
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <input type="text" id="posHandySearchInp" placeholder="🔍 فلترة سريعة بالاسم أو الكود..." oninput="renderHandyItemsGrid()"
+        style="flex:1;min-width:200px;padding:9px 14px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:.88rem;outline:none;" />
+      <div id="handyCatTabs" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-primary handy-tab-btn on" onclick="setHandyCat('all', this)">الكل</button>
+        <button type="button" class="btn btn-sm btn-ghost handy-tab-btn" onclick="setHandyCat('مسكنات', this)">💊 مسكنات</button>
+        <button type="button" class="btn btn-sm btn-ghost handy-tab-btn" onclick="setHandyCat('برد ومغص', this)">🍋 برد ومغص</button>
+        <button type="button" class="btn btn-sm btn-ghost handy-tab-btn" onclick="setHandyCat('مستلزمات', this)">🩹 مستلزمات</button>
+        <button type="button" class="btn btn-sm btn-ghost handy-tab-btn" onclick="setHandyCat('خدمات', this)">🩺 خدمات</button>
+      </div>
+    </div>
+
+    <!-- Grid of Buttons -->
+    <div id="posHandyItemsGrid" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill, minmax(185px, 1fr));gap:12px;padding:4px;max-height:55vh;">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Footer info -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text3);">
+      <div>💡 <strong>ملاحظة صيدلية:</strong> بيع الأقراص يخصم تلقائياً من رصيد العلبة الأم مع فك علبة جديدة آلياً عند نفاذ الأقراص المفتوحة.</div>
+      <button onclick="closePosHandyItemsModal()" class="btn btn-ghost btn-sm">إغلاق [Esc / *]</button>
     </div>
   </div>
 </div>
