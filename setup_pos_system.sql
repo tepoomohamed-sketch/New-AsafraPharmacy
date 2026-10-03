@@ -149,11 +149,25 @@ ALTER TABLE shift_handovers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases       DISABLE ROW LEVEL SECURITY;
 ALTER TABLE handy_items     DISABLE ROW LEVEL SECURITY;
 
--- 7. تفعيل البث اللحظي (Realtime)
-ALTER PUBLICATION supabase_realtime ADD TABLE items;
-ALTER PUBLICATION supabase_realtime ADD TABLE sales;
-ALTER PUBLICATION supabase_realtime ADD TABLE shift_handovers;
-ALTER PUBLICATION supabase_realtime ADD TABLE handy_items;
+-- 7. تفعيل البث اللحظي (Realtime) بأمان تام بدون أخطاء التكرار
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'items') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE items;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'sales') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE sales;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'shift_handovers') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE shift_handovers;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'handy_items') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE handy_items;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
 
 -- 8. دالة معالجة البيع وخصم المخزون ذرياً (Atomic POS Sale Engine)
 -- تدعم خصم الأقراص من العلب الأصلية parent_code وإعادة حساب الأرصدة تلقائياً
