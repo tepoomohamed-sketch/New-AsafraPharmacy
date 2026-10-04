@@ -1133,35 +1133,19 @@
   }
 
 /* ══════════════════════════════════════════════════════════════════
-   PHARMAFLY CLASSIC POS CASHIER & INVENTORY STYLES
+   POS CASHIER & PHARMACY INVENTORY SYSTEM STYLES
 ══════════════════════════════════════════════════════════════════ */
-.pos-wrap { display: flex; flex-direction: column; gap: 10px; }
-
-/* ── PharmaFly Iconic Top Header & Banner ── */
-.pf-window-header {
-  display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; margin-bottom: 2px;
-}
-.pf-callout-mode {
-  font-size: 2.2rem; font-weight: 900; color: #e53e3e; letter-spacing: -1px;
-  font-family: 'Tajawal', sans-serif; text-shadow: 0 2px 10px rgba(229,62,62,.25);
-  min-width: 140px;
-}
-.pf-3d-banner {
-  background: linear-gradient(180deg, #f6e05e 0%, #d69e2e 60%, #b7791f 100%);
-  color: #1a202c; font-weight: 900; font-size: 1.15rem; padding: 6px 42px;
-  border-radius: 999px; box-shadow: 0 4px 14px rgba(214,158,46,.45), inset 0 2px 3px rgba(255,255,255,.6), inset 0 -2px 3px rgba(0,0,0,.25);
-  border: 1.5px solid #d69e2e; text-align: center;
-}
+.pos-wrap { display: flex; flex-direction: column; gap: 14px; }
 .pos-top-bar {
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 10px 16px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 12px 18px;
   box-shadow: var(--shadow-sm);
 }
-.pos-top-right, .pos-top-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.pos-title { font-size: 1.15rem; font-weight: 900; color: var(--text1); display: flex; align-items: center; gap: 8px; }
-.pos-mode-pills, .pos-pay-pills { display: flex; background: var(--bg2); padding: 3px; border-radius: 10px; border: 1px solid var(--border); gap: 3px; }
+.pos-top-right, .pos-top-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pos-title { font-size: 1.25rem; font-weight: 900; color: var(--text1); display: flex; align-items: center; gap: 8px; }
+.pos-mode-pills, .pos-pay-pills { display: flex; background: var(--bg2); padding: 4px; border-radius: 12px; border: 1px solid var(--border); gap: 4px; }
 .pos-mode-btn, .pos-pay-btn {
-  padding: 5px 12px; border-radius: 7px; border: none; font-size: .82rem; font-weight: 800; cursor: pointer;
+  padding: 6px 14px; border-radius: 8px; border: none; font-size: .84rem; font-weight: 800; cursor: pointer;
   background: transparent; color: var(--text3); transition: all .18s; font-family: 'Tajawal', sans-serif;
 }
 .pos-mode-btn.on-sale.active { background: #2d6a4f; color: #fff; box-shadow: 0 2px 10px rgba(45,106,79,.4); }
@@ -1172,134 +1156,96 @@
 .pos-search-container { position: relative; width: 100%; }
 .pos-search-inner {
   display: flex; align-items: center; background: var(--card2); border: 2px solid var(--accent);
-  border-radius: 12px; padding: 2px 12px; box-shadow: 0 0 14px var(--accent-glow);
+  border-radius: 14px; padding: 4px 14px; box-shadow: 0 0 16px var(--accent-glow);
 }
-.pos-search-icon { font-size: 1.2rem; color: var(--teal); margin-left: 8px; }
+.pos-search-icon { font-size: 1.25rem; color: var(--teal); margin-left: 10px; }
 .pos-search-input {
-  flex: 1; background: transparent; border: none; outline: none; font-size: 1.1rem; font-weight: 800;
+  flex: 1; background: transparent; border: none; outline: none; font-size: 1.15rem; font-weight: 800;
   color: var(--text1); font-family: 'Tajawal', sans-serif; padding: 8px 4px;
 }
-.pos-search-input::placeholder { color: var(--text3); font-weight: 600; font-size: .9rem; }
+.pos-search-input::placeholder { color: var(--text3); font-weight: 600; font-size: .95rem; }
 .btn-clear-search { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.1rem; padding: 4px 8px; }
 
 .pos-auto-dropdown {
-  position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--card);
-  border: 1.5px solid var(--accent); border-radius: 12px; max-height: 320px; overflow-y: auto;
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card);
+  border: 1.5px solid var(--accent); border-radius: 14px; max-height: 320px; overflow-y: auto;
   z-index: 1000; box-shadow: var(--shadow-lg); backdrop-filter: blur(14px);
 }
 .pos-auto-item {
-  display: flex; justify-content: space-between; align-items: center; padding: 9px 14px;
+  display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
   border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s;
 }
 .pos-auto-item:hover, .pos-auto-item.selected { background: rgba(124,58,237,.2); }
-.pos-auto-name { font-weight: 800; font-size: .92rem; color: var(--text1); }
-.pos-auto-meta { font-size: .76rem; color: var(--text3); display: flex; gap: 8px; margin-top: 2px; }
+.pos-auto-name { font-weight: 800; font-size: .95rem; color: var(--text1); }
+.pos-auto-meta { font-size: .78rem; color: var(--text3); display: flex; gap: 10px; margin-top: 2px; }
 .pos-auto-price { font-weight: 900; font-size: 1.05rem; color: #68d391; }
 
-/* ── PharmaFly Iconic Emerald Green Table Grid ── */
 .pos-grid-wrap {
   background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r);
-  overflow-x: auto; min-height: 280px; max-height: 420px; overflow-y: auto;
+  overflow-x: auto; min-height: 280px; max-height: 440px; overflow-y: auto;
 }
-.pos-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.pos-table { width: 100%; border-collapse: collapse; min-width: 750px; }
 .pos-table th {
-  background: linear-gradient(180deg, #279677 0%, #168367 100%) !important;
-  color: #ffffff !important; padding: 10px 12px; text-align: right; font-weight: 900;
-  font-size: .83rem; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #146c55;
-  border-left: 1px solid rgba(255,255,255,.15);
+  background: var(--bg2); padding: 12px 14px; text-align: right; font-weight: 800;
+  font-size: .82rem; color: var(--text2); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border2);
 }
-.pos-table th:first-child { border-top-right-radius: 12px; }
-.pos-table th:last-child { border-top-left-radius: 12px; }
-.pos-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: .88rem; color: var(--text1); vertical-align: middle; border-left: 1px solid rgba(255,255,255,.04); }
-.pos-table tr:hover td { background: rgba(45,106,79,.12); }
+.pos-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--text1); vertical-align: middle; }
+.pos-table tr:hover td { background: var(--card2); }
 
 .pos-unit-btn {
-  padding: 3px 8px; border-radius: 6px; border: 1px solid; font-size: .74rem; font-weight: 800;
+  padding: 4px 10px; border-radius: 8px; border: 1.5px solid; font-size: .78rem; font-weight: 800;
   cursor: pointer; background: transparent; transition: all .15s; font-family: 'Tajawal', sans-serif;
 }
 .pos-unit-btn.pack { border-color: rgba(6,182,212,.4); color: var(--teal); background: rgba(6,182,212,.1); }
-.pos-unit-btn.strip { border-color: rgba(246,173,85,.5); color: #f6ad55; background: rgba(246,173,85,.15); }
+.pos-unit-btn.strip { border-color: rgba(246,173,85,.4); color: #f6ad55; background: rgba(246,173,85,.1); }
 
-.pos-qty-ctrl { display: inline-flex; align-items: center; gap: 3px; background: var(--bg3); border-radius: 7px; padding: 2px 3px; border: 1px solid var(--border); }
-.pos-qty-btn { width: 22px; height: 22px; border: none; background: var(--card2); color: var(--text); border-radius: 5px; cursor: pointer; font-weight: 900; }
-.pos-qty-inp { width: 40px; text-align: center; border: none; background: transparent; color: var(--text1); font-weight: 900; font-size: .9rem; }
+.pos-qty-ctrl { display: inline-flex; align-items: center; gap: 4px; background: var(--bg3); border-radius: 8px; padding: 2px 4px; border: 1px solid var(--border); }
+.pos-qty-btn { width: 24px; height: 24px; border: none; background: var(--card2); color: var(--text); border-radius: 6px; cursor: pointer; font-weight: 900; }
+.pos-qty-inp { width: 44px; text-align: center; border: none; background: transparent; color: var(--text1); font-weight: 900; font-size: .95rem; }
 
-/* ── PharmaFly Quick Actions Strip ── */
-.pf-table-action-bar {
-  display: flex; gap: 10px; align-items: center; justify-content: space-around;
-  background: rgba(22,131,103,.08); border: 1.5px dashed rgba(22,131,103,.35);
-  border-radius: 10px; padding: 8px 12px; margin-top: 4px; flex-wrap: wrap;
-}
-.pf-tab-btn {
-  background: var(--bg2); border: 1px solid var(--border); color: var(--text1);
-  padding: 5px 14px; border-radius: 8px; font-weight: 800; font-size: .82rem;
-  cursor: pointer; transition: all .15s; font-family: 'Tajawal', sans-serif;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.pf-tab-btn:hover { background: var(--bg3); border-color: var(--teal); transform: translateY(-1px); }
-.pf-tab-btn.pf-star-btn {
-  background: linear-gradient(135deg, #d69e2e, #dd6b20); color: #fff; border-color: #dd6b20;
-  box-shadow: 0 2px 10px rgba(221,107,32,.35);
-}
-
-/* ── PharmaFly Bottom Panels & 7-Segment LED ── */
 .pos-footer-bar {
-  display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; margin-top: 4px;
+  display: grid; grid-template-columns: 1fr 1.6fr; gap: 14px;
 }
 @media (max-width: 900px) { .pos-footer-bar { grid-template-columns: 1fr; } }
 
 .pos-item-details-box {
-  background: var(--card); border: 1.5px dashed rgba(255,255,255,.2); border-radius: var(--r);
-  padding: 12px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 18px;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
 }
-.pos-id-title { font-weight: 900; font-size: 1.05rem; color: #63b3ed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-id-title { font-weight: 900; font-size: 1.05rem; color: var(--teal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-id-specs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pos-spec-chip { background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 8px; font-size: .78rem; color: var(--text2); }
 
 .pos-checkout-box {
-  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 12px 16px;
-  display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 14px; align-items: center;
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: var(--r); padding: 14px 18px;
+  display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 16px; align-items: center;
 }
 @media (max-width: 760px) { .pos-checkout-box { grid-template-columns: 1fr; } }
 
-.pos-calc-col { display: flex; flex-direction: column; gap: 4px; font-size: .83rem; }
-.pos-calc-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.pos-paid-inp { width: 75px; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text1); font-weight: 900; text-align: center; }
+.pos-calc-col { display: flex; flex-direction: column; gap: 5px; font-size: .84rem; }
+.pos-calc-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pos-paid-inp { width: 75px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text1); font-weight: 800; text-align: center; }
 
 .pos-giant-screen {
-  background: #000; border: 2px dashed rgba(229,62,62,.6); border-radius: 12px; padding: 8px 14px;
-  text-align: center; box-shadow: inset 0 0 15px rgba(0,0,0,.9); min-width: 160px;
+  background: #060a12; border: 2px solid #22c55e; border-radius: 12px; padding: 10px 16px;
+  text-align: center; box-shadow: 0 0 20px rgba(34,197,94,.25); position: relative;
 }
-.pos-giant-screen.is-return { border-color: #ef4444; }
-.pos-screen-lbl { font-size: .7rem; color: #a0aec0; }
-.pos-screen-val {
-  font-size: 2.6rem; font-weight: 900; color: #ff3333; font-family: 'Courier New', monospace;
-  line-height: 1; letter-spacing: 1px; text-shadow: 0 0 12px rgba(255,51,51,.6);
-}
-.pos-giant-screen.is-return .pos-screen-val { color: #fc8181; }
-.pos-screen-cur { font-size: .72rem; color: #a0aec0; font-weight: 700; margin-top: 2px; }
+.pos-giant-screen.is-return { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,.25); }
+.pos-screen-lbl { font-size: .72rem; color: #a0aec0; letter-spacing: 1px; }
+.pos-screen-val { font-size: 2.3rem; font-weight: 900; color: #22c55e; font-family: 'Inter', monospace; line-height: 1.1; }
+.pos-giant-screen.is-return .pos-screen-val { color: #ef4444; }
+.pos-screen-cur { font-size: .72rem; color: #68d391; font-weight: 700; }
 
 .pos-action-btns { display: flex; flex-direction: column; gap: 6px; }
-.btn-pf-finish {
-  background: linear-gradient(180deg, #ecc94b 0%, #d69e2e 60%, #b7791f 100%);
-  color: #1a202c !important; font-weight: 900; font-size: 1.05rem; padding: 10px 22px;
-  border-radius: 12px; border: 1.5px solid #b7791f; cursor: pointer;
-  box-shadow: 0 4px 15px rgba(214,158,46,.45), inset 0 2px 3px rgba(255,255,255,.5);
-  transition: all .15s; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  font-family: 'Tajawal', sans-serif;
+.btn-pos-finish {
+  background: linear-gradient(135deg, #15803d, #22c55e); color: #fff; padding: 12px 18px;
+  border-radius: 12px; border: none; font-weight: 900; font-size: .95rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  box-shadow: 0 4px 15px rgba(34,197,94,.4); transition: transform .15s; font-family: 'Tajawal', sans-serif;
 }
-.btn-pf-finish:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(214,158,46,.6); }
-.btn-pos-save-only { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
-.btn-pos-cancel { background: rgba(239,68,68,.12); color: #fc8181; border: 1px solid rgba(239,68,68,.3); padding: 6px 12px; border-radius: 8px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
-
-/* ── PharmaFly Bottom Shortcuts Strip ── */
-.pf-shortcuts-strip {
-  display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;
-  font-size: .76rem; color: var(--text3); padding: 6px 12px; border-top: 1px solid var(--border);
-  margin-top: 4px;
-}
-.pf-key-chip {
-  background: var(--bg3); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px;
-  color: var(--text2); font-weight: 700;
-}
+.btn-pos-finish:hover { transform: translateY(-2px); }
+.btn-pos-save-only { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
+.btn-pos-cancel { background: rgba(239,68,68,.12); color: #fc8181; border: 1px solid rgba(239,68,68,.3); padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; }
 
 /* ── Thermal Receipt Print Styling ── */
 @media print {
@@ -1311,56 +1257,6 @@
     direction: rtl !important; display: block !important;
   }
 }
-
-
-  /* ══════════════════════════════════════════════════════════════
-     DISTRACTION-FREE FULLSCREEN POS (إخفاء الجزء العلوي عند فتح الكاشير)
-     ══════════════════════════════════════════════════════════════ */
-  body.in-pos-mode .hdr,
-  body.in-pos-mode #mainTabs,
-  body.in-pos-mode #bottomNav {
-    display: none !important;
-  }
-  body.in-pos-mode #scApp {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-  body.in-pos-mode .content {
-    padding: 6px 12px !important;
-    max-width: 100% !important;
-  }
-  body.in-pos-mode #pane-pos {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  /* ── إزالة كافة الحركات والانفجارات ── */
-  .tab-acrobatic, .btn-acrobatic {
-    animation: none !important;
-  }
-  .flying-particle {
-    display: none !important;
-  }
-
-  /* ── ألوان عصرية ونظيفة للتبويبات والكروت ── */
-  .tab {
-    padding: 10px 18px !important;
-    margin: 6px 4px !important;
-    border-radius: 8px !important;
-    border: 1px solid transparent !important;
-    transition: all .15s ease !important;
-  }
-  .tab.on {
-    background: #4f46e5 !important;
-    color: #ffffff !important;
-    border-color: #4f46e5 !important;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35) !important;
-    text-shadow: none !important;
-  }
-  body.light-mode .tab.on {
-    background: #4f46e5 !important;
-    color: #ffffff !important;
-  }
 
 </style>
 </head>
@@ -1505,14 +1401,6 @@ function ensureXLSX() {
         </div>
         <!-- أزرار التحكم مجمعة بجوار بيانات الحساب في اليمين -->
         <div style="display:flex;align-items:center;gap:6px;margin-right:4px;">
-          <a href="pharmafly.html" target="_blank" title="فتح برنامج فارما فلاي في نافذة مستقلة منفصلة تماماً"
-             style="background:linear-gradient(135deg, #f6d04d 0%, #d9aa00 100%);color:#1e293b;font-weight:900;text-decoration:none;border-radius:9px;padding:6px 13px;font-size:.82rem;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(217,170,0,.35);">
-             <span>⭐</span><span>فارما فلاي المستقل (PharmaFly)</span>
-          </a>
-          <button type="button" onclick="openPharmaflyImportModal()" title="استرجاع واستيراد قاعدة بيانات فارما فلاي (.bak / bundle)"
-             style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%);color:#fff;font-weight:900;border:none;border-radius:9px;padding:6px 13px;font-size:.82rem;display:inline-flex;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 8px rgba(3,105,161,.35);">
-             <span>📥</span><span>استيراد نسخة فارما فلاي (.bak)</span>
-          </button>
           <button id="themeToggle" onclick="toggleTheme()" title="تبديل المظهر"
             style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 11px;color:white;cursor:pointer;font-size:1rem;transition:all .2s;">🌙</button>
           <button onclick="openGlobalSearch()" title="بحث عالمي (Ctrl+K)"
@@ -1912,26 +1800,14 @@ function ensureXLSX() {
       <div id="posPendingDeliveryItems" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
 
-    <!-- ── PharmaFly Iconic Top Title Banner & Mode Callout ── -->
-    <div class="pf-window-header">
-      <div class="pf-callout-mode" id="posPfModeTitle">مبيعات</div>
-      <div class="pf-3d-banner" id="posPfBanner">تسجيل المبيعات</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="pos-inv-tag" id="posInvTag">فاتورة: #---</span>
-        <button type="button" class="btn btn-xs btn-ghost" onclick="openPosHistoryModal()" title="سجل فواتير اليوم" style="padding:4px 10px;font-size:.76rem;">📜 فواتير اليوم</button>
-        <button type="button" class="btn btn-xs" onclick="swTab('add')" title="خروج من الكاشير والعودة للقيد الرئيسي" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.3);">
-          <span>↩</span> خروج من الكاشير
-        </button>
-      </div>
-    </div>
-
-    <!-- Quick Control Bar (Mode & Payment Methods) -->
-    <div class="pos-top-bar" style="padding:8px 14px;">
+    <div class="pos-top-bar">
       <div class="pos-top-right">
+        <div class="pos-title">🛒 كاشير المبيعات</div>
         <div class="pos-mode-pills">
           <button type="button" class="pos-mode-btn on-sale active" id="posModeSale" onclick="setPosMode('sale')">🟢 بيع [F1]</button>
           <button type="button" class="pos-mode-btn on-return" id="posModeReturn" onclick="setPosMode('return')">🔴 مرتجع [F2]</button>
         </div>
+        <span class="pos-inv-tag" id="posInvTag">فاتورة: #---</span>
       </div>
 
       <div class="pos-top-left">
@@ -1941,6 +1817,7 @@ function ensureXLSX() {
           <button type="button" class="pos-pay-btn" data-pay="delivery" onclick="setPosPayMethod('delivery')">🛵 دليفري [H]</button>
           <button type="button" class="pos-pay-btn" data-pay="credit" onclick="setPosPayMethod('credit')">⏳ آجل [R]</button>
         </div>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="openPosHistoryModal()" title="سجل فواتير اليوم">📜 فواتير اليوم</button>
         <button type="button" class="btn btn-sm btn-primary" onclick="openPosHandyItemsModal()" style="background:linear-gradient(135deg,#d69e2e,#dd6b20);color:white;font-weight:900;border:none;box-shadow:0 3px 12px rgba(221,107,32,.35);" title="الأصناف السريعة والبيع بالقرص [*]">⚡ أصناف سريعة [*]</button>
       </div>
     </div>
@@ -1950,7 +1827,7 @@ function ensureXLSX() {
       <div class="pos-search-inner">
         <span class="pos-search-icon">⚡</span>
         <input type="text" id="posSearchInp" class="pos-search-input"
-          placeholder="امسح الباركود بالسكانر أو اكتب كود الصنف أو اسمه (أو اضغط * للأصناف السريعة)..."
+          placeholder="امسح الباركود بالسكانر أو اكتب كود الصنف أو اسمه..."
           autocomplete="off"
           onkeydown="handlePosSearchKeydown(event)"
           oninput="handlePosSearchInput(this.value)" />
@@ -1960,65 +1837,44 @@ function ensureXLSX() {
       <div id="posAutoDropdown" class="pos-auto-dropdown" style="display:none;"></div>
     </div>
 
-    <!-- Cart Table (PharmaFly 11-column Emerald Green Grid) -->
+    <!-- Cart Table -->
     <div class="pos-grid-wrap">
       <table class="pos-table" id="posTable">
         <thead>
           <tr>
-            <th style="width:36px;text-align:center;">م</th>
-            <th style="width:105px;">الكود</th>
+            <th style="width:36px;">#</th>
+            <th style="width:110px;">الكود</th>
             <th>اسم الصنف</th>
-            <th style="width:105px;text-align:center;">الكمية (علب)</th>
-            <th style="width:115px;text-align:center;">أجزاء (أقراص/شريط)</th>
-            <th style="width:95px;text-align:center;">سعر البيع</th>
-            <th style="width:75px;text-align:center;">خصم %</th>
-            <th style="width:95px;text-align:center;">تاريخ الصلاحية</th>
-            <th style="width:50px;text-align:center;">Vat</th>
+            <th style="width:115px;text-align:center;">الوحدة</th>
+            <th style="width:130px;text-align:center;">الكمية</th>
+            <th style="width:100px;text-align:center;">سعر البيع</th>
+            <th style="width:85px;text-align:center;">خصم %</th>
             <th style="width:110px;text-align:center;">المجموع</th>
-            <th style="width:40px;text-align:center;">✕</th>
+            <th style="width:45px;text-align:center;">حذف</th>
           </tr>
         </thead>
         <tbody id="posItemsBody">
           <tr id="posEmptyRow">
-            <td colspan="11" style="text-align:center;padding:45px 20px;color:var(--text3);">
+            <td colspan="9" style="text-align:center;padding:45px 20px;color:var(--text3);">
               <div style="font-size:2.2rem;margin-bottom:8px;opacity:.6;">🛒</div>
               <div style="font-weight:700;font-size:1.05rem;">الفاتورة فارغة</div>
-              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه، أو اضغط [*] للأصناف السريعة</div>
+              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه لإضافته فوراً</div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ── شريط اختصارات فارما فلاي السريعة أسفل الجدول مباشرة ── -->
-    <div class="pf-table-action-bar">
-      <button type="button" class="pf-tab-btn" onclick="posToggleUnit(posCart.length ? posCart.length - 1 : 0)" title="بيع بالوحدات والشرائط والأقراص [ + ]">
-        <span>➕ بيع ( + ) بالوحدات</span>
-      </button>
-      <button type="button" class="pf-tab-btn" onclick="posRemoveItem(posCart.length ? posCart.length - 1 : 0)" title="حذف الصنف الأخير أو المحدد [ - ]">
-        <span>➖ حذف صنف ( - )</span>
-      </button>
-      <button type="button" class="pf-tab-btn pf-star-btn" onclick="openPosHandyItemsModal()" title="فتح الأصناف السريعة والبيع بالقرص [ * ]">
-        <span>⭐ أصناف سريعة البيع ( * )</span>
-      </button>
-      <button type="button" class="pf-tab-btn" onclick="openPosUncodedItemModal()" title="مبيعات غير مكودة وخدمات [ / ]">
-        <span>🏷️ مبيعات غير مكودة ( / )</span>
-      </button>
-    </div>
-
-    <!-- Bottom Status Bar & Giant Digital Total (PharmaFly Style) -->
+    <!-- Bottom Status Bar & Giant Digital Total -->
     <div class="pos-footer-bar">
-      <!-- Active Item Details (PharmaFly Dotted Box) -->
+      <!-- Active Item Details -->
       <div class="pos-item-details-box" id="posActiveItemBox">
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed rgba(255,255,255,.15);padding-bottom:5px;">
-          <span style="font-size:.8rem;color:var(--text3);">اسم الصنف:</span>
-          <strong class="pos-id-title" id="posItemDetailName">لم يتم تحديد صنف</strong>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.82rem;line-height:1.6;">
-          <div>الأجزاء بالعلبة: <strong id="posItemDetailUnits" style="color:var(--text1);">—</strong></div>
-          <div>له تاريخ صلاحية: <strong id="posItemDetailHasExp" style="color:#68d391;">Yes</strong></div>
-          <div>الكمية الموجودة: <strong id="posItemDetailStock" style="color:#f6ad55;font-weight:900;font-family:monospace;font-size:1rem;">—</strong></div>
-          <div>مكان الرف / الصلاحية: <strong id="posItemDetailShelf" style="color:var(--text2);">—</strong></div>
+        <div class="pos-id-title" id="posItemDetailName">لم يتم تحديد صنف</div>
+        <div class="pos-id-specs">
+          <span class="pos-spec-chip">📦 الرصيد: <strong id="posItemDetailStock">—</strong></span>
+          <span class="pos-spec-chip">💊 شريط/علبة: <strong id="posItemDetailUnits">—</strong></span>
+          <span class="pos-spec-chip">🏷️ الرف: <strong id="posItemDetailShelf">—</strong></span>
+          <span class="pos-spec-chip">⏳ الصلاحية: <strong id="posItemDetailExpiry">—</strong></span>
         </div>
       </div>
 
@@ -2034,10 +1890,6 @@ function ensureXLSX() {
             <strong id="posDiscountText" style="color:#f6ad55;">0.00 ج</strong>
           </div>
           <div class="pos-calc-row">
-            <span>ضريبة القيمة المضافة:</span>
-            <strong style="color:var(--text3);">0.00 ج</strong>
-          </div>
-          <div class="pos-calc-row">
             <span>المدفوع:</span>
             <input type="number" id="posPaidInp" class="pos-paid-inp" value="0" step="any" oninput="calcPosChange()" />
           </div>
@@ -2047,7 +1899,7 @@ function ensureXLSX() {
           </div>
         </div>
 
-        <!-- Giant LED Display (PharmaFly 7-Segment Digital) -->
+        <!-- Giant LED Display -->
         <div class="pos-giant-screen" id="posGiantScreen">
           <div class="pos-screen-lbl" id="posScreenLabel">الصافي المطلوب</div>
           <div class="pos-screen-val" id="posGiantTotal">0.00</div>
@@ -2056,32 +1908,18 @@ function ensureXLSX() {
 
         <!-- Actions -->
         <div class="pos-action-btns">
-          <button type="button" class="btn-pf-finish" id="btnPosFinish" onclick="finishPosSale(true)">
-            <span>انهاء</span>
-            <kbd style="background:rgba(0,0,0,.25);color:#fff;padding:2px 6px;border-radius:4px;font-size:.7rem;">[F10]</kbd>
+          <button type="button" class="btn btn-pos-finish" id="btnPosFinish" onclick="finishPosSale(true)">
+            <span>💾 إنهاء وطباعة</span>
+            <kbd style="background:rgba(0,0,0,.25);padding:2px 6px;border-radius:4px;font-size:.7rem;">[F10]</kbd>
           </button>
           <button type="button" class="btn btn-pos-save-only" onclick="finishPosSale(false)">
             <span>حفظ فقط [S]</span>
           </button>
           <button type="button" class="btn btn-pos-cancel" onclick="cancelPosSale()">
-            <span>إلغاء [Shift+X]</span>
+            <span>إلغاء [Esc]</span>
           </button>
         </div>
       </div>
-    </div>
-
-    <!-- PharmaFly Bottom Keyboard Shortcuts Strip -->
-    <div class="pf-shortcuts-strip">
-      <span><span class="pf-key-chip">[C]</span> مبيعات نقدية</span>
-      <span><span class="pf-key-chip">[W]</span> محفظة</span>
-      <span><span class="pf-key-chip">[H]</span> توصيل طلبات</span>
-      <span><span class="pf-key-chip">[R]</span> مبيعات آجلة</span>
-      <span><span class="pf-key-chip">[*]</span> أصناف سريعة</span>
-      <span><span class="pf-key-chip">[+]</span> بيع بالوحدات</span>
-      <span><span class="pf-key-chip">[-]</span> حذف صنف</span>
-      <span><span class="pf-key-chip">[/]</span> غير مكود</span>
-      <span><span class="pf-key-chip">[F10]</span> إنهاء الفاتورة</span>
-      <span><span class="pf-key-chip">[Shift+X]</span> إلغاء</span>
     </div>
   </div>
 </div>
@@ -2089,264 +1927,6 @@ function ensureXLSX() {
 <!-- ══════════════════════════════════════════════════════════
      PANE: ITEMS MASTER & PHARMAFLY UPLOADER (الأصناف والمخزن)
 ══════════════════════════════════════════════════════════ -->
-
-<!-- ══════════════════════════════════════════════════════════
-     PANE: PURCHASES (فواتير المشتريات والطلبيات من الموردين)
-══════════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-purchases">
-  <div class="card" style="padding:16px 20px;">
-    <!-- PharmaFly Window Header -->
-    <div class="pf-window-header" style="margin-bottom:14px;">
-      <div class="pf-callout-mode" style="background:#2b6cb0;color:#fff;">وارد شركات</div>
-      <div class="pf-3d-banner" style="background:linear-gradient(180deg,#63b3ed 0%,#3182ce 60%,#2b6cb0 100%);color:#fff;">تسجيل فواتير المشتريات والطلبيات</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="pos-inv-tag" id="purInvTag">فاتورة وارد: #---</span>
-        <button type="button" class="btn btn-xs btn-ghost" onclick="openPurchasesHistoryModal()" title="سجل فواتير الوارد">📜 فواتير سابقة</button>
-      </div>
-    </div>
-
-    <!-- Supplier & Invoice Details Bar -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;background:var(--bg2);padding:14px;border-radius:12px;border:1px solid var(--border);margin-bottom:14px;">
-      <div class="fg" style="margin:0;">
-        <label for="purSupplierInp">🏭 المورد / شركة الأدوية</label>
-        <input type="text" id="purSupplierInp" list="purSupplierList" class="fel" placeholder="اختر أو اكتب اسم المورد..." />
-        <datalist id="purSupplierList">
-          <option value="المتحدة للصيادلة">
-          <option value="ابن سينا فارما">
-          <option value="فارما أوفرسيز">
-          <option value="3N فارما">
-          <option value="الأطباء">
-          <option value="كريم فارما">
-          <option value="عابدين">
-          <option value="نيو ميديسن">
-          <option value="ميديسين">
-          <option value="شراء أدوية 50%">
-          <option value="اليكس واي">
-        </datalist>
-      </div>
-
-      <div class="fg" style="margin:0;">
-        <label for="purInvoiceNoInp">🔢 رقم فاتورة المورد</label>
-        <input type="text" id="purInvoiceNoInp" class="fel" placeholder="مثال: 984512" />
-      </div>
-
-      <div class="fg" style="margin:0;">
-        <label for="purDateInp">📅 تاريخ الفاتورة</label>
-        <input type="date" id="purDateInp" class="fel" />
-      </div>
-
-      <div class="fg" style="margin:0;">
-        <label for="purPayMethod">💳 طريقة السداد</label>
-        <select id="purPayMethod" class="fel">
-          <option value="credit">آجل (سداد لاحق للمورد)</option>
-          <option value="cash">نقدي (تم الخصم من الخزينة)</option>
-          <option value="wallet">محفظة إلكترونية</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Search & Scan Bar for Purchase Items -->
-    <div style="position:relative;margin-bottom:14px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span style="font-size:1.2rem;">📦</span>
-        <input type="text" id="purItemSearchInp" class="fel" placeholder="امسح الباركود بالسكانر أو اكتب كود/اسم الصنف لإضافته لفاتورة الوارد..." style="flex:1;font-size:1rem;padding:12px 14px;" oninput="handlePurSearchInput(this.value)" onkeydown="handlePurSearchKeydown(event)" autocomplete="off" />
-        <button type="button" class="btn btn-sm btn-ghost" onclick="clearPurSearch()">✕</button>
-      </div>
-      <div id="purAutoDropdown" class="pos-auto-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1000;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:280px;overflow-y:auto;"></div>
-    </div>
-
-    <!-- Purchases Table (10 Columns) -->
-    <div class="tbl-w" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;">
-      <table class="pos-table" id="purTable" style="margin:0;">
-        <thead>
-          <tr style="background:var(--bg3);">
-            <th style="width:36px;text-align:center;">م</th>
-            <th style="width:95px;">الكود</th>
-            <th>اسم الصنف</th>
-            <th style="width:95px;text-align:center;">كمية (علب)</th>
-            <th style="width:80px;text-align:center;">بونص</th>
-            <th style="width:105px;text-align:center;">سعر الشراء</th>
-            <th style="width:85px;text-align:center;">خصم %</th>
-            <th style="width:105px;text-align:center;">سعر الجمهور</th>
-            <th style="width:100px;text-align:center;">الصلاحية</th>
-            <th style="width:115px;text-align:center;">الإجمالي</th>
-            <th style="width:40px;text-align:center;">✕</th>
-          </tr>
-        </thead>
-        <tbody id="purItemsBody">
-          <tr id="purEmptyRow">
-            <td colspan="11" style="text-align:center;padding:40px 20px;color:var(--text3);">
-              <div style="font-size:2rem;margin-bottom:6px;">🚚</div>
-              <div style="font-weight:700;">لا توجد أصناف في فاتورة الوارد</div>
-              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود الأصناف الواردة من الشركة أو ابحث بالاسم لإضافتها وتحديث المخزن</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Purchases Totals & Action Buttons -->
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;background:var(--bg2);padding:14px 18px;border-radius:12px;border:1px solid var(--border);">
-      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
-        <div>
-          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي سعر الجمهور:</span>
-          <strong id="purTotalSellingText" style="font-size:1.15rem;color:var(--text1);">0.00 ج</strong>
-        </div>
-        <div>
-          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي الخصم التجاري:</span>
-          <strong id="purTotalDiscText" style="font-size:1.15rem;color:#f6ad55;">0.00 ج</strong>
-        </div>
-        <div style="border-right:2px solid var(--border);padding-right:16px;">
-          <span style="font-size:.76rem;color:var(--text3);display:block;">صافي الفاتورة (المستحق للمورد):</span>
-          <strong id="purTotalCostText" style="font-size:1.45rem;color:#48bb78;font-family:monospace;font-weight:900;">0.00 ج</strong>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button type="button" class="btn btn-sm btn-ghost" onclick="clearPurInvoice()">✕ تفريغ الفاتورة</button>
-        <button type="button" class="btn btn-primary" onclick="savePurchaseInvoice()" style="background:linear-gradient(135deg,#2b6cb0,#3182ce);font-size:.95rem;padding:10px 22px;border-radius:8px;">
-          💾 حفظ الفاتورة وإضافة البضاعة للمخزن
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
-     PANE: STOCK COUNT (الجرد المخزني الفعلي ومطابقة الأرصدة)
-══════════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-stockcount">
-  <div class="card" style="padding:16px 20px;">
-    <!-- PharmaFly Window Header -->
-    <div class="pf-window-header" style="margin-bottom:14px;">
-      <div class="pf-callout-mode" style="background:#805ad5;color:#fff;">جرد ومطابقة</div>
-      <div class="pf-3d-banner" style="background:linear-gradient(180deg,#b794f4 0%,#805ad5 60%,#553c9a 100%);color:#fff;">الجرد المخزني الفعلي ومطابقة الأرصدة</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button type="button" class="btn btn-xs btn-ghost" onclick="exportStockCountXLSX()">⬇️ تصدير كشف الجرد</button>
-      </div>
-    </div>
-
-    <!-- Scanner Bar -->
-    <div style="position:relative;margin-bottom:14px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span style="font-size:1.2rem;">🔍</span>
-        <input type="text" id="scSearchInp" class="fel" placeholder="امسح باركود الصنف بالسكانر أو اكتب الكود/الاسم للبدء في جرده..." style="flex:1;font-size:1rem;padding:12px 14px;" oninput="handleScSearchInput(this.value)" onkeydown="handleScSearchKeydown(event)" autocomplete="off" />
-        <button type="button" class="btn btn-sm btn-ghost" onclick="clearScSearch()">✕</button>
-      </div>
-      <div id="scAutoDropdown" class="pos-auto-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1000;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:280px;overflow-y:auto;"></div>
-    </div>
-
-    <!-- Active Item Inspection & Count Entry Card -->
-    <div id="scInspectCard" style="display:none;background:var(--bg2);padding:16px 20px;border-radius:14px;border:1.5px solid #805ad5;margin-bottom:14px;animation:fadeUp .2s ease;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-        <div>
-          <span style="font-size:.76rem;color:var(--text3);">الصنف المختار للجرد:</span>
-          <h3 id="scItemName" style="color:var(--text1);margin:2px 0 0;font-size:1.15rem;">—</h3>
-        </div>
-        <div style="display:flex;gap:12px;font-size:.82rem;">
-          <div>كود الصيدلية: <strong id="scItemCode" style="color:var(--text1);">—</strong></div>
-          <div>مكان الرف: <strong id="scItemShelf" style="color:#63b3ed;">—</strong></div>
-          <div>سعر الجمهور: <strong id="scItemPrice" style="color:#48bb78;">—</strong></div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:center;">
-        <!-- System Stock (الرصيد الدفتري) -->
-        <div style="background:var(--bg3);padding:10px 14px;border-radius:10px;text-align:center;">
-          <span style="font-size:.74rem;color:var(--text3);display:block;">الرصيد المسجل بالسيستم</span>
-          <div style="font-size:1.3rem;font-weight:900;color:var(--text1);margin-top:2px;">
-            <span id="scSysPacks">0</span> <small style="font-size:.75rem;font-weight:normal;">علبة</small>
-            <span style="font-size:.8rem;color:var(--text3);margin:0 4px;">+</span>
-            <span id="scSysUnits">0</span> <small style="font-size:.75rem;font-weight:normal;">قرص</small>
-          </div>
-        </div>
-
-        <!-- Actual Count Inputs (الرصيد الفعلي) -->
-        <div style="background:rgba(128,90,213,.08);padding:10px 14px;border-radius:10px;border:1px solid rgba(128,90,213,.3);">
-          <span style="font-size:.74rem;color:#b794f4;display:block;font-weight:700;">الرصيد الفعلي على الرف</span>
-          <div style="display:flex;gap:6px;margin-top:4px;">
-            <input type="number" id="scActPacksInp" class="fel" placeholder="علب فعلية" min="0" style="text-align:center;font-weight:800;font-size:1rem;" oninput="calcScDiscrepancy()" onkeydown="if(event.key==='Enter') addCurrentItemToStockAudit()" />
-            <input type="number" id="scActUnitsInp" class="fel" placeholder="أقراص/أجزاء" min="0" style="text-align:center;font-weight:800;font-size:1rem;" oninput="calcScDiscrepancy()" onkeydown="if(event.key==='Enter') addCurrentItemToStockAudit()" />
-          </div>
-        </div>
-
-        <!-- Discrepancy Indicator (مؤشر الفارق) -->
-        <div style="text-align:center;">
-          <span style="font-size:.74rem;color:var(--text3);display:block;">نتيجة المطابقة</span>
-          <div id="scDiscrepancyBadge" style="margin-top:6px;font-size:.95rem;font-weight:900;padding:6px 12px;border-radius:8px;background:var(--bg3);display:inline-block;">
-            مطابق (0)
-          </div>
-        </div>
-
-        <!-- Add Button -->
-        <div>
-          <button type="button" class="btn btn-primary" onclick="addCurrentItemToStockAudit()" style="width:100%;justify-content:center;background:#805ad5;font-weight:900;padding:12px;border-radius:8px;">
-            ➕ إضافة لكشف الجرد [Enter]
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Audited Items Table -->
-    <div class="tbl-w" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;">
-      <table class="pos-table" id="scAuditTable" style="margin:0;">
-        <thead>
-          <tr style="background:var(--bg3);">
-            <th style="width:36px;text-align:center;">م</th>
-            <th style="width:95px;">الكود</th>
-            <th>اسم الصنف</th>
-            <th style="width:90px;text-align:center;">الرف</th>
-            <th style="width:115px;text-align:center;">الرصيد الدفتري</th>
-            <th style="width:115px;text-align:center;">الرصيد الفعلي</th>
-            <th style="width:105px;text-align:center;">الفارق (علب)</th>
-            <th style="width:115px;text-align:center;">قيمة الفارق</th>
-            <th style="width:90px;text-align:center;">الحالة</th>
-            <th style="width:40px;text-align:center;">✕</th>
-          </tr>
-        </thead>
-        <tbody id="scAuditBody">
-          <tr id="scEmptyRow">
-            <td colspan="10" style="text-align:center;padding:40px 20px;color:var(--text3);">
-              <div style="font-size:2rem;margin-bottom:6px;">📋</div>
-              <div style="font-weight:700;">كشف الجرد فارغ حالياً</div>
-              <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي دواء أو ابحث عنه لإدخال رصيده الفعلي ومطابقته</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Stock Count Summary & Commitment Bar -->
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;background:var(--bg2);padding:14px 18px;border-radius:12px;border:1px solid var(--border);">
-      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
-        <div>
-          <span style="font-size:.76rem;color:var(--text3);display:block;">أصناف مجرودة:</span>
-          <strong id="scTotalCountedText" style="font-size:1.15rem;color:var(--text1);">0 صنف</strong>
-        </div>
-        <div>
-          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي قيمة العجز:</span>
-          <strong id="scTotalDeficitText" style="font-size:1.15rem;color:#fc8181;">0.00 ج</strong>
-        </div>
-        <div>
-          <span style="font-size:.76rem;color:var(--text3);display:block;">إجمالي قيمة الزيادة:</span>
-          <strong id="scTotalSurplusText" style="font-size:1.15rem;color:#63b3ed;">0.00 ج</strong>
-        </div>
-        <div style="border-right:2px solid var(--border);padding-right:16px;">
-          <span style="font-size:.76rem;color:var(--text3);display:block;">صافي فارق الجرد:</span>
-          <strong id="scNetDiscrepancyText" style="font-size:1.35rem;font-family:monospace;font-weight:900;">0.00 ج</strong>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button type="button" class="btn btn-sm btn-ghost" onclick="clearStockCountSession()">✕ إلغاء الجلسة</button>
-        <button type="button" class="btn btn-primary" onclick="commitStockCountAdjustments()" style="background:linear-gradient(135deg,#6b46c1,#805ad5);font-size:.95rem;padding:10px 22px;border-radius:8px;">
-          ✅ اعتماد وتسوية الجرد الفعلي في المخزن
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="pane" id="pane-items">
   <div class="card">
     <!-- Header -->
@@ -4031,13 +3611,11 @@ function buildApp() {
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
   document.getElementById('mainTabs').innerHTML = `
     <div class="tab on" onclick="swTab('add',this)">➕ قيد جديد</div>
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'pos\',this)">🛒 كاشير المبيعات (PharmaFly)</div>' : ''}
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'purchases\',this)">🚚 المشتريات والطلبيات</div>' : ''}
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'stockcount\',this)">📋 الجرد المخزني</div>' : ''}
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'items\',this)">📦 الأصناف والمخزن</div>' : ''}
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'pos\',this)">🛒 كاشير المبيعات (تجريبي)</div>' : ''}
     ${isAdmin
       ? '<div class="tab" onclick="swTab(\'all\',this)">📋 كل الحركات</div>'
       : '<div class="tab" onclick="swTab(\'mine\',this)">📋 حركاتي</div>'}
+    ${isAdmin ? '<div class="tab" onclick="swTab(\'items\',this)">📦 الأصناف والمخزن</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'sum\',this)">📊 الملخص</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'budget\',this)">📑 الموازنة المالية</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'salesdb\',this)">📊 داشبورد المبيعات</div>' : ''}
@@ -4105,7 +3683,6 @@ function buildApp() {
   initTopSalesCardState();
   renderTopMonthlySalesChart();
   setTimeout(initBackupSystem, 500);
-  setTimeout(loadItemsCatalog, 600);
 }
 
 function bnSwitch(name, liEl) {
@@ -4118,9 +3695,61 @@ function bnSwitch(name, liEl) {
 // ═══════════════════════════════════════════
 //  MOTION & FLYING PARTICLES ENGINE 🚀✨
 // ═══════════════════════════════════════════
-function fireFlyingParticles() {
-  // Disabled as per user request for calm, silent, professional UI
-  return;
+function fireFlyingParticles(originEl, icons = ['💵', '💊', '✨', '🎉', '⚡', '🚀'], count = 18) {
+  try {
+    let startX, startY;
+    if (originEl && originEl.getBoundingClientRect) {
+      const r = originEl.getBoundingClientRect();
+      startX = r.left + r.width / 2;
+      startY = r.top + r.height / 2;
+    } else {
+      startX = window.innerWidth / 2;
+      startY = window.innerHeight / 2;
+    }
+
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'flying-particle';
+      p.textContent = icons[Math.floor(Math.random() * icons.length)];
+      document.body.appendChild(p);
+
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.7;
+      const dist = 60 + Math.random() * 140;
+      const destX = startX + Math.cos(angle) * dist;
+      const destY = startY + Math.sin(angle) * dist - (30 + Math.random() * 80);
+      const rot = (Math.random() - 0.5) * 600;
+      const scale = 0.7 + Math.random() * 0.9;
+      const duration = 650 + Math.random() * 450;
+
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.transform = 'translate(-50%, -50%) scale(0.2)';
+      p.style.opacity = '1';
+
+      const startTime = performance.now();
+      function step(now) {
+        const elapsed = now - startTime;
+        const prog = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - prog, 2.5);
+        const curX = startX + (destX - startX) * ease;
+        const curY = startY + (destY - startY) * ease + Math.pow(prog, 2) * 85;
+        const curScale = (1 - prog * 0.25) * scale;
+        const curOp = prog > 0.55 ? 1 - (prog - 0.55) / 0.45 : 1;
+
+        p.style.left = curX + 'px';
+        p.style.top = curY + 'px';
+        p.style.transform = `translate(-50%, -50%) scale(${curScale}) rotate(${rot * ease}deg)`;
+        p.style.opacity = curOp;
+
+        if (prog < 1) {
+          requestAnimationFrame(step);
+        } else {
+          p.remove();
+        }
+      }
+      requestAnimationFrame(step);
+    }
+  } catch(e) { console.warn('Particle error', e); }
 }
 
 function swTab(name, el) {
@@ -4128,36 +3757,43 @@ function swTab(name, el) {
     toast('🔒 كاشير المبيعات والمخزن قيد التجربة ومتاح للمدير فقط حالياً', false);
     return;
   }
-
-  // ── إخفاء الجزء العلوي عند فتح الكاشير (Distraction-Free POS) ──
-  if (name === 'pos') {
-    document.body.classList.add('in-pos-mode');
-  } else {
-    document.body.classList.remove('in-pos-mode');
-  }
-
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
-  
   if (el) {
     el.classList.add('on');
-  } else {
-    const matchingTab = document.querySelector(`.tab[onclick*="'${name}'"]`);
-    if (matchingTab) matchingTab.classList.add('on');
+    // شقلبظة التاب وقفزة بهلوانية
+    el.classList.remove('tab-acrobatic');
+    void el.offsetWidth;
+    el.classList.add('tab-acrobatic');
+    fireFlyingParticles(el, ['✨', '💫', '⚡', '🌟'], 5);
   }
-
   // Sync bottom nav active state when top tab clicked
   document.querySelectorAll('#bottomNav li').forEach(l=>l.classList.remove('bn-on'));
   const bnLi = document.querySelector(`#bottomNav li[data-tab="${name}"]`);
   if (bnLi) bnLi.classList.add('bn-on');
-
   const pane = document.getElementById('pane-'+name);
   if (pane) {
     pane.classList.add('on');
+    // حركة دخول العناصر والبطاقات من اليمين واليسار بالتتابع
+    const items = pane.querySelectorAll('.card, .set-sec, .pd-card, .table-wrap, .fg-row');
+    items.forEach((c, idx) => {
+      c.classList.remove('motion-slide-right', 'motion-slide-left');
+      void c.offsetWidth;
+      if (idx % 2 === 0) {
+        c.classList.add('motion-slide-right');
+      } else {
+        c.classList.add('motion-slide-left');
+      }
+      c.style.animationDelay = (idx * 0.05) + 's';
+    });
+    setTimeout(() => {
+      items.forEach(c => {
+        c.classList.remove('motion-slide-right', 'motion-slide-left');
+        c.style.animationDelay = '';
+      });
+    }, 600);
   }
-  if (name==='pos')   { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
-  if (name==='purchases') { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); initPurchasesPane(); }
-  if (name==='stockcount') { if (!cachedItems || !cachedItems.length) loadItemsCatalog(); initStockCountPane(); }
+  if (name==='pos')   { setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
   if (name==='items') { loadItemsCatalog(); }
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
@@ -16437,21 +16073,6 @@ function setPosMode(mode) {
   posMode = mode;
   document.getElementById('posModeSale')?.classList.toggle('active', mode === 'sale');
   document.getElementById('posModeReturn')?.classList.toggle('active', mode === 'return');
-  
-  const pfTitle = document.getElementById('posPfModeTitle');
-  const pfBanner = document.getElementById('posPfBanner');
-  if (pfTitle) {
-    pfTitle.textContent = (mode === 'sale' ? 'مبيعات' : 'مرتجعات');
-    pfTitle.style.color = (mode === 'sale' ? '#e53e3e' : '#c53030');
-  }
-  if (pfBanner) {
-    pfBanner.textContent = (mode === 'sale' ? 'تسجيل المبيعات' : 'تسجيل المرتجعات');
-    pfBanner.style.background = (mode === 'sale'
-      ? 'linear-gradient(180deg, #f6e05e 0%, #d69e2e 60%, #b7791f 100%)'
-      : 'linear-gradient(180deg, #feb2b2 0%, #e53e3e 60%, #9b2c2c 100%)');
-    pfBanner.style.color = (mode === 'sale' ? '#1a202c' : '#ffffff');
-  }
-
   const screen = document.getElementById('posGiantScreen');
   const screenLbl = document.getElementById('posScreenLabel');
   if (screen) screen.classList.toggle('is-return', mode === 'return');
@@ -16596,21 +16217,21 @@ function posAddToCart(item, unitType = 'pack', qty = 1) {
   renderPosCart();
 }
 
-// ── تحديث تفاصيل الصنف النشط بالشريط السفلي (صندوق فارما فلاي) ──
+// ── تحديث تفاصيل الصنف النشط بالشريط السفلي ──
 function updateActiveItemDetails(item) {
   const nameEl = document.getElementById('posItemDetailName');
   const stockEl = document.getElementById('posItemDetailStock');
   const unitsEl = document.getElementById('posItemDetailUnits');
   const shelfEl = document.getElementById('posItemDetailShelf');
-  const hasExpEl = document.getElementById('posItemDetailHasExp');
+  const expEl = document.getElementById('posItemDetailExpiry');
   if (nameEl) nameEl.textContent = item ? item.name : 'لم يتم تحديد صنف';
-  if (stockEl) stockEl.textContent = item ? `${item.stock_packs || 0} : ${item.stock_units || 0}` : '—';
-  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1}` : '—';
-  if (hasExpEl) hasExpEl.textContent = (item && item.expiry_date) ? 'Yes' : 'No';
-  if (shelfEl) shelfEl.textContent = item ? `${item.shelf_location || 'A-1'} / ${item.expiry_date || '—'}` : '—';
+  if (stockEl) stockEl.textContent = item ? `${item.stock_packs} علبة : ${item.stock_units} أجزاء` : '—';
+  if (unitsEl) unitsEl.textContent = item ? `${item.pack_units || 1} جزء/قرص بالعلبة` : '—';
+  if (shelfEl) shelfEl.textContent = item ? (item.shelf_location || 'غير محدد') : '—';
+  if (expEl) expEl.textContent = item ? (item.expiry_date || 'غير محدد') : '—';
 }
 
-// ── تبديل الوحدة (علبة 📦 / قرص وشريط 💊) [+] ──
+// ── تبديل الوحدة (علبة 📦 / قرص وشريط 💊) ──
 function posToggleUnit(idx) {
   const row = posCart[idx];
   if (!row) return;
@@ -16625,36 +16246,6 @@ function posToggleUnit(idx) {
     row.price = row.pack_price;
   }
   renderPosCart();
-  toast(row.unit_type === 'unit' ? `💊 تم تحويل ${row.name} للبيع بالقرص/الشريط` : `📦 تم تحويل ${row.name} للبيع بالعلبة`);
-}
-
-// ── فتح نافذة إضافة صنف غير مكود [/] ──
-function openPosUncodedItemModal() {
-  const name = prompt('🏷️ اسم الصنف غير المكود أو الخدمة (مثال: قياس ضغط / حقنة عضل / شاش وطوارئ):');
-  if (!name || !name.trim()) return;
-  const priceStr = prompt(`سعر بيع "${name.trim()}" بالجنيه:`, '10');
-  if (!priceStr) return;
-  const price = parseFloat(priceStr);
-  if (isNaN(price) || price <= 0) {
-    toast('⚠️ يرجى إدخال سعر صحيح', false);
-    return;
-  }
-  posAddToCart({
-    id: 'uncoded-' + Date.now(),
-    internal_code: 'UNC-' + Math.floor(Math.random() * 9000 + 1000),
-    barcode: '',
-    name: name.trim(),
-    selling_price: price,
-    unit_price: price,
-    cost_price: 0,
-    pack_units: 1,
-    stock_packs: 999,
-    stock_units: 0,
-    expiry_date: '',
-    shelf_location: 'غير مكود'
-  }, 'pack', 1);
-  playPosBeep(true);
-  toast(`⚡ تمت إضافة صنف غير مكود: ${name.trim()} (${fmt(price)} ج)`);
 }
 
 // ── تعديل الكمية ──
@@ -16690,29 +16281,24 @@ function posChangeDiscount(idx, val) {
 }
 
 function posRemoveItem(idx) {
-  if (idx >= 0 && idx < posCart.length) {
-    const itName = posCart[idx]?.name || '';
-    posCart.splice(idx, 1);
-    renderPosCart();
-    toast(`🗑 تم حذف الصنف: ${itName}`);
-  }
+  posCart.splice(idx, 1);
+  renderPosCart();
 }
 
-// ── رسم جدول السلة بنظام فارما فلاي 11 عمود ──
+// ── رسم جدول السلة ──
 function renderPosCart() {
   const body = document.getElementById('posItemsBody');
   if (!body) return;
   if (!posCart.length) {
     body.innerHTML = `
       <tr id="posEmptyRow">
-        <td colspan="11" style="text-align:center;padding:45px 20px;color:var(--text3);">
+        <td colspan="9" style="text-align:center;padding:45px 20px;color:var(--text3);">
           <div style="font-size:2.2rem;margin-bottom:8px;opacity:.6;">🛒</div>
           <div style="font-weight:700;font-size:1.05rem;">الفاتورة فارغة</div>
-          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه، أو اضغط [*] للأصناف السريعة</div>
+          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي علبة بالسكانر أو اكتب كود الصنف أو اسمه لإضافته فوراً</div>
         </td>
       </tr>
     `;
-    updateActiveItemDetails(null);
     calcPosTotals();
     return;
   }
@@ -16722,56 +16308,40 @@ function renderPosCart() {
     const disc = rawTotal * (row.discount_pct / 100);
     const lineTotal = Math.max(0, rawTotal - disc);
     const isStrip = row.unit_type === 'unit';
-
     return `
-      <tr onclick="updateActiveItemDetails(posCart[${idx}])" style="cursor:pointer;" class="pos-cart-row">
-        <td style="text-align:center;font-weight:700;color:var(--text3);font-size:.82rem;">${idx + 1}</td>
+      <tr onclick="updateActiveItemDetails(${JSON.stringify(row).replace(/"/g, '&quot;')})">
+        <td style="color:var(--text3);font-size:.8rem;">${idx + 1}</td>
         <td>
-          <span style="font-family:monospace;font-weight:800;color:var(--teal);">${esc(row.internal_code || row.barcode || '—')}</span>
+          <span style="font-family:monospace;font-weight:700;color:var(--teal);">${esc(row.internal_code || row.barcode || '—')}</span>
         </td>
         <td>
-          <div style="font-weight:900;color:var(--text1);">${esc(row.name)}</div>
-          <div style="font-size:.72rem;color:var(--text3);">المخزون: <strong>${row.stock_packs} علبة : ${row.stock_units} أجزاء</strong></div>
+          <div style="font-weight:800;color:var(--text1);">${esc(row.name)}</div>
+          <div style="font-size:.72rem;color:var(--text3);">رصيد: ${row.stock_packs}:${row.stock_units}</div>
         </td>
         <td style="text-align:center;">
-          ${!isStrip ? `
-            <div class="pos-qty-ctrl">
-              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, -1)">-</button>
-              <input type="number" class="pos-qty-inp" value="${row.qty}" min="1" step="any" onclick="event.stopPropagation()" onchange="posSetQty(${idx}, this.value)" />
-              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, 1)">+</button>
-            </div>
-          ` : `<span style="color:var(--text3);font-size:.85rem;font-weight:700;">0</span>`}
+          <button type="button" class="pos-unit-btn ${isStrip ? 'strip' : 'pack'}" onclick="posToggleUnit(${idx})" title="انقر للتبديل بين علبة وقرص/شريط">
+            ${isStrip ? '💊 قرص/شريط' : '📦 علبة'}
+          </button>
         </td>
         <td style="text-align:center;">
-          ${isStrip ? `
-            <div class="pos-qty-ctrl">
-              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, -1)">-</button>
-              <input type="number" class="pos-qty-inp" value="${row.qty}" min="1" step="any" onclick="event.stopPropagation()" onchange="posSetQty(${idx}, this.value)" />
-              <button type="button" class="pos-qty-btn" onclick="event.stopPropagation();posChangeQty(${idx}, 1)">+</button>
-            </div>
-          ` : `
-            <button type="button" class="pos-unit-btn strip" onclick="event.stopPropagation();posToggleUnit(${idx})" title="تحويل لبيع بالقرص أو الشريط [+]">
-              0 (قرص +)
-            </button>
-          `}
+          <div class="pos-qty-ctrl">
+            <button type="button" class="pos-qty-btn" onclick="posChangeQty(${idx}, -1)">-</button>
+            <input type="number" class="pos-qty-inp" value="${row.qty}" min="0.1" step="any" onchange="posSetQty(${idx}, this.value)" />
+            <button type="button" class="pos-qty-btn" onclick="posChangeQty(${idx}, 1)">+</button>
+          </div>
         </td>
-        <td style="text-align:center;font-weight:900;color:var(--text1);">${fmt(row.price)} <small style="font-size:.7rem;">ج</small></td>
+        <td style="text-align:center;font-weight:800;">${fmt(row.price)} ج</td>
         <td style="text-align:center;">
-          <input type="number" value="${row.discount_pct || 0}" min="0" max="100" style="width:48px;padding:3px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:#f6ad55;font-weight:900;font-size:.82rem;" onclick="event.stopPropagation()" onchange="posChangeDiscount(${idx}, this.value)" />
+          <input type="number" value="${row.discount_pct || 0}" min="0" max="100" style="width:48px;padding:3px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:#f6ad55;font-weight:800;font-size:.8rem;" onchange="posChangeDiscount(${idx}, this.value)" />
         </td>
-        <td style="text-align:center;font-size:.8rem;color:var(--text2);font-family:monospace;">${esc(row.expiry_date || '—')}</td>
-        <td style="text-align:center;font-size:.8rem;color:var(--text3);">0</td>
-        <td style="text-align:center;font-weight:900;color:#68d391;font-size:1.02rem;">${fmt(lineTotal)} <small style="font-size:.7rem;">ج</small></td>
+        <td style="text-align:center;font-weight:900;color:#68d391;font-size:.95rem;">${fmt(lineTotal)} ج</td>
         <td style="text-align:center;">
-          <button type="button" onclick="event.stopPropagation();posRemoveItem(${idx})" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fc8181;cursor:pointer;border-radius:6px;padding:2px 7px;font-size:.85rem;font-weight:900;" title="حذف">✕</button>
+          <button type="button" onclick="posRemoveItem(${idx})" style="background:none;border:none;color:#fc8181;cursor:pointer;font-size:1.1rem;" title="حذف">✕</button>
         </td>
       </tr>
     `;
   }).join('');
 
-  if (posCart.length > 0) {
-    updateActiveItemDetails(posCart[posCart.length - 1]);
-  }
   calcPosTotals();
 }
 
@@ -17129,192 +16699,41 @@ function handlePfExcelDrop(e) {
   }
 }
 
-let pfPendingBundle = {
-  items: [],
-  vendors: [],
-  customers: [],
-  safes: []
-};
-
-function updateIndexBackupStats(sourceName) {
-  const items = pfPendingBundle.items || [];
-  const vendors = pfPendingBundle.vendors || [];
-  const customers = pfPendingBundle.customers || [];
-  const stockCount = items.filter(it => (it.stock_packs > 0 || it.stock_units > 0)).length;
-
-  const wrap = document.getElementById('pfImportStatsWrap');
-  if (wrap) wrap.style.display = 'block';
-
-  const elItems = document.getElementById('idxBkpCountItems');
-  const elStock = document.getElementById('idxBkpCountStock');
-  const elVendors = document.getElementById('idxBkpCountVendors');
-  const elCust = document.getElementById('idxBkpCountCustomers');
-
-  if (elItems) elItems.textContent = items.length.toLocaleString('ar-EG');
-  if (elStock) elStock.textContent = stockCount.toLocaleString('ar-EG');
-  if (elVendors) elVendors.textContent = (vendors.length || 95).toLocaleString('ar-EG');
-  if (elCust) elCust.textContent = (customers.length || 46).toLocaleString('ar-EG');
-
-  const btn = document.getElementById('btnStartPfImport');
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = `🚀 بدء الترحيل والمزامنة (${items.length.toLocaleString('ar-EG')} صنف)`;
-  }
-}
-
-async function restorePfBackupInstant() {
-  toast('⚡ جاري سحب حزمة النسخة المعتمدة new24_FullBackup...');
-  const wrap = document.getElementById('pfImportProgressWrap');
-  const bar = document.getElementById('pfImportProgressBar');
-  const txt = document.getElementById('pfImportStatusText');
-  const pctTxt = document.getElementById('pfImportPctText');
-  if (wrap) wrap.style.display = 'block';
-  if (bar) bar.style.width = '35%';
-  if (pctTxt) pctTxt.textContent = '35%';
-  if (txt) txt.textContent = 'تحميل حزمة 27,986 صنف وموردين وعملاء...';
-
-  try {
-    const resp = await fetch('pharmafly_backup_bundle.json');
-    if (!resp.ok) throw new Error('تعذر تحميل ملف الحزمة: ' + resp.statusText);
-    const bundle = await resp.json();
-    pfPendingBundle = bundle;
-    pfParsedRows = bundle.items || [];
-
-    if (bar) bar.style.width = '100%';
-    if (pctTxt) pctTxt.textContent = '100%';
-    if (txt) txt.textContent = '✅ تم فك واستخراج كافة محتويات النسخة بنجاح';
-    setTimeout(() => { if (wrap) wrap.style.display = 'none'; }, 600);
-
-    updateIndexBackupStats('new24_FullBackup.bak (مدمج)');
-    toast('✅ تم استخراج 27,986 صنف دوائي و95 مورد و46 عميل جاهزة للترحيل');
-  } catch(err) {
-    toast('❌ ' + err.message, false);
-    if (wrap) wrap.style.display = 'none';
-  }
-}
-
-function parseIndexBakBuffer(buf) {
-  const u8 = new Uint8Array(buf);
-  const dv = new DataView(buf);
-  let td1256;
-  try { td1256 = new TextDecoder('windows-1256'); } catch(e) { td1256 = new TextDecoder('utf-8'); }
-
-  const itemsMap = new Map();
-  for (let i = 0; i < u8.length - 400; i++) {
-    if (u8[i] === 0x30 && u8[i+1] === 0x00 && u8[i+2] === 0x63 && u8[i+3] === 0x01) {
-      const code = dv.getUint32(i + 4, true);
-      if (code > 0 && code < 500000) {
-        const sellPrice = dv.getFloat64(i + 182, true);
-        const costPrice = dv.getFloat64(i + 228, true);
-        const ncol = dv.getUint16(i + 355, true);
-        const nullBytes = Math.floor((ncol + 7) / 8);
-        const varStart = 355 + 2 + nullBytes;
-        if (i + varStart + 2 < u8.length) {
-          const nvar = dv.getUint16(i + varStart, true);
-          if (nvar > 0 && nvar < 50) {
-            const offPtr = varStart + 2;
-            let offsets = [];
-            for (let v = 0; v < nvar; v++) {
-              if (i + offPtr + v*2 + 2 <= u8.length) offsets.push(dv.getUint16(i + offPtr + v*2, true));
-            }
-            let prevOff = offPtr + nvar * 2;
-            let name = '';
-            for (let off of offsets) {
-              if (prevOff <= off && i + off <= u8.length) {
-                try {
-                  const s = td1256.decode(u8.subarray(i + prevOff, i + off)).trim();
-                  if (s.length >= 3 && /[a-zA-Z\u0600-\u06FF]/.test(s) && !/^\d+$/.test(s)) {
-                    if (!name) name = s;
-                  }
-                } catch(e) {}
-                prevOff = off;
-              }
-            }
-            if (name && sellPrice > 0.1 && sellPrice < 50000) {
-              const validSell = +sellPrice.toFixed(2);
-              const validCost = +(costPrice || 0).toFixed(2);
-              const existing = itemsMap.get(code);
-              if (!existing || validSell > existing.selling_price) {
-                let packUnits = 1;
-                const m = name.match(/(\d+)\s*(?:TAB|CAP|TABLET|CAPSULE|T\b|C\b|AMP|VIAL|STRIP|S\b)/i);
-                if (m) {
-                  const val = parseInt(m[1], 10);
-                  if (val >= 2 && val <= 200) packUnits = val;
-                }
-                itemsMap.set(code, {
-                  internal_code: String(code),
-                  barcode: null,
-                  name: name,
-                  selling_price: validSell,
-                  cost_price: validCost,
-                  pack_units: packUnits,
-                  unit_price: +(validSell / packUnits).toFixed(2),
-                  stock_packs: 0,
-                  stock_units: 0,
-                  is_active: true
-                });
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return Array.from(itemsMap.values());
-}
-
 async function handlePfExcelSelected(files) {
   if (!files || !files.length) return;
   const file = files[0];
-  const name = file.name.toLowerCase();
 
-  // 1. دعم ملفات النسخة الاحتياطية المباشرة (.bak)
-  if (name.endsWith('.bak')) {
-    toast(`⏳ جاري فك شفرة ملف النسخة الاحتياطية (${(file.size / (1024*1024)).toFixed(1)} MB)...`);
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const buf = e.target.result;
-        const parsedItems = parseIndexBakBuffer(buf);
-        pfParsedRows = parsedItems;
-        pfPendingBundle.items = parsedItems;
-
-        // دعم الموردين والعملاء
-        try {
-          const resp = await fetch('pharmafly_backup_bundle.json');
-          if (resp.ok) {
-            const bundle = await resp.json();
-            pfPendingBundle.vendors = bundle.vendors || [];
-            pfPendingBundle.customers = bundle.customers || [];
-            pfPendingBundle.safes = bundle.safes || [];
-          }
-        } catch(e) {}
-
-        updateIndexBackupStats(file.name);
-        toast(`✅ تم استخراج ${parsedItems.length.toLocaleString('ar-EG')} صنف من ملف BAK بنجاح`);
-      } catch(err) {
-        toast('❌ خطأ في معالجة ملف BAK: ' + err.message, false);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-    return;
-  }
-
-  // 2. دعم ملفات JSON المباشرة عالية السرعة
-  if (name.endsWith('.json')) {
+  // 1. دعم ملفات JSON المباشرة عالية السرعة
+  if (file.name.toLowerCase().endsWith('.json')) {
     toast('⏳ جاري قراءة ملف الأصناف JSON بسرعة فائقة...');
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const parsed = JSON.parse(e.target.result);
-        if (Array.isArray(parsed)) {
-          pfParsedRows = parsed;
-          pfPendingBundle.items = parsed;
-        } else if (parsed.items) {
-          pfPendingBundle = parsed;
-          pfParsedRows = parsed.items;
+        if (!Array.isArray(parsed) || !parsed.length) {
+          toast('❌ ملف JSON فارغ أو غير متوافق', false);
+          return;
         }
-        updateIndexBackupStats(file.name);
+        pfParsedRows = parsed.map(it => ({
+          internal_code: String(it.internal_code || it.id || '').trim(),
+          barcode: it.barcode ? String(it.barcode).trim() : null,
+          name: String(it.name || '').trim(),
+          selling_price: parseFloat(it.selling_price || it.sales_price) || 0,
+          unit_price: parseFloat(it.unit_price) || (parseFloat(it.selling_price || it.sales_price) || 0),
+          cost_price: parseFloat(it.cost_price) || 0,
+          pack_units: parseInt(it.pack_units) || 1,
+          stock_packs: parseInt(it.stock_packs) || 0,
+          stock_units: parseInt(it.stock_units) || 0,
+          expiry_date: it.expiry_date || null,
+          shelf_location: it.shelf_location || it.category || null,
+          is_active: true
+        })).filter(it => it.name && (it.internal_code || it.barcode || it.selling_price > 0));
+
+        const btn = document.getElementById('btnStartPfImport');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = `🚀 بدء رفع (${pfParsedRows.length} صنف)`;
+        }
         toast(`✅ تم فحص ملف JSON بنجاح — جاهز لرفع ${pfParsedRows.length} صنف`);
       } catch(err) {
         toast('❌ خطأ في معالجة ملف JSON: ' + err.message, false);
@@ -17324,7 +16743,7 @@ async function handlePfExcelSelected(files) {
     return;
   }
 
-  // 3. معالجة ملفات الإكسيل (.xlsx, .xls, .csv)
+  // 2. معالجة ملفات الإكسيل (.xlsx, .xls, .csv)
   await ensureXLSX();
   if (typeof XLSX === 'undefined') {
     toast('❌ تعذر تحميل مكتبة معالجة الإكسيل', false);
@@ -17345,6 +16764,7 @@ async function handlePfExcelSelected(files) {
         return;
       }
 
+      // مطابقة الأعمدة الصيدلية بمرونة تامة ودعم شيتات فارما فلاي والمخزون
       pfParsedRows = rows.map(r => {
         const getVal = (keys) => {
           for (const k of keys) {
@@ -17384,8 +16804,11 @@ async function handlePfExcelSelected(files) {
         };
       }).filter(it => it.name && (it.internal_code || it.barcode || it.selling_price > 0));
 
-      pfPendingBundle.items = pfParsedRows;
-      updateIndexBackupStats(file.name);
+      const btn = document.getElementById('btnStartPfImport');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = `🚀 بدء رفع (${pfParsedRows.length} صنف)`;
+      }
       toast(`✅ تم فحص الملف بنجاح — جاهز لرفع ${pfParsedRows.length} صنف`);
     } catch(err) {
       toast('❌ خطأ في معالجة ملف الإكسيل: ' + err.message, false);
@@ -17396,9 +16819,7 @@ async function handlePfExcelSelected(files) {
 
 // ── رفع الأصناف إلى سوبابيز بالدفعات (Chunks) ──
 async function startPharmaflyBatchImport() {
-  const items = (pfPendingBundle && pfPendingBundle.items && pfPendingBundle.items.length) ? pfPendingBundle.items : pfParsedRows;
-  if (!items || !items.length) return;
-
+  if (!pfParsedRows || !pfParsedRows.length) return;
   const wrap = document.getElementById('pfImportProgressWrap');
   const bar = document.getElementById('pfImportProgressBar');
   const txt = document.getElementById('pfImportStatusText');
@@ -17408,781 +16829,45 @@ async function startPharmaflyBatchImport() {
   if (wrap) wrap.style.display = 'block';
   if (btn) btn.disabled = true;
 
+  const total = pfParsedRows.length;
+  const CHUNK_SIZE = 150;
+  let processed = 0;
+
   try {
-    // 1. مزامنة الخزائن
-    if (pfPendingBundle.safes && pfPendingBundle.safes.length) {
-      if (txt) txt.textContent = 'تهيئة الخزائن والورديات...';
-      await sb.from('safes').upsert(pfPendingBundle.safes, { onConflict: 'code' });
-    }
-
-    // 2. مزامنة الموردين
-    if (pfPendingBundle.vendors && pfPendingBundle.vendors.length) {
-      if (txt) txt.textContent = 'حفظ شركات وموردي الأدوية...';
-      await sb.from('vendors').upsert(pfPendingBundle.vendors, { onConflict: 'code' });
-    }
-
-    // 3. مزامنة العملاء
-    if (pfPendingBundle.customers && pfPendingBundle.customers.length) {
-      if (txt) txt.textContent = 'حفظ عملاء الصيدلية والدليفري...';
-      await sb.from('customers').upsert(pfPendingBundle.customers, { onConflict: 'code' });
-    }
-
-    // 4. ترحيل الأصناف بدفعات 500
-    const total = items.length;
-    const CHUNK_SIZE = 500;
-    let processed = 0;
-
     for (let i = 0; i < total; i += CHUNK_SIZE) {
-      const chunk = items.slice(i, i + CHUNK_SIZE);
+      const chunk = pfParsedRows.slice(i, i + CHUNK_SIZE);
       const { error } = await sb.from('items').upsert(chunk, { onConflict: 'internal_code' });
       if (error) {
         console.error('Batch import error:', error);
+        if (error.code === 'PGRST205' || (error.message && error.message.includes('items'))) {
+          throw new Error('جدول الأصناف (items) غير مفعل في Supabase. يرجى تشغيل سكريبت setup_pos_system.sql في Supabase SQL Editor أولاً.');
+        }
       }
       processed += chunk.length;
       const pct = Math.min(100, Math.round((processed / total) * 100));
       if (bar) bar.style.width = pct + '%';
       if (pctTxt) pctTxt.textContent = pct + '%';
-      if (txt) txt.textContent = `تم ترحيل ${processed.toLocaleString('ar-EG')} من ${total.toLocaleString('ar-EG')} صنف...`;
+      if (txt) txt.textContent = `تم رفع ${processed} من ${total} صنف...`;
     }
 
-    toast('🎉 تم استرجاع وترحيل قاعدة بيانات فارما فلاي بالكامل بنجاح!');
+    toast('🎉 تم استيراد ورفع قاعدة أصناف الصيدلية بالكامل بنجاح!');
     closePharmaflyImportModal();
     await loadItemsCatalog();
   } catch(err) {
     toast('❌ ' + err.message, false);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🚀 بدء الترحيل والمزامنة إلى سوبابيز'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🚀 بدء الاستيراد والرفع'; }
   }
 }
 
 // ══════════════════════════════════════════════════════════════════
-
-// ══════════════════════════════════════════════════════════════════
-// 🚚  PHARMAFLY PURCHASES ENGINE (فواتير المشتريات والطلبيات الواردة)
-// ══════════════════════════════════════════════════════════════════
-let purCart = [];
-let purInvSeq = 1;
-
-function initPurchasesPane() {
-  const dInp = document.getElementById('purDateInp');
-  if (dInp && !dInp.value) dInp.value = todayStr();
-  const tag = document.getElementById('purInvTag');
-  if (tag) tag.textContent = 'فاتورة وارد: #PUR-' + (Date.now().toString().slice(-4));
-  setTimeout(() => document.getElementById('purItemSearchInp')?.focus(), 200);
-}
-
-function handlePurSearchInput(q) {
-  const dd = document.getElementById('purAutoDropdown');
-  if (!dd) return;
-  q = (q || '').trim().toLowerCase();
-  if (q.length < 2) { dd.style.display = 'none'; return; }
-
-  // Search in cachedItems (30,617 items)
-  const matches = (cachedItems || []).filter(it => {
-    return (it.internal_code && it.internal_code.toLowerCase().includes(q)) ||
-           (it.barcode && it.barcode.toLowerCase().includes(q)) ||
-           (it.name && it.name.toLowerCase().includes(q));
-  }).slice(0, 15);
-
-  if (!matches.length) { dd.style.display = 'none'; return; }
-
-  dd.innerHTML = matches.map(it => `
-    <div class="pos-auto-item" onclick="selectPurItem('${it.id}')" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <strong style="color:var(--text1);font-size:.9rem;">${it.name}</strong>
-        <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">كود: <span style="color:#63b3ed;">${it.internal_code||'—'}</span> | باركود: ${it.barcode||'—'}</div>
-      </div>
-      <div style="text-align:left;">
-        <span style="color:#48bb78;font-weight:800;font-size:.95rem;">${fmt(it.selling_price||0)} ج</span>
-        <div style="font-size:.74rem;color:var(--text3);">المخزن: ${it.stock_packs||0} علبة</div>
-      </div>
-    </div>
-  `).join('');
-  dd.style.display = 'block';
-}
-
-function handlePurSearchKeydown(e) {
-  if (e.key === 'Enter') {
-    const val = (e.target.value || '').trim();
-    if (!val) return;
-    const exact = (itemsByBarcode.get(val) || itemsByCode.get(val));
-    if (exact) {
-      selectPurItem(exact.id);
-      e.target.value = '';
-      clearPurSearch();
-    }
-  }
-}
-
-function clearPurSearch() {
-  const inp = document.getElementById('purItemSearchInp');
-  if (inp) inp.value = '';
-  const dd = document.getElementById('purAutoDropdown');
-  if (dd) dd.style.display = 'none';
-}
-
-function selectPurItem(itemId) {
-  const it = (cachedItems || []).find(x => x.id === itemId);
-  if (!it) return;
-  clearPurSearch();
-
-  // Check if item already in cart
-  const existing = purCart.find(x => x.item_id === it.id);
-  if (existing) {
-    existing.packs += 1;
-  } else {
-    const cost = it.cost_price > 0 ? it.cost_price : (it.selling_price ? Math.round(it.selling_price * 0.75 * 100) / 100 : 0);
-    const discPct = it.selling_price > 0 && cost > 0 ? Math.round((1 - (cost / it.selling_price)) * 100) : 25;
-    purCart.push({
-      item_id: it.id,
-      code: it.internal_code || '',
-      barcode: it.barcode || '',
-      name: it.name || '',
-      packs: 1,
-      bonus: 0,
-      cost_price: cost,
-      discount_pct: discPct,
-      selling_price: it.selling_price || 0,
-      expiry: it.expiry_date || '',
-    });
-  }
-  renderPurTable();
-  setTimeout(() => document.getElementById('purItemSearchInp')?.focus(), 100);
-}
-
-function renderPurTable() {
-  const body = document.getElementById('purItemsBody');
-  if (!body) return;
-
-  if (!purCart.length) {
-    body.innerHTML = `
-      <tr id="purEmptyRow">
-        <td colspan="11" style="text-align:center;padding:40px 20px;color:var(--text3);">
-          <div style="font-size:2rem;margin-bottom:6px;">🚚</div>
-          <div style="font-weight:700;">لا توجد أصناف في فاتورة الوارد</div>
-          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود الأصناف الواردة من الشركة أو ابحث بالاسم لإضافتها وتحديث المخزن</div>
-        </td>
-      </tr>`;
-    calcPurTotals();
-    return;
-  }
-
-  body.innerHTML = purCart.map((row, idx) => {
-    const rowTotal = row.packs * row.cost_price;
-    return `
-      <tr>
-        <td style="text-align:center;color:var(--text3);">${idx + 1}</td>
-        <td><strong style="color:#63b3ed;">${row.code || '—'}</strong></td>
-        <td><strong style="color:var(--text1);">${row.name}</strong></td>
-        <td style="text-align:center;">
-          <input type="number" min="1" value="${row.packs}" class="fel" style="width:70px;text-align:center;padding:4px;" onchange="updatePurItem(${idx}, 'packs', this.value)" />
-        </td>
-        <td style="text-align:center;">
-          <input type="number" min="0" value="${row.bonus}" class="fel" style="width:65px;text-align:center;padding:4px;color:#48bb78;" onchange="updatePurItem(${idx}, 'bonus', this.value)" />
-        </td>
-        <td style="text-align:center;">
-          <input type="number" step="0.01" min="0" value="${row.cost_price}" class="fel" style="width:85px;text-align:center;padding:4px;font-weight:700;" onchange="updatePurItem(${idx}, 'cost_price', this.value)" />
-        </td>
-        <td style="text-align:center;">
-          <input type="number" step="0.5" min="0" max="100" value="${row.discount_pct}" class="fel" style="width:65px;text-align:center;padding:4px;color:#f6ad55;" onchange="updatePurItem(${idx}, 'discount_pct', this.value)" />
-        </td>
-        <td style="text-align:center;">
-          <input type="number" step="0.01" min="0" value="${row.selling_price}" class="fel" style="width:85px;text-align:center;padding:4px;color:#48bb78;font-weight:700;" onchange="updatePurItem(${idx}, 'selling_price', this.value)" />
-        </td>
-        <td style="text-align:center;">
-          <input type="text" value="${row.expiry || ''}" placeholder="MM/YY" class="fel" style="width:80px;text-align:center;padding:4px;" onchange="updatePurItem(${idx}, 'expiry', this.value)" />
-        </td>
-        <td style="text-align:center;font-weight:900;color:var(--text1);font-family:monospace;">${fmt(rowTotal)} ج</td>
-        <td style="text-align:center;">
-          <button type="button" class="btn-del" onclick="removePurItem(${idx})" title="حذف">✕</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  calcPurTotals();
-}
-
-function updatePurItem(idx, field, val) {
-  if (!purCart[idx]) return;
-  const num = parseFloat(val) || 0;
-  if (field === 'packs') purCart[idx].packs = Math.max(1, parseInt(num) || 1);
-  if (field === 'bonus') purCart[idx].bonus = Math.max(0, parseInt(num) || 0);
-  if (field === 'cost_price') {
-    purCart[idx].cost_price = Math.max(0, num);
-    if (purCart[idx].selling_price > 0) {
-      purCart[idx].discount_pct = Math.round((1 - (num / purCart[idx].selling_price)) * 100);
-    }
-  }
-  if (field === 'selling_price') {
-    purCart[idx].selling_price = Math.max(0, num);
-    if (purCart[idx].discount_pct > 0) {
-      purCart[idx].cost_price = Math.round(num * (1 - (purCart[idx].discount_pct / 100)) * 100) / 100;
-    }
-  }
-  if (field === 'discount_pct') {
-    purCart[idx].discount_pct = num;
-    if (purCart[idx].selling_price > 0) {
-      purCart[idx].cost_price = Math.round(purCart[idx].selling_price * (1 - (num / 100)) * 100) / 100;
-    }
-  }
-  if (field === 'expiry') purCart[idx].expiry = (val || '').trim();
-  renderPurTable();
-}
-
-function removePurItem(idx) {
-  purCart.splice(idx, 1);
-  renderPurTable();
-}
-
-function clearPurInvoice() {
-  if (purCart.length && !confirm('هل تريد إلغاء فاتورة المشتريات الحالية وتفريغ الجدول؟')) return;
-  purCart = [];
-  renderPurTable();
-  const supInp = document.getElementById('purSupplierInp');
-  if (supInp) supInp.value = '';
-  const invNo = document.getElementById('purInvoiceNoInp');
-  if (invNo) invNo.value = '';
-}
-
-function calcPurTotals() {
-  let totalSell = 0;
-  let totalCost = 0;
-  purCart.forEach(r => {
-    totalSell += (r.packs * (r.selling_price || 0));
-    totalCost += (r.packs * (r.cost_price || 0));
-  });
-  const totalDisc = Math.max(0, totalSell - totalCost);
-
-  const tSellEl = document.getElementById('purTotalSellingText');
-  const tDiscEl = document.getElementById('purTotalDiscText');
-  const tCostEl = document.getElementById('purTotalCostText');
-
-  if (tSellEl) tSellEl.textContent = fmt(totalSell) + ' ج';
-  if (tDiscEl) tDiscEl.textContent = fmt(totalDisc) + ' ج';
-  if (tCostEl) tCostEl.textContent = fmt(totalCost) + ' ج';
-}
-
-async function savePurchaseInvoice() {
-  if (!purCart.length) {
-    toast('⚠️ الفاتورة فارغة! أضف أصنافاً أولاً', false);
-    return;
-  }
-  const supName = (document.getElementById('purSupplierInp')?.value || '').trim();
-  if (!supName) {
-    toast('⚠️ يرجى اختيار أو كتابة اسم المورد / الشركة', false);
-    document.getElementById('purSupplierInp')?.focus();
-    return;
-  }
-  const invNo = (document.getElementById('purInvoiceNoInp')?.value || '').trim() || ('PUR-' + Date.now().toString().slice(-6));
-  const pDate = document.getElementById('purDateInp')?.value || todayStr();
-  const payMethod = document.getElementById('purPayMethod')?.value || 'credit';
-
-  let totalSell = 0;
-  let totalCost = 0;
-  purCart.forEach(r => {
-    totalSell += (r.packs * (r.selling_price || 0));
-    totalCost += (r.packs * (r.cost_price || 0));
-  });
-
-  try {
-    toast('⏳ جارٍ حفظ الفاتورة وإضافة البضاعة للمخزن...', true);
-
-    // 1. Insert into purchases table
-    const purchasePayload = {
-      id: genId(),
-      supplier_name: supName,
-      supplier_invoice_no: invNo,
-      date: pDate,
-      time: nowTimeStr(),
-      total_cost: totalCost,
-      total_selling: totalSell,
-      items_count: purCart.length,
-      items_data: purCart
-    };
-    await sb.from('purchases').insert([purchasePayload]);
-
-    // 2. Increment stock_packs for each item in Supabase items & local cache
-    for (const it of purCart) {
-      const addedPacks = (it.packs || 0) + (it.bonus || 0);
-      const match = cachedItems.find(x => x.id === it.item_id);
-      if (match) {
-        match.stock_packs = (match.stock_packs || 0) + addedPacks;
-        if (it.cost_price) match.cost_price = it.cost_price;
-        if (it.selling_price) match.selling_price = it.selling_price;
-        if (it.expiry) match.expiry_date = it.expiry;
-      }
-      // Update in Supabase
-      await sb.from('items').update({
-        stock_packs: match ? match.stock_packs : addedPacks,
-        cost_price: it.cost_price,
-        selling_price: it.selling_price,
-        expiry_date: it.expiry || null,
-        updated_at: new Date().toISOString()
-      }).eq('id', it.item_id);
-    }
-
-    // Save updated catalog to local IndexedDB
-    idbSaveCachedItems(cachedItems);
-
-    // 3. Automatically record purchase entry in entries table (type: طلبيات)
-    const entryPayload = {
-      id: genId(),
-      date: pDate,
-      type: 'طلبيات',
-      company: supName,
-      invoice: invNo,
-      amount: totalCost,
-      notes: `فاتورة وارد موردين #${invNo} (${purCart.length} صنف) — بضاعة مضافة للمخزن`,
-      uid: me?.uid || null,
-      uname: me?.name || 'مدير',
-      time: nowTimeStr(),
-      ts: Date.now()
-    };
-    await sb.from('entries').insert([entryPayload]);
-    entries.unshift(entryPayload);
-
-    toast(`✅ تم حفظ فاتورة ${supName} بنجاح وإضافة الكميات للمخزن!`);
-    purCart = [];
-    renderPurTable();
-    updateItemsKpis();
-    renderItemsTable();
-    renderAll();
-  } catch(err) {
-    console.error('savePurchaseInvoice error:', err);
-    toast('❌ خطأ أثناء حفظ الفاتورة: ' + (err.message || err), false);
-  }
-}
-
-async function openPurchasesHistoryModal() {
-  try {
-    const { data, error } = await sb.from('purchases').select('*').order('created_at', { ascending: false }).limit(20);
-    if (error) throw error;
-    if (!data || !data.length) {
-      toast('لا توجد فواتير مشتريات سابقة حتى الآن');
-      return;
-    }
-    const html = `
-      <div style="font-size:1.15rem;font-weight:900;margin-bottom:12px;color:var(--text1);">📜 سجل فواتير المشتريات والطلبيات الواردة</div>
-      <div style="max-height:400px;overflow-y:auto;">
-        <table class="pos-table">
-          <thead>
-            <tr>
-              <th>التاريخ</th>
-              <th>المورد</th>
-              <th>رقم الفاتورة</th>
-              <th>الأصناف</th>
-              <th>التكلفة الصافية</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(p => `
-              <tr>
-                <td>${p.date} ${p.time||''}</td>
-                <td><strong>${p.supplier_name||'—'}</strong></td>
-                <td>${p.supplier_invoice_no||'—'}</td>
-                <td style="text-align:center;">${p.items_count||0}</td>
-                <td><strong style="color:#48bb78;">${fmt(p.total_cost||0)} ج</strong></td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-    openCustomModal(html);
-  } catch(e) {
-    toast('خطأ في جلب الفواتير: ' + e.message, false);
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════
-// 📋  PHARMAFLY STOCK COUNT ENGINE (الجرد المخزني الفعلي ومطابقة الأرصدة)
-// ══════════════════════════════════════════════════════════════════
-let scCurrentItem = null;
-let scAuditList = [];
-
-function initStockCountPane() {
-  setTimeout(() => document.getElementById('scSearchInp')?.focus(), 200);
-}
-
-function handleScSearchInput(q) {
-  const dd = document.getElementById('scAutoDropdown');
-  if (!dd) return;
-  q = (q || '').trim().toLowerCase();
-  if (q.length < 2) { dd.style.display = 'none'; return; }
-
-  const matches = (cachedItems || []).filter(it => {
-    return (it.internal_code && it.internal_code.toLowerCase().includes(q)) ||
-           (it.barcode && it.barcode.toLowerCase().includes(q)) ||
-           (it.name && it.name.toLowerCase().includes(q));
-  }).slice(0, 15);
-
-  if (!matches.length) { dd.style.display = 'none'; return; }
-
-  dd.innerHTML = matches.map(it => `
-    <div class="pos-auto-item" onclick="selectScItem('${it.id}')" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <strong style="color:var(--text1);font-size:.9rem;">${it.name}</strong>
-        <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">كود: <span style="color:#63b3ed;">${it.internal_code||'—'}</span> | رف: ${it.shelf_location||'—'}</div>
-      </div>
-      <div style="text-align:left;">
-        <span style="color:#f6ad55;font-weight:800;">${it.stock_packs||0} علبة</span>
-        <div style="font-size:.74rem;color:var(--text3);">${fmt(it.selling_price||0)} ج</div>
-      </div>
-    </div>
-  `).join('');
-  dd.style.display = 'block';
-}
-
-function handleScSearchKeydown(e) {
-  if (e.key === 'Enter') {
-    const val = (e.target.value || '').trim();
-    if (!val) return;
-    const exact = (itemsByBarcode.get(val) || itemsByCode.get(val));
-    if (exact) {
-      selectScItem(exact.id);
-      e.target.value = '';
-      clearScSearch();
-    }
-  }
-}
-
-function clearScSearch() {
-  const inp = document.getElementById('scSearchInp');
-  if (inp) inp.value = '';
-  const dd = document.getElementById('scAutoDropdown');
-  if (dd) dd.style.display = 'none';
-}
-
-function selectScItem(itemId) {
-  const it = (cachedItems || []).find(x => x.id === itemId);
-  if (!it) return;
-  clearScSearch();
-  scCurrentItem = it;
-
-  const card = document.getElementById('scInspectCard');
-  if (card) card.style.display = 'block';
-
-  document.getElementById('scItemName').textContent = it.name;
-  document.getElementById('scItemCode').textContent = it.internal_code || '—';
-  document.getElementById('scItemShelf').textContent = it.shelf_location || '—';
-  document.getElementById('scItemPrice').textContent = fmt(it.selling_price || 0) + ' ج';
-  document.getElementById('scSysPacks').textContent = it.stock_packs || 0;
-  document.getElementById('scSysUnits').textContent = it.stock_units || 0;
-
-  const actP = document.getElementById('scActPacksInp');
-  const actU = document.getElementById('scActUnitsInp');
-  if (actP) { actP.value = it.stock_packs || 0; actP.select(); actP.focus(); }
-  if (actU) actU.value = it.stock_units || 0;
-
-  calcScDiscrepancy();
-}
-
-function calcScDiscrepancy() {
-  if (!scCurrentItem) return;
-  const sysP = scCurrentItem.stock_packs || 0;
-  const sysU = scCurrentItem.stock_units || 0;
-  const actP = parseInt(document.getElementById('scActPacksInp')?.value) || 0;
-  const actU = parseInt(document.getElementById('scActUnitsInp')?.value) || 0;
-
-  const pu = Math.max(1, scCurrentItem.pack_units || 1);
-  const sysTotalUnits = (sysP * pu) + sysU;
-  const actTotalUnits = (actP * pu) + actU;
-  const diffUnits = actTotalUnits - sysTotalUnits;
-
-  const badge = document.getElementById('scDiscrepancyBadge');
-  if (!badge) return;
-
-  if (diffUnits === 0) {
-    badge.textContent = '✅ مطابق تماماً (0)';
-    badge.style.color = '#48bb78';
-    badge.style.background = 'rgba(72,187,120,.15)';
-  } else if (diffUnits < 0) {
-    const packsDeficit = Math.abs(diffUnits / pu).toFixed(1);
-    const valDeficit = Math.abs(diffUnits * (scCurrentItem.unit_price || (scCurrentItem.selling_price / pu)));
-    badge.textContent = `🔴 عجز: -${packsDeficit} علبة (-${fmt(valDeficit)} ج)`;
-    badge.style.color = '#fc8181';
-    badge.style.background = 'rgba(245,101,101,.15)';
-  } else {
-    const packsSurplus = (diffUnits / pu).toFixed(1);
-    const valSurplus = (diffUnits * (scCurrentItem.unit_price || (scCurrentItem.selling_price / pu)));
-    badge.textContent = `🔵 زيادة: +${packsSurplus} علبة (+${fmt(valSurplus)} ج)`;
-    badge.style.color = '#63b3ed';
-    badge.style.background = 'rgba(99,179,237,.15)';
-  }
-}
-
-function addCurrentItemToStockAudit() {
-  if (!scCurrentItem) return;
-  const sysP = scCurrentItem.stock_packs || 0;
-  const sysU = scCurrentItem.stock_units || 0;
-  const actP = parseInt(document.getElementById('scActPacksInp')?.value) || 0;
-  const actU = parseInt(document.getElementById('scActUnitsInp')?.value) || 0;
-
-  const pu = Math.max(1, scCurrentItem.pack_units || 1);
-  const sysTotalUnits = (sysP * pu) + sysU;
-  const actTotalUnits = (actP * pu) + actU;
-  const diffUnits = actTotalUnits - sysTotalUnits;
-  const diffPacks = diffUnits / pu;
-  const diffVal = diffUnits * (scCurrentItem.unit_price || (scCurrentItem.selling_price / pu));
-
-  // Check if item already in audit list
-  const existingIdx = scAuditList.findIndex(x => x.item_id === scCurrentItem.id);
-  const auditRow = {
-    item_id: scCurrentItem.id,
-    code: scCurrentItem.internal_code || '',
-    name: scCurrentItem.name || '',
-    shelf: scCurrentItem.shelf_location || '—',
-    sys_packs: sysP,
-    sys_units: sysU,
-    act_packs: actP,
-    act_units: actU,
-    diff_packs: diffPacks,
-    diff_val: diffVal,
-    status: diffUnits === 0 ? 'matching' : (diffUnits < 0 ? 'deficit' : 'surplus')
-  };
-
-  if (existingIdx !== -1) {
-    scAuditList[existingIdx] = auditRow;
-  } else {
-    scAuditList.push(auditRow);
-  }
-
-  // Hide inspect card & focus search
-  document.getElementById('scInspectCard').style.display = 'none';
-  scCurrentItem = null;
-  renderScAuditTable();
-  setTimeout(() => document.getElementById('scSearchInp')?.focus(), 150);
-}
-
-function renderScAuditTable() {
-  const body = document.getElementById('scAuditBody');
-  if (!body) return;
-
-  if (!scAuditList.length) {
-    body.innerHTML = `
-      <tr id="scEmptyRow">
-        <td colspan="10" style="text-align:center;padding:40px 20px;color:var(--text3);">
-          <div style="font-size:2rem;margin-bottom:6px;">📋</div>
-          <div style="font-weight:700;">كشف الجرد فارغ حالياً</div>
-          <div style="font-size:.82rem;opacity:.8;margin-top:4px;">امسح باركود أي دواء أو ابحث عنه لإدخال رصيده الفعلي ومطابقته</div>
-        </td>
-      </tr>`;
-    calcScTotals();
-    return;
-  }
-
-  body.innerHTML = scAuditList.map((r, idx) => {
-    let statusLabel = '<span style="color:#48bb78;font-weight:800;">مطابق</span>';
-    let diffColor = 'color:var(--text3);';
-    if (r.status === 'deficit') {
-      statusLabel = '<span style="color:#fc8181;font-weight:800;">عجز</span>';
-      diffColor = 'color:#fc8181;';
-    } else if (r.status === 'surplus') {
-      statusLabel = '<span style="color:#63b3ed;font-weight:800;">زيادة</span>';
-      diffColor = 'color:#63b3ed;';
-    }
-
-    return `
-      <tr>
-        <td style="text-align:center;color:var(--text3);">${idx + 1}</td>
-        <td><strong style="color:#63b3ed;">${r.code || '—'}</strong></td>
-        <td><strong style="color:var(--text1);">${r.name}</strong></td>
-        <td style="text-align:center;color:var(--text3);">${r.shelf}</td>
-        <td style="text-align:center;">${r.sys_packs} ع | ${r.sys_units} ق</td>
-        <td style="text-align:center;"><strong style="color:var(--text1);">${r.act_packs} ع | ${r.act_units} ق</strong></td>
-        <td style="text-align:center;font-weight:800;${diffColor}">${r.diff_packs > 0 ? '+' : ''}${r.diff_packs.toFixed(1)}</td>
-        <td style="text-align:center;font-weight:800;${diffColor}">${fmt(r.diff_val)} ج</td>
-        <td style="text-align:center;">${statusLabel}</td>
-        <td style="text-align:center;">
-          <button type="button" class="btn-del" onclick="removeScAuditItem(${idx})" title="حذف">✕</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  calcScTotals();
-}
-
-function removeScAuditItem(idx) {
-  scAuditList.splice(idx, 1);
-  renderScAuditTable();
-}
-
-function clearStockCountSession() {
-  if (scAuditList.length && !confirm('هل تريد إلغاء جلسة الجرد الحالية وتفريغ الكشف؟')) return;
-  scAuditList = [];
-  renderScAuditTable();
-}
-
-function calcScTotals() {
-  let deficit = 0;
-  let surplus = 0;
-  scAuditList.forEach(r => {
-    if (r.diff_val < 0) deficit += Math.abs(r.diff_val);
-    else if (r.diff_val > 0) surplus += r.diff_val;
-  });
-  const net = surplus - deficit;
-
-  const cntEl = document.getElementById('scTotalCountedText');
-  const defEl = document.getElementById('scTotalDeficitText');
-  const surEl = document.getElementById('scTotalSurplusText');
-  const netEl = document.getElementById('scNetDiscrepancyText');
-
-  if (cntEl) cntEl.textContent = scAuditList.length + ' صنف';
-  if (defEl) defEl.textContent = fmt(deficit) + ' ج';
-  if (surEl) surEl.textContent = fmt(surplus) + ' ج';
-  if (netEl) {
-    netEl.textContent = (net >= 0 ? '+' : '') + fmt(net) + ' ج';
-    netEl.style.color = (net === 0 ? 'var(--text1)' : (net > 0 ? '#63b3ed' : '#fc8181'));
-  }
-}
-
-async function commitStockCountAdjustments() {
-  if (!scAuditList.length) {
-    toast('⚠️ كشف الجرد فارغ! أضف أصنافاً أولاً', false);
-    return;
-  }
-  if (!confirm(`هل أنت متأكد من اعتماد وتسوية الجرد لـ ${scAuditList.length} صنف؟\nسيتم تحديث أرصدة المخزن الفعلية في قاعدة البيانات فوراً.`)) return;
-
-  try {
-    toast('⏳ جارٍ تسوية الأرصدة وتحديث المخزن...', true);
-
-    for (const r of scAuditList) {
-      const match = cachedItems.find(x => x.id === r.item_id);
-      if (match) {
-        match.stock_packs = r.act_packs;
-        match.stock_units = r.act_units;
-      }
-      await sb.from('items').update({
-        stock_packs: r.act_packs,
-        stock_units: r.act_units,
-        updated_at: new Date().toISOString()
-      }).eq('id', r.item_id);
-    }
-
-    // Save updated catalog to local IndexedDB
-    idbSaveCachedItems(cachedItems);
-
-    toast(`✅ تم اعتماد وتسوية الجرد لـ ${scAuditList.length} صنف بنجاح!`);
-    scAuditList = [];
-    renderScAuditTable();
-    updateItemsKpis();
-    renderItemsTable();
-  } catch(err) {
-    console.error('commitStockCountAdjustments error:', err);
-    toast('❌ خطأ أثناء تسوية الجرد: ' + (err.message || err), false);
-  }
-}
-
-function exportStockCountXLSX() {
-  if (!scAuditList.length) {
-    toast('لا توجد أصناف لتصديرها في كشف الجرد', false);
-    return;
-  }
-  const rows = scAuditList.map((r, i) => ({
-    'م': i + 1,
-    'كود الصيدلية': r.code,
-    'اسم الصنف': r.name,
-    'مكان الرف': r.shelf,
-    'رصيد دفتري علب': r.sys_packs,
-    'رصيد دفتري أقراص': r.sys_units,
-    'رصيد فعلي علب': r.act_packs,
-    'رصيد فعلي أقراص': r.act_units,
-    'الفارق بالعلب': r.diff_packs,
-    'قيمة الفارق بالجنيه': r.diff_val,
-    'الحالة': r.status === 'matching' ? 'مطابق' : (r.status === 'deficit' ? 'عجز' : 'زيادة')
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "كشف_الجرد_الفعلي");
-  XLSX.writeFile(wb, `كشف_جرد_المخزن_${todayStr()}.xlsx`);
-  toast('✅ تم تصدير كشف الجرد إكسيل بنجاح');
-}
-
 //  ITEMS MASTER CATALOG (إدارة دليل الأصناف والمخزن)
 // ══════════════════════════════════════════════════════════════════
-function idbItemsOpen() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open('asafra_items_cache_v3', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('cache');
-    req.onsuccess = e => res(e.target.result);
-    req.onerror = () => rej(req.error);
-  });
-}
-
-async function idbGetCachedItems() {
+async function loadItemsCatalog() {
   try {
-    const db = await idbItemsOpen();
-    const tx = db.transaction('cache', 'readonly');
-    return new Promise(res => {
-      const req = tx.objectStore('cache').get('catalog');
-      req.onsuccess = () => res(req.result || null);
-      req.onerror = () => res(null);
-    });
-  } catch(e) { return null; }
-}
-
-async function idbSaveCachedItems(items) {
-  try {
-    const db = await idbItemsOpen();
-    const tx = db.transaction('cache', 'readwrite');
-    tx.objectStore('cache').put(items, 'catalog');
-    return new Promise(res => { tx.oncomplete = res; tx.onerror = () => res(); });
-  } catch(e) {}
-}
-
-async function loadItemsCatalog(forceRefresh = false) {
-  try {
-    // 1. سرعة البرق: تحميل فوري من الذاكرة المحلية IndexedDB خلال 50ms
-    if (!forceRefresh) {
-      const localCached = await idbGetCachedItems();
-      if (localCached && localCached.length >= 25000) {
-        cachedItems = localCached;
-        itemsByCode.clear();
-        itemsByBarcode.clear();
-        cachedItems.forEach(it => {
-          if (it.internal_code) itemsByCode.set(String(it.internal_code).trim(), it);
-          if (it.barcode) itemsByBarcode.set(String(it.barcode).trim(), it);
-        });
-        renderItemsTable();
-        updateItemsKpis();
-        return; // الداتا الحقيقية متوفرة محلياً، لا حاجة لانتظار الشبكة
-      }
-    }
-
-    // 2. تحميل البيانات الحقيقية من Supabase بالتوازي فائق السرعة
-    const pageSize = 1000;
-    const totalBatches = 29; // تغطي حتى 29,000 صنف
-    const concurrency = 6;
-    let allData = [];
-
-    for (let i = 0; i < totalBatches; i += concurrency) {
-      const batchPromises = [];
-      for (let j = i; j < Math.min(i + concurrency, totalBatches); j++) {
-        batchPromises.push(
-          sb.from('items')
-            .select('*')
-            .range(j * pageSize, (j + 1) * pageSize - 1)
-            .order('name')
-            .then(res => res.data || [])
-        );
-      }
-      const batchResults = await Promise.all(batchPromises);
-      batchResults.forEach(rows => {
-        if (rows && rows.length) allData = allData.concat(rows);
-      });
-      if (batchResults.some(rows => !rows || rows.length < pageSize)) {
-        break;
-      }
-    }
-
-    if (allData.length > 0) {
-      cachedItems = allData;
-      await idbSaveCachedItems(allData); // حفظ محلي دائم فائق السرعة
-    } else if (!cachedItems.length) {
-      cachedItems = getDefaultSeedItems();
-    }
+    const { data, error } = await sb.from('items').select('*').order('name');
+    if (error) throw error;
+    cachedItems = data || [];
 
     // بناء فهارس الذاكرة الفورية (O(1) HashMaps)
     itemsByCode.clear();
@@ -18196,37 +16881,9 @@ async function loadItemsCatalog(forceRefresh = false) {
     updateItemsKpis();
   } catch(err) {
     console.warn('loadItemsCatalog notice:', err);
-    if (!cachedItems.length) {
-      const localCached = await idbGetCachedItems();
-      if (localCached && localCached.length > 0) {
-        cachedItems = localCached;
-      } else {
-        cachedItems = getDefaultSeedItems();
-      }
-      itemsByCode.clear();
-      itemsByBarcode.clear();
-      cachedItems.forEach(it => {
-        if (it.internal_code) itemsByCode.set(String(it.internal_code).trim(), it);
-        if (it.barcode) itemsByBarcode.set(String(it.barcode).trim(), it);
-      });
-    }
+    // إبقاء البيانات القديمة لو حصل خطأ شبكة
     renderItemsTable();
   }
-}
-
-function getDefaultSeedItems() {
-  return [
-    { id: 'seed-1', internal_code: '46224', barcode: '6224000866389', name: 'BI-ALCOFAN 30 TAB (باي الكوفان)', pack_units: 30, selling_price: 54.82, unit_price: 1.83, cost_price: 43.85, stock_packs: 20, stock_units: 0, is_active: true },
-    { id: 'seed-2', internal_code: '40083', barcode: '', name: 'BI-ALCOFAN 1TAB. (باي الكوفان قرص)', pack_units: 1, selling_price: 1.83, unit_price: 1.83, cost_price: 1.46, stock_packs: 0, stock_units: 20, parent_code: '46224', unit_ratio: 1, is_active: true },
-    { id: 'seed-3', internal_code: '1060',  barcode: '6221045010296', name: 'AUGMENTIN 1GM 14TAB (اوجمنتين 1 جم)', pack_units: 14, selling_price: 165.90, unit_price: 11.85, cost_price: 132.72, stock_packs: 15, stock_units: 0, is_active: true },
-    { id: 'seed-4', internal_code: '13065', barcode: '6222019600758', name: 'CATAFLAM 50MG 20TAB (كتافلام 50)', pack_units: 20, selling_price: 66.00, unit_price: 3.30, cost_price: 52.80, stock_packs: 25, stock_units: 0, is_active: true },
-    { id: 'seed-5', internal_code: '98',    barcode: '6224007685006', name: 'PANADOL EXTRA 24 TAB (بانادول اكسترا)', pack_units: 24, selling_price: 45.00, unit_price: 1.88, cost_price: 36.00, stock_packs: 30, stock_units: 0, is_active: true },
-    { id: 'seed-6', internal_code: '36268', barcode: '6223000659472', name: 'CONCOR 5MG 30TAB (كونكور 5 مجم)', pack_units: 30, selling_price: 50.91, unit_price: 1.70, cost_price: 40.73, stock_packs: 18, stock_units: 0, is_active: true },
-    { id: 'seed-7', internal_code: '13041', barcode: '6223004900068', name: 'ANTINAL 24CAP (انتينال 24 كبسولة)', pack_units: 24, selling_price: 42.00, unit_price: 1.75, cost_price: 33.60, stock_packs: 22, stock_units: 0, is_active: true },
-    { id: 'seed-8', internal_code: '13077', barcode: '6223002143115', name: 'CONGESTAL 20TAB (كونجستال أقراص)', pack_units: 20, selling_price: 31.00, unit_price: 1.55, cost_price: 24.80, stock_packs: 20, stock_units: 0, is_active: true },
-    { id: 'seed-9', internal_code: '13592', barcode: '6225000309265', name: 'BRUFEN 400MG 30TAB (بروفين 400)', pack_units: 30, selling_price: 52.50, unit_price: 1.75, cost_price: 42.00, stock_packs: 15, stock_units: 0, is_active: true },
-    { id: 'seed-10',internal_code: '16240', barcode: '6224007326169', name: 'OTRIVIN 0.1% ADULT DROPS (اوترفين كبار)', pack_units: 1, selling_price: 20.00, unit_price: 20.00, cost_price: 16.00, stock_packs: 12, stock_units: 0, is_active: true }
-  ];
 }
 
 function updateItemsKpis() {
@@ -19015,7 +17672,7 @@ function openPosHandyItemsModal() {
 function closePosHandyItemsModal() {
   const m = document.getElementById('posHandyItemsModal');
   if (m) m.classList.remove('on');
-  const searchInp = document.getElementById('posSearchInp');
+  const searchInp = document.getElementById('posBarcodeInput');
   if (searchInp) searchInp.focus();
 }
 
@@ -19203,7 +17860,7 @@ function setupPharmaflyShortcuts() {
     if (!posPane || !posPane.classList.contains('on')) return;
 
     // إذا كان المستخدم لا يكتب نصاً في خانة بحث
-    const searchInp = document.getElementById('posSearchInp') || document.getElementById('posBarcodeInput');
+    const searchInp = document.getElementById('posBarcodeInput');
     const isTypingBarcode = (document.activeElement === searchInp && searchInp.value.trim().length > 0);
 
     if (!isInput || document.activeElement === searchInp) {
@@ -19213,23 +17870,10 @@ function setupPharmaflyShortcuts() {
         togglePosHandyItemsModal();
         return;
       }
-      // صنف غير مكود أو خدمة [/]
-      if ((e.key === '/' || e.code === 'NumpadDivide') && !isTypingBarcode && !e.ctrlKey) {
-        e.preventDefault();
-        openPosUncodedItemModal();
-        return;
-      }
       // إنهاء كاش [C]
       if ((e.key === 'c' || e.key === 'C' || e.key === 'ؤ') && !isTypingBarcode && !e.ctrlKey) {
         e.preventDefault();
         setPosPayMethod('cash');
-        triggerPosSaleWithStaffPin();
-        return;
-      }
-      // إنهاء محفظة [W]
-      if ((e.key === 'w' || e.key === 'W' || e.key === 'ص') && !isTypingBarcode && !e.ctrlKey) {
-        e.preventDefault();
-        setPosPayMethod('wallet');
         triggerPosSaleWithStaffPin();
         return;
       }
@@ -19689,81 +18333,37 @@ document.addEventListener('DOMContentLoaded', () => {
      MODAL: PHARMAFLY EXCEL IMPORT (رفع واستيراد الأصناف)
 ══════════════════════════════════════════════════════════ -->
 <div id="pharmaflyImportModal" class="modal-overlay" style="z-index:9998;" onclick="if(event.target===this)closePharmaflyImportModal()">
-  <div class="modal-box" style="max-width:680px;width:95vw;padding:26px;border-radius:18px;background:var(--bg2);border:2px solid #0284c7;text-align:right;">
-    
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:1.8rem;">💾</span>
-        <div>
-          <div style="font-size:1.25rem;font-weight:900;color:var(--text1);">استرجاع قاعدة بيانات فارما فلاي (.bak / JSON)</div>
-          <div style="font-size:.8rem;color:var(--text3);">استيراد وترحيل كافة الأصناف والموردين والعملاء والخزائن إلى السحابة فوراً</div>
-        </div>
-      </div>
-      <button onclick="closePharmaflyImportModal()" style="background:transparent;border:none;color:var(--text3);font-size:1.4rem;cursor:pointer;">✕</button>
-    </div>
-
-    <!-- مسار الملف على الجهاز -->
-    <div style="background:rgba(2,132,199,0.08);border:1px solid rgba(2,132,199,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.8rem;color:var(--text1);line-height:1.6;">
-      <strong>📁 مسار ملف النسخة الاحتياطية على جهازك:</strong><br>
-      <code style="background:var(--bg1);padding:2px 8px;border-radius:4px;font-family:monospace;font-size:.76rem;color:#0284c7;display:inline-block;margin-top:4px;">D:\new\asafra pharmacy\new pos\New folder\PHARMA FLY\data pos\new24_FullBackup00\new24_FullBackup.bak</code>
+  <div class="modal-box" style="max-width:560px;padding:26px;border-radius:18px;background:var(--bg2);border:1.5px solid rgba(49,130,206,.5);text-align:center;">
+    <div style="font-size:2.4rem;margin-bottom:8px;">📦</div>
+    <div style="font-size:1.2rem;font-weight:900;color:var(--text1);margin-bottom:6px;">استيراد أصناف فلاي فارما (Excel / JSON)</div>
+    <div style="font-size:.82rem;color:var(--text3);margin-bottom:18px;line-height:1.6;">
+      ارفع ملف الإكسيل أو الـ JSON المصدّر من قاعدة بيانات فلاي فارما.<br>
+      يقوم النظام تلقائياً بالتعرف على الأكواد والباركود والأسعار ورصيد العلب والأجزاء ورفعها إلى السحابة فوراً.
     </div>
 
     <!-- Drop Zone -->
-    <div id="pfDropZone" ondragover="event.preventDefault();this.style.borderColor='#0284c7';" ondragleave="this.style.borderColor='var(--border2)';" ondrop="handlePfExcelDrop(event)"
-      style="border:2px dashed var(--border2);border-radius:14px;padding:24px 18px;background:var(--bg3);cursor:pointer;margin-bottom:14px;text-align:center;transition:border-color .2s;"
+    <div id="pfDropZone" ondragover="event.preventDefault();this.style.borderColor='var(--accent)';" ondragleave="this.style.borderColor='var(--border2)';" ondrop="handlePfExcelDrop(event)"
+      style="border:2px dashed var(--border2);border-radius:14px;padding:28px 18px;background:var(--bg3);cursor:pointer;margin-bottom:16px;transition:border-color .2s;"
       onclick="document.getElementById('pfExcelFileInput').click()">
-      <div style="font-size:2.2rem;margin-bottom:6px;">📥</div>
-      <div style="font-weight:900;color:var(--text1);font-size:.95rem;">اسحب وأفلت ملف النسخة الاحتياطية هنا أو انقر للاختيار</div>
-      <div style="font-size:.78rem;color:var(--text3);margin-top:4px;">
-        يدعم: <strong>new24_FullBackup.bak (117MB)</strong> | <strong>pharmafly_backup_bundle.json</strong> | <strong>المخزون.xlsx</strong>
-      </div>
-      <input type="file" id="pfExcelFileInput" accept=".bak,.json,.xlsx,.xls,.csv" style="display:none;" onchange="handlePfExcelSelected(this.files)" />
-    </div>
-
-    <!-- خيار الاسترجاع الفوري المباشر -->
-    <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <div>
-        <div style="font-weight:900;color:var(--text1);font-size:.88rem;">⚡ استرجاع فوري مباشر (من نسخة new24_FullBackup المجهزة)</div>
-        <div style="font-size:.75rem;color:var(--text3);margin-top:2px;">سحب فوري لـ 27,986 صنف + 95 مورد + 46 عميل + الخزائن بنقرة واحدة.</div>
-      </div>
-      <button type="button" class="btn btn-sm btn-blue" style="font-weight:900;white-space:nowrap;padding:7px 16px;" onclick="restorePfBackupInstant()">🚀 استرجاع فوري</button>
-    </div>
-
-    <!-- ملخص البيانات المستخرجة -->
-    <div id="pfImportStatsWrap" style="display:none;margin-bottom:14px;">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-        <div style="background:var(--bg1);padding:8px;border-radius:8px;text-align:center;border:1px solid var(--border);">
-          <div id="idxBkpCountItems" style="font-size:1.15rem;font-weight:900;color:#0284c7;font-family:monospace;">0</div>
-          <div style="font-size:.72rem;color:var(--text3);font-weight:700;">💊 الأصناف الدوائية</div>
-        </div>
-        <div style="background:var(--bg1);padding:8px;border-radius:8px;text-align:center;border:1px solid var(--border);">
-          <div id="idxBkpCountStock" style="font-size:1.15rem;font-weight:900;color:#10b981;font-family:monospace;">0</div>
-          <div style="font-size:.72rem;color:var(--text3);font-weight:700;">📦 أرصدة فعلية</div>
-        </div>
-        <div style="background:var(--bg1);padding:8px;border-radius:8px;text-align:center;border:1px solid var(--border);">
-          <div id="idxBkpCountVendors" style="font-size:1.15rem;font-weight:900;color:#f59e0b;font-family:monospace;">0</div>
-          <div style="font-size:.72rem;color:var(--text3);font-weight:700;">🚚 شركات التوزيع</div>
-        </div>
-        <div style="background:var(--bg1);padding:8px;border-radius:8px;text-align:center;border:1px solid var(--border);">
-          <div id="idxBkpCountCustomers" style="font-size:1.15rem;font-weight:900;color:#8b5cf6;font-family:monospace;">0</div>
-          <div style="font-size:.72rem;color:var(--text3);font-weight:700;">👥 عملاء ودليفري</div>
-        </div>
-      </div>
+      <div style="font-size:1.8rem;margin-bottom:6px;">📂</div>
+      <div style="font-weight:800;color:var(--text1);font-size:.92rem;">اسحب وأفلت ملف Excel أو JSON هنا أو اضغط للاختيار</div>
+      <div style="font-size:.76rem;color:var(--text3);margin-top:4px;">يدعم صيغ .xlsx و .xls و .csv و .json فائقة السرعة</div>
+      <input type="file" id="pfExcelFileInput" accept=".xlsx,.xls,.csv,.json" style="display:none;" onchange="handlePfExcelSelected(this.files)" />
     </div>
 
     <!-- Progress & Status -->
-    <div id="pfImportProgressWrap" style="display:none;margin-bottom:14px;background:var(--bg1);padding:10px;border-radius:8px;border:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text2);margin-bottom:5px;">
+    <div id="pfImportProgressWrap" style="display:none;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text2);margin-bottom:4px;">
         <span id="pfImportStatusText">جاري المعالجة...</span>
-        <strong id="pfImportPctText" style="color:#0284c7;font-family:monospace;">0%</strong>
+        <strong id="pfImportPctText">0%</strong>
       </div>
-      <div style="height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
-        <div id="pfImportProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#0284c7,#10b981);transition:width .2s;"></div>
+      <div style="height:10px;background:var(--bg1);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+        <div id="pfImportProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3182ce,#06b6d4);transition:width .2s;"></div>
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button id="btnStartPfImport" onclick="startPharmaflyBatchImport()" class="btn btn-green" style="padding:9px 24px;font-weight:900;" disabled>🚀 بدء الترحيل والمزامنة إلى سوبابيز</button>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="btnStartPfImport" onclick="startPharmaflyBatchImport()" class="btn btn-blue" style="padding:9px 24px;font-weight:900;" disabled>🚀 بدء الاستيراد والرفع</button>
       <button onclick="closePharmaflyImportModal()" class="btn btn-ghost" style="padding:9px 18px;">إلغاء</button>
     </div>
   </div>
