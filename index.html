@@ -12,6 +12,16 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <!-- [v13] SheetJS لم تعد تُحمَّل مع الصفحة — تُجلب عند أول استخدام فعلي عبر ensureXLSX() -->
+  <script>
+    (function(){
+      try {
+        var s = localStorage.getItem('asafra_theme') || localStorage.getItem('asafra_new_theme');
+        if (s === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch(e){}
+    })();
+  </script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   :root {
@@ -1766,22 +1776,256 @@
     z-index: 490;
     backdrop-filter: blur(2px);
   }
-  body.dark-mode {
+  /* ═══════════════════════════════════════════════════════════════════
+     🌙 COMPLETE SALIIM DARK MODE PALETTE & COMPONENT STYLING
+     ═══════════════════════════════════════════════════════════════════ */
+  :root.dark-mode, body.dark-mode {
     --bg: #0b132b;
-    --bg2: #101c3d;
-    --bg3: #1c2541;
+    --bg2: #0f1938;
+    --bg3: #162244;
     --card: #141e38;
-    --card2: #1b284a;
+    --card2: #1a2749;
     --card3: #22325c;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.15);
+    --border: rgba(255, 255, 255, 0.08);
+    --border2: rgba(255, 255, 255, 0.16);
     --text: #f8fafc;
     --text1: #f8fafc;
     --text2: #cbd5e1;
     --text3: #94a3b8;
+    --text-faint: #64748b;
+    --accent: #38bdf8;
+    --accent2: #0284c7;
+    --accent3: #0369a1;
+    --accent-hi: #7dd3fc;
+    --accent-soft: rgba(56, 189, 248, 0.14);
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --acc: #38bdf8;
+    --brand-ink: #070e1e;
+    --brand-ink-2: #0b132b;
     --bg1: #0b132b;
-    --border1: rgba(255,255,255,0.08);
+    --border1: rgba(255, 255, 255, 0.08);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.6);
   }
+
+  /* Dark mode specific component adjustments */
+  body.dark-mode .saliim-sidebar {
+    background: #080f1d !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+  body.dark-mode .saliim-topbar {
+    background: #111a33 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-tb-btn {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .saliim-tb-btn:hover {
+    background: #22325c !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  body.dark-mode .saliim-live-badge {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #94a3b8 !important;
+  }
+  body.dark-mode .saliim-tb-logout {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #f87171 !important;
+  }
+  body.dark-mode .saliim-tb-logout:hover {
+    background: rgba(239, 68, 68, 0.25) !important;
+    color: #fca5a5 !important;
+  }
+
+  body.dark-mode .saliim-kpi-card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-kpi-card:hover {
+    border-color: rgba(56, 189, 248, 0.3) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+  body.dark-mode .saliim-kpi-val {
+    color: #f8fafc !important;
+  }
+  body.dark-mode .saliim-kpi-lbl {
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .saliim-kpi-sub {
+    color: #94a3b8 !important;
+  }
+  body.dark-mode .badge-cyan {
+    background: rgba(2, 132, 199, 0.22) !important;
+    color: #38bdf8 !important;
+  }
+  body.dark-mode .badge-amber {
+    background: rgba(217, 119, 6, 0.22) !important;
+    color: #fbbf24 !important;
+  }
+  body.dark-mode .badge-green {
+    background: rgba(16, 185, 129, 0.22) !important;
+    color: #34d399 !important;
+  }
+  body.dark-mode .saliim-kpi-bridge {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+  }
+
+  body.dark-mode .saliim-today-card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-today-title {
+    color: #f8fafc !important;
+  }
+  body.dark-mode .saliim-today-head {
+    border-left-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-today-col:not(:last-child) {
+    border-left-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-today-lbl {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode .top-sales-card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .ts-chip {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .ts-ctrl-btn {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .ts-ctrl-btn.ts-active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode .card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+  body.dark-mode .card-t {
+    color: #f8fafc !important;
+  }
+  body.dark-mode .fg label {
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .fg input,
+  body.dark-mode .fg select,
+  body.dark-mode .fg textarea,
+  body.dark-mode .fel {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .fg input::placeholder,
+  body.dark-mode .fel::placeholder {
+    color: #64748b !important;
+  }
+  body.dark-mode .fg input:focus,
+  body.dark-mode .fg select:focus,
+  body.dark-mode .fel:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+  }
+  body.dark-mode select option {
+    background: #141e38 !important;
+    color: #f8fafc !important;
+  }
+
+  body.dark-mode .type-btn {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .type-btn:hover {
+    background: #22325c !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+  }
+  body.dark-mode .type-btn.on {
+    background: rgba(2, 132, 199, 0.3) !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+  }
+
+  body.dark-mode thead th {
+    background: #1a2749 !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode tbody td {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode tbody tr:hover td {
+    background: rgba(56, 189, 248, 0.06) !important;
+  }
+
+  body.dark-mode .modal-box {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .modal-header,
+  body.dark-mode .modal-hdr {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .modal-footer,
+  body.dark-mode .modal-ftr {
+    background: #0f1938 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  body.dark-mode .ent-chip {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+  }
+  body.dark-mode .ent-chip:hover {
+    background: #22325c !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .ent-chip.ent-chip-on {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+  }
+
+  body.dark-mode .btn-secondary,
+  body.dark-mode .btn-ghost {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .btn-secondary:hover,
+  body.dark-mode .btn-ghost:hover {
+    background: #22325c !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode .text-green { color: #34d399 !important; }
+  body.dark-mode .text-red { color: #f87171 !important; }
+  body.dark-mode .text-blue { color: #60a5fa !important; }
+  body.dark-mode .text-amber { color: #fbbf24 !important; }
+  body.dark-mode .text-teal { color: #2dd4bf !important; }
+  body.dark-mode .text-cyan { color: #38bdf8 !important; }
 
   @media (max-width: 1024px) {
     .saliim-sidebar { transform: translateX(100%); }
@@ -6192,7 +6436,7 @@ function renderTopMonthlySalesChart() {
     try { topSalesChart.destroy(); } catch(e){}
   }
 
-  const isDark = !document.body.classList.contains('light-mode');
+  const isDark = document.body.classList.contains('dark-mode');
   const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
   const tickColor = isDark ? '#a0aec0' : '#4a5568';
 
@@ -16188,20 +16432,31 @@ function custSubSwitch(name){
 // 🌙  DARK / LIGHT MODE
 // ═══════════════════════════════════════════════════════════════════
 function toggleTheme(){
-  var isLight=document.body.classList.toggle('light-mode');
-  localStorage.setItem('asafra_new_theme',isLight?'light':'dark');
-  document.getElementById('themeToggle').textContent=isLight?'☀️':'🌙';
-  renderTopMonthlySalesChart();
+  var isDark = document.body.classList.toggle('dark-mode');
+  document.documentElement.classList.toggle('dark-mode', isDark);
+  document.body.classList.remove('light-mode');
+  try {
+    localStorage.setItem('asafra_theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('asafra_new_theme', isDark ? 'dark' : 'light');
+  } catch(e){}
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  try { renderTopMonthlySalesChart(); } catch(e){}
 }
 (function(){
-  var saved=localStorage.getItem('asafra_new_theme');
-  if(saved==='light'){
-    document.body.classList.add('light-mode');
-    document.addEventListener('DOMContentLoaded',function(){
-      var btn=document.getElementById('themeToggle');
-      if(btn)btn.textContent='☀️';
+  try {
+    var saved = localStorage.getItem('asafra_theme') || localStorage.getItem('asafra_new_theme');
+    if (saved === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      var isDark = document.body.classList.contains('dark-mode');
+      var btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = isDark ? '☀️' : '🌙';
     });
-  }
+  } catch(e){}
 })();
 
 
