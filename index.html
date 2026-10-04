@@ -1784,7 +1784,7 @@ function ensureXLSX() {
     <!-- ══════════════════════════════════════════════════════════
      PANE: POS CASHIER (كاشير المبيعات والمرتجعات)
 ══════════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-pos">
+<div class="pane" id="pane-pos" style="display:none !important;">
   <div class="pos-wrap">
     <!-- POS Top Header Bar -->
     
@@ -1927,7 +1927,7 @@ function ensureXLSX() {
 <!-- ══════════════════════════════════════════════════════════
      PANE: ITEMS MASTER & PHARMAFLY UPLOADER (الأصناف والمخزن)
 ══════════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-items">
+<div class="pane" id="pane-items" style="display:none !important;">
   <div class="card">
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
@@ -3611,11 +3611,9 @@ function buildApp() {
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
   document.getElementById('mainTabs').innerHTML = `
     <div class="tab on" onclick="swTab('add',this)">➕ قيد جديد</div>
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'pos\',this)">🛒 كاشير المبيعات (تجريبي)</div>' : ''}
     ${isAdmin
       ? '<div class="tab" onclick="swTab(\'all\',this)">📋 كل الحركات</div>'
       : '<div class="tab" onclick="swTab(\'mine\',this)">📋 حركاتي</div>'}
-    ${isAdmin ? '<div class="tab" onclick="swTab(\'items\',this)">📦 الأصناف والمخزن</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'sum\',this)">📊 الملخص</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'budget\',this)">📑 الموازنة المالية</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'salesdb\',this)">📊 داشبورد المبيعات</div>' : ''}
@@ -3637,9 +3635,7 @@ function buildApp() {
     const isAdm = me.role==='admin';
     const adminItems = [
       {tab:'add',  ico:'➕', lbl:'قيد'},
-      {tab:'pos',  ico:'🛒', lbl:'كاشير'},
       {tab:'all',  ico:'📋', lbl:'حركات'},
-      {tab:'items',ico:'📦', lbl:'مخزن'},
       {tab:'sum',  ico:'📊', lbl:'ملخص'},
       {tab:'att',  ico:'⏱', lbl:'حضور'},
       {tab:'set',  ico:'⚙️', lbl:'إعدادات'},
@@ -3794,7 +3790,7 @@ function swTab(name, el) {
     }, 600);
   }
   if (name==='pos')   { setTimeout(() => document.getElementById('posSearchInp')?.focus(), 150); }
-  if (name==='items') { loadItemsCatalog(); }
+
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
   if (name==='sum')   renderSum();
@@ -17130,7 +17126,7 @@ function closePosHistoryModal() {
 }
 
 // ── تشغيل النظام عند الإقلاع ──
-setTimeout(initPosSystem, 1000);
+// setTimeout(initPosSystem, 1000);
 
 
 
@@ -17938,7 +17934,7 @@ function triggerPosSaleWithStaffPin() {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     loadActiveShift();
-    setupPharmaflyShortcuts();
+    // setupPharmaflyShortcuts();
   }, 1200);
 });
 
