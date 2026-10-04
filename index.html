@@ -14,32 +14,54 @@
   <!-- [v13] SheetJS لم تعد تُحمَّل مع الصفحة — تُجلب عند أول استخدام فعلي عبر ensureXLSX() -->
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
-  :root{
-    --bg:#0d0b1a;--bg2:#120f25;--bg3:#1a1730;
-    --card:#1e1b3a;--card2:#25224a;--card3:#2f2c58;
-    --border:rgba(124,58,237,.12);--border2:rgba(124,58,237,.22);
-    --green:#40916c;--green2:#2d6a4f;--green3:#1b4332;
-    --green-glow:rgba(64,145,108,.35);
-    --red:#e53e3e;--blue:#3182ce;--gold:#d69e2e;--purple:#7c3aed;
-    --text:#f1f0ff;--text2:#c4b5fd;--text3:#7c6bab;
-    --accent:#7c3aed;--accent2:#6d28d9;--accent3:#5b21b6;
-    --accent-glow:rgba(124,58,237,.4);
-    --teal:#06b6d4;--teal2:#0891b2;--teal-glow:rgba(6,182,212,.3);
-    --grad-main:linear-gradient(135deg,#3b0764 0%,#6d28d9 50%,#7c3aed 100%);
-    --grad-teal:linear-gradient(135deg,#0891b2 0%,#06b6d4 100%);
-    --shadow-sm:0 2px 8px rgba(0,0,0,.55);
-    --shadow-md:0 4px 20px rgba(0,0,0,.65);
-    --shadow-lg:0 8px 40px rgba(0,0,0,.75);
-    --r:18px;
-    /* ── [v12] متغيرات كانت مستخدمة 46 مرة وغير معرَّفة إطلاقاً ──
-       النتيجة كانت قيمة غير صالحة → وراثة لون الأب أو العودة للافتراضي.
-       أوضح أثر ظهر في نتائج البحث الشامل (--text1 وحده 31 مرة). */
-    --text1:#f1f0ff;                 /* مرادف --text   */
-    --acc:#7c3aed;                   /* مرادف --accent */
-    --border1:rgba(124,58,237,.12);  /* مرادف --border */
-    --bg1:#0d0b1a;                   /* مرادف --bg     */
+  :root {
+    --bg: #f8fafc;
+    --bg2: #f1f5f9;
+    --bg3: #e2e8f0;
+    --card: #ffffff;
+    --card2: #f8fafc;
+    --card3: #f1f5f9;
+    --border: #e2e8f0;
+    --border2: #cbd5e1;
+    --green: #10b981;
+    --green2: #059669;
+    --green3: #047857;
+    --green-glow: rgba(16,185,129,.2);
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --gold: #f59e0b;
+    --purple: #8b5cf6;
+    --text: #0f172a;
+    --text1: #0f172a;
+    --text2: #475569;
+    --text3: #64748b;
+    --accent: #0284c7;
+    --accent2: #0369a1;
+    --accent3: #075985;
+    --accent-glow: rgba(2,132,199,.25);
+    --acc: #0284c7;
+    --border1: #e2e8f0;
+    --bg1: #f8fafc;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-glow: rgba(13,148,136,.2);
+    --grad-main: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    --grad-teal: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.02);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.03);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,.07), 0 4px 10px rgba(0,0,0,.04);
+    --r: 16px;
   }
-  body{font-family:'Tajawal',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;line-height:1.5;background-image:radial-gradient(ellipse at 80% 10%,rgba(124,58,237,.12) 0%,transparent 50%),radial-gradient(ellipse at 20% 90%,rgba(6,182,212,.07) 0%,transparent 45%);background-attachment:fixed;}
+  body {
+    font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    direction: rtl;
+    min-height: 100vh;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
   .scr{display:none;min-height:100vh;}
   .scr.on{display:block;}
   #scLoad.on{display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e0845 0%,#3b0764 40%,#5b21b6 75%,#7c3aed 100%);color:white;gap:18px;}
@@ -1053,67 +1075,575 @@
   .rp-unpaid{background:rgba(229,62,62,.08);border:1px solid rgba(229,62,62,.25);border-radius:12px;padding:14px 16px;}
   .rp-unpaid-title{font-weight:800;color:#fc8181;margin-bottom:8px;font-size:.88rem;}
 
-  /* ── Midnight Pro: extra polish ─────────────────────────── */
-  .at-clock{font-family:'Inter',monospace!important;}
-  .dkpi-val,.pd-kv,.at-kv,.sv,.bal-amt,.cl-final-val{font-family:'Inter',sans-serif!important;letter-spacing:-.03em;}
-  ::-webkit-scrollbar{width:5px;height:5px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:rgba(124,58,237,.3);border-radius:10px;}
-  ::-webkit-scrollbar-thumb:hover{background:rgba(124,58,237,.5);}
-  input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6) sepia(1) saturate(3) hue-rotate(230deg);}
-  .fg input,.fg select,.fg textarea{background:rgba(26,23,48,.8)!important;border-color:rgba(124,58,237,.22)!important;}
-  .fel{background:rgba(26,23,48,.8)!important;border-color:rgba(124,58,237,.22)!important;}
-  .cfg-ta{background:rgba(18,15,37,.9)!important;border-color:rgba(124,58,237,.22)!important;color:#c4b5fd!important;}
-  .at-rate-inp{background:rgba(26,23,48,.8)!important;border-color:rgba(124,58,237,.22)!important;}
-  .pb{background:rgba(37,34,74,.7)!important;border-color:rgba(124,58,237,.2)!important;}
-  .btn-gray{background:rgba(47,44,88,.8)!important;}
-  select option{background:#1a1730!important;color:#f1f0ff!important;}
-  tbody td{border-bottom:1px solid rgba(124,58,237,.08)!important;}
-  .bkt td{border-bottom:1px solid rgba(124,58,237,.08)!important;}
-  .pl-tbl td{border-bottom:1px solid rgba(124,58,237,.08)!important;}
-  .att-live-in{border-color:rgba(6,182,212,.4)!important;background:rgba(6,182,212,.06)!important;}
-  .att-live-done{border-color:rgba(124,58,237,.35)!important;background:rgba(124,58,237,.06)!important;}
-  .at-kpi-g{border-right-color:var(--accent)!important;}
-  .rc-admin{background:rgba(124,58,237,.25)!important;color:#c4b5fd!important;}
-  .rc-emp{background:rgba(6,182,212,.18)!important;color:#67e8f9!important;}
-  .pos-badge{background:rgba(124,58,237,.15)!important;color:#c4b5fd!important;}
-  .g-logo{text-shadow:0 0 40px rgba(124,58,237,.8);}
-  .at-clock-box{background:rgba(124,58,237,.15)!important;border-color:rgba(124,58,237,.3)!important;}
-  .modal-overlay{background:rgba(0,0,0,.82)!important;}
-  .d-up{color:#06b6d4!important;}.d-dn{color:#fc8181!important;}
-  /* ───────────────────────────────────────────────────────── */
-
-
-  /* ─── Light Mode ─────────────────────────── */
-  body.light-mode {
-    --bg:#f3f4f8;--bg2:#e8eaf0;--bg3:#dde0ea;
-    --card:#ffffff;--card2:#f0f2f8;--card3:#e2e5ee;
-    --border:rgba(100,80,200,.15);--border2:rgba(100,80,200,.25);
-    --text:#1a1635;--text2:#3d3565;--text3:#7c6bab;
-    --shadow-sm:0 2px 8px rgba(0,0,0,.10);
-    --shadow-md:0 4px 20px rgba(0,0,0,.14);
-    /* [v12] نفس المتغيرات الأربعة بقيم الوضع الفاتح */
-    --text1:#1a1635;
-    --acc:#6d28d9;
-    --border1:rgba(100,80,200,.15);
-    --bg1:#f3f4f8;
+  
+  /* ── SALIIM SAAS COMPONENT & THEME POLISH ── */
+  .saliim-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+    direction: rtl;
+    position: relative;
   }
-  body.light-mode .hdr{background:linear-gradient(135deg,#4c1d95 0%,#6d28d9 60%,#7c3aed 100%);}
-  body.light-mode .card{background:#fff;border-color:rgba(124,58,237,.18);}
-  body.light-mode .fg input,body.light-mode .fg select,body.light-mode .fg textarea,
-  body.light-mode .fel,body.light-mode .frow .fel{background:#f0f2f8;color:#1a1635;border-color:rgba(124,58,237,.25);}
-  body.light-mode .tabs{background:#eff1f8;}
-  body.light-mode .tab{color:#7c6bab;}
-  body.light-mode .tab.on{color:#6d28d9;}
-  body.light-mode thead th{background:#e8eaf0;color:#3d3565;}
-  body.light-mode tbody tr:hover td{background:rgba(124,58,237,.06);}
-  body.light-mode .modal-box{background:#fff;}
-  body.light-mode .set-sec{background:#fff;}
-  body.light-mode .at-reg-card,.light-mode .at-emp-sec{background:#fff;}
-  body.light-mode #coDropList{background:#fff;border-color:#6d28d9;}
-  body.light-mode .co-opt{color:#1a1635;}
-  body.light-mode .t-bar{background:#e8eaf0;}
+  .saliim-sidebar {
+    width: 250px;
+    background: #0b132b;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 500;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    user-select: none;
+    transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .saliim-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 18px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .saliim-logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #0284c7;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(2,132,199,0.35);
+  }
+  .saliim-brand-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.2;
+  }
+  .saliim-brand-sub {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #38bdf8;
+    letter-spacing: 0.4px;
+  }
+  .saliim-sidebar-close {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: auto;
+    padding: 4px;
+  }
+  .saliim-quick-search {
+    margin: 14px 14px 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .saliim-quick-search:hover {
+    background: rgba(255,255,255,0.08);
+    color: #cbd5e1;
+  }
+  .saliim-search-badge {
+    margin-right: auto;
+    font-size: 0.68rem;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #94a3b8;
+  }
+  .saliim-nav-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px;
+  }
+  .saliim-nav-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .saliim-nav-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+  }
+  .saliim-group-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 10px 6px;
+  }
+  .saliim-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    margin-bottom: 2px;
+    text-decoration: none;
+    border-right: 3px solid transparent;
+  }
+  .saliim-nav-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: #f1f5f9;
+  }
+  .saliim-nav-item.active {
+    background: #1c2541;
+    color: #38bdf8;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    border-right-color: #38bdf8;
+  }
+  .saliim-item-icon {
+    font-size: 1.05rem;
+    width: 22px;
+    text-align: center;
+    color: #64748b;
+    transition: color 0.18s;
+  }
+  .saliim-nav-item.active .saliim-item-icon {
+    color: #38bdf8;
+  }
+  .saliim-sidebar-profile {
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.18);
+  }
+  .saliim-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .saliim-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(2,132,199,0.3);
+  }
+  .saliim-profile-name {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .saliim-profile-role {
+    font-size: 0.7rem;
+    color: #94a3b8;
+  }
+  .saliim-btn-logout {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s;
+  }
+  .saliim-btn-logout:hover {
+    color: #ef4444;
+  }
 
+  .saliim-main {
+    flex: 1;
+    margin-right: 250px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--bg);
+    transition: margin-right 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .saliim-topbar {
+    height: 64px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .saliim-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .saliim-mobile-toggle {
+    display: none;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1.25rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .saliim-page-header {
+    display: flex;
+    flex-direction: column;
+  }
+  .saliim-page-title {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .saliim-breadcrumb {
+    font-size: 0.74rem;
+    color: var(--text3);
+    font-weight: 500;
+  }
+  .saliim-topbar-center {
+    display: flex;
+    align-items: center;
+  }
+  .saliim-live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text2);
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+  .saliim-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.25);
+    animation: pulseDot 2s infinite;
+  }
+  .saliim-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .saliim-tb-btn {
+    padding: 7px 12px;
+    border-radius: 9px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: inherit;
+    font-weight: 700;
+  }
+  .saliim-tb-btn:hover {
+    background: var(--card3);
+    color: var(--text);
+    border-color: var(--border2);
+  }
+  .saliim-tb-logout {
+    color: #ef4444;
+    border-color: rgba(239,68,68,0.2);
+    background: #fef2f2;
+  }
+  body.dark-mode .saliim-tb-logout {
+    background: rgba(239,68,68,0.15);
+  }
+  .saliim-tb-logout:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .saliim-content-body {
+    flex: 1;
+    padding: 22px 26px;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .saliim-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .saliim-kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-height: 125px;
+  }
+  .saliim-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border2);
+  }
+  .saliim-kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .saliim-kpi-lbl {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text2);
+  }
+  .saliim-kpi-icon {
+    font-size: 1.1rem;
+    color: var(--accent);
+  }
+  .saliim-kpi-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+  .badge-cyan { background: #e0f2fe; color: #0284c7; }
+  .badge-amber { background: #fef3c7; color: #d97706; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .saliim-kpi-val {
+    font-size: 1.95rem;
+    font-weight: 900;
+    color: var(--text);
+    font-family: 'Inter', 'Tajawal', sans-serif;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .saliim-kpi-sub {
+    font-size: 0.73rem;
+    color: var(--text3);
+  }
+  .saliim-kpi-bridge {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.04);
+  }
+  .saliim-kpi-bridge:hover {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: #10b981;
+  }
+
+  .saliim-today-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+  }
+  .saliim-today-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .saliim-today-title {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .saliim-today-badge {
+    font-size: 0.72rem;
+    color: var(--text2);
+    background: var(--card2);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .saliim-today-cols {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    text-align: center;
+  }
+  .saliim-today-col {
+    flex: 1;
+    padding: 0 10px;
+  }
+  .saliim-today-col:not(:last-child) {
+    border-left: 1px solid var(--border);
+  }
+  .saliim-today-num {
+    font-size: 1.65rem;
+    font-weight: 900;
+    font-family: 'Inter', 'Tajawal', sans-serif;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .saliim-today-lbl {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text2);
+  }
+
+  .text-green { color: #10b981 !important; }
+  .text-red { color: #ef4444 !important; }
+  .text-blue { color: #3b82f6 !important; }
+  .text-amber { color: #f59e0b !important; }
+  .text-teal { color: #0d9488 !important; }
+  .text-cyan { color: #0284c7 !important; }
+
+  /* Polished elements in panes */
+  .card {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  .fg label {
+    color: var(--text2) !important;
+  }
+  .fg input, .fg select, .fg textarea, .fel {
+    background: var(--card) !important;
+    border: 1.5px solid var(--border2) !important;
+    color: var(--text) !important;
+    border-radius: 10px !important;
+  }
+  .fg input:focus, .fg select:focus, .fg textarea:focus, .fel:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.15) !important;
+  }
+  thead th {
+    background: var(--card2) !important;
+    color: var(--text2) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  tbody td {
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--text) !important;
+  }
+  tbody tr:hover td {
+    background: rgba(2, 132, 199, 0.03) !important;
+  }
+  .type-btn {
+    background: var(--card2);
+    border: 1.5px solid var(--border);
+    color: var(--text2);
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: 800;
+    transition: all 0.18s;
+  }
+  .type-btn:hover {
+    background: var(--card3);
+    border-color: var(--border2);
+  }
+  .type-btn.on {
+    background: #e0f2fe;
+    border-color: #0284c7;
+    color: #0369a1;
+  }
+  .top-sales-card {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  .modal-box {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+  .btn-primary {
+    background: #0284c7 !important;
+    border-radius: 10px !important;
+    color: #fff !important;
+  }
+  .btn-primary:hover {
+    background: #0369a1 !important;
+  }
+  .saliim-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 490;
+    backdrop-filter: blur(2px);
+  }
+  body.dark-mode {
+    --bg: #0b132b;
+    --bg2: #101c3d;
+    --bg3: #1c2541;
+    --card: #141e38;
+    --card2: #1b284a;
+    --card3: #22325c;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f8fafc;
+    --text1: #f8fafc;
+    --text2: #cbd5e1;
+    --text3: #94a3b8;
+    --bg1: #0b132b;
+    --border1: rgba(255,255,255,0.08);
+  }
+
+  @media (max-width: 1024px) {
+    .saliim-sidebar { transform: translateX(100%); }
+    .saliim-sidebar.open { transform: translateX(0); }
+    .saliim-sidebar-close { display: block; }
+    .saliim-main { margin-right: 0; }
+    .saliim-mobile-toggle { display: block; }
+    .saliim-content-body { padding: 16px; }
+    .saliim-backdrop.open { display: block; }
+  }
+  @media (max-width: 768px) {
+    .saliim-kpi-grid { grid-template-columns: 1fr; }
+    .saliim-today-cols { flex-direction: column; gap: 12px; }
+    .saliim-today-col:not(:last-child) { border-left: none; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .saliim-topbar { padding: 0 16px; }
+  }
+  
   /* ─── Print Styles ─────────────────────────── */
   @media print {
     body{background:#fff!important;color:#000!important;font-size:11pt;}
@@ -1262,166 +1792,255 @@ function ensureXLSX() {
 
 <!-- ══════════════ MAIN APP ══════════════ -->
 <div id="scApp" class="scr">
-
-  <!-- Header -->
-  <div class="hdr">
-    <!-- Row 1: Brand, User Profile, Quick Tools (Theme, Search, Logout) & Sales Targets -->
-    <div class="hdr-row-top">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="ph-name" id="hPhName">🏥 صيدلية العصافرة</div>
-        <div class="u-badge">
-          <span id="hUName">—</span>
-          <span class="r-chip" id="hURole">—</span>
+  <div class="saliim-layout">
+    <!-- ── RIGHT SIDEBAR (Dark Navy #0b132b) ── -->
+    <aside class="saliim-sidebar" id="saliimSidebar">
+      <div class="saliim-brand">
+        <div class="saliim-logo-icon">🏥</div>
+        <div class="saliim-brand-text">
+          <div class="saliim-brand-title" id="sidePhName">صيدلية العصافرة</div>
+          <div class="saliim-brand-sub">نظام الإدارة المالية الموحد</div>
         </div>
-        <!-- أزرار التحكم مجمعة بجوار بيانات الحساب في اليمين -->
-        <div style="display:flex;align-items:center;gap:6px;margin-right:4px;">
-          <button id="themeToggle" onclick="toggleTheme()" title="تبديل المظهر"
-            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 11px;color:white;cursor:pointer;font-size:1rem;transition:all .2s;">🌙</button>
-          <button onclick="openGlobalSearch()" title="بحث عالمي (Ctrl+K)"
-            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 12px;color:white;cursor:pointer;font-size:.82rem;transition:all .2s;display:flex;align-items:center;gap:5px;">
-            <span>🔍</span><span style="opacity:.7;font-size:.7rem;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:1px 4px;">Ctrl+K</span>
-          </button>
-          <button class="btn-logout" onclick="doLogout()" style="padding:6px 13px;">خروج ↩</button>
-        </div>
+        <button class="saliim-sidebar-close" onclick="toggleSidebar(false)" aria-label="إغلاق">✕</button>
       </div>
 
-      <!-- صناديق التارجت في يسار الصف العلوي -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="target-box" id="salesTargetBox" style="display:none;" title="متوسط المبيعات اليومي مقارنةً بالتارجت">
-          <div class="target-lbl">🎯 تحقيق التارجت</div>
-          <div class="target-pct" id="targetPct">—</div>
-          <div class="target-sub" id="targetSub">—</div>
-        </div>
-        <div id="monthlyTargetBox" style="display:none;align-items:center;gap:8px;background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.25);border-radius:12px;padding:6px 12px;cursor:default;" title="تقدم المبيعات الشهرية">
-          <svg width="34" height="34" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
-            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(124,58,237,.2)" stroke-width="4"/>
-            <circle id="monthRingFill" cx="18" cy="18" r="15" fill="none" stroke="#7c3aed" stroke-width="4"
-              stroke-dasharray="94.25" stroke-dashoffset="94.25" stroke-linecap="round" style="transition:stroke-dashoffset .6s ease;"/>
-          </svg>
-          <div style="text-align:center;">
-            <div style="font-size:.68rem;color:rgba(255,255,255,.75);font-weight:600;">الشهر</div>
-            <div id="monthlyPct" style="font-size:.95rem;font-weight:900;color:#fff;">0%</div>
+      <div class="saliim-quick-search" onclick="openGlobalSearch()" title="بحث سريع (Ctrl+K)">
+        <span>🔍</span>
+        <span>بحث سريع...</span>
+        <span class="saliim-search-badge">Ctrl+K</span>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="saliim-nav-scroll" id="saliimNavMenu"></nav>
+
+      <!-- Sidebar Profile Box -->
+      <div class="saliim-sidebar-profile">
+        <div class="saliim-profile-info">
+          <div class="saliim-avatar" id="sideUserAvatar">م</div>
+          <div class="saliim-profile-meta">
+            <div class="saliim-profile-name" id="sideUName">—</div>
+            <div class="saliim-profile-role" id="sideURole">—</div>
           </div>
         </div>
+        <button class="saliim-btn-logout" onclick="doLogout()" title="تسجيل الخروج">🚪</button>
       </div>
-    </div>
+    </aside>
 
-    <!-- Row 2: Financial Balances & Wallet-to-Cash Bridge -->
-    <div class="hdr-row-fin">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <!-- ── صندوق ذمم أونلاين اليوم ── -->
-        <div class="online-box today-online-box" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم (متاح للموظفين)">
-          <div class="online-lbl" style="color:#81e6d9;">⚡ أونلاين اليوم</div>
-          <div class="online-val" id="hOnlineToday">0 ج</div>
-        </div>
+    <!-- Mobile Backdrop -->
+    <div class="saliim-backdrop" id="saliimBackdrop" onclick="toggleSidebar(false)"></div>
 
-        <!-- ── صندوق ذمم أونلاين المعلقة (تراكمي) ── -->
-        <div class="online-box" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة (متاح للموظفين)">
-          <div class="online-lbl">⏳ ذمم أونلاين معلقة</div>
-          <div class="online-val" id="hOnlineDebts">0 ج</div>
-        </div>
-
-        <!-- ── صندوق إجمالي مبيعات المحفظة ونسبتها من المبيعات (بند تحليلي دائم) ── -->
-        <div class="online-box" id="onlineWalletTotalBox" onclick="openOnlineDebtsModal('all')" style="border-color:rgba(72,187,120,.35);background:rgba(72,187,120,.08);cursor:pointer;" title="إجمالي مبيعات المحفظة الإلكترونية ونسبتها المئوية من المبيعات — اضغط للتحليل المالي">
-          <div class="online-lbl" style="color:#68d391;">📱 إجمالي المحفظة</div>
-          <div class="online-val" id="hWalletTotalVal" style="color:#48bb78;">0 ج</div>
-          <div id="hWalletSharePct" style="font-size:.65rem;color:#a7f3d0;font-weight:800;margin-top:2px;">(0% من المبيعات)</div>
-        </div>
-
-        <!-- ── سهم تحويل وسيط أنيق بين ذمم المحفظة والعهدة ── -->
-        <button id="btnSettleWallet" onclick="openWalletSettleOptions()" class="btn-wallet-bridge" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية (كلي أو جزئي)">
-          <span style="font-size:1.05rem;">📥</span>
-          <span style="font-size:.78rem;font-weight:800;">تصفية المحفظة للعهدة</span>
-          <span id="btnSettleWalletAmt" class="bridge-badge">0 ج</span>
-          <span class="bridge-arrow">➔</span>
-        </button>
-      </div>
-
-      <!-- ── الصندوق الثاني: العهدة الحالية (الخزينة العامة للصيدلية) ── -->
-      <div class="bal-box" style="padding:6px 20px;border-radius:14px;min-width:170px;">
-        <div class="bal-lbl">💼 العهدة الحالية</div>
-        <div class="bal-amt" id="hBal">0</div>
-        <div style="font-size:.65rem;opacity:.8;">الخزينة العامة (جنيه)</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Today bar -->
-  <div class="t-bar">
-    <div class="ti"><span class="ti-l">إيرادات اليوم:</span><span class="ti-v c-g" id="tRev">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">مصاريف اليوم:</span><span class="ti-v c-r" id="tExp">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">طلبيات اليوم:</span><span class="ti-v c-b" id="tOrd">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">صافي اليوم:</span><span class="ti-v c-o" id="tNet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">📱 محفظة اليوم:</span><span class="ti-v" style="color:#4fd1c5;" id="tWallet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span> <span id="tWalletPct" style="font-size:.72rem;color:#81e6d9;font-weight:800;">(0%)</span></div>
-  </div>
-
-  <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
-  <div id="topSalesTrendCard" class="top-sales-card">
-    <div class="top-sales-hdr">
-      <div class="top-sales-title-wrap">
-        <div class="top-sales-title">
-          <span style="font-size:1.15rem;">📈</span>
-          <span>حركة مبيعات الشهر</span>
-          <span class="ts-month-badge" id="tsMonthBadge">—</span>
-        </div>
-        <div class="ts-kpi-row" id="tsKpiRow">
-          <div class="ts-chip ts-chip-tot" title="إجمالي مبيعات الشهر الفعلية (بدون الإيداعات)">
-            <span class="ts-chip-lbl">الإجمالي:</span>
-            <strong id="tsTotalAmt">0 ج</strong>
-          </div>
-          <div class="ts-chip ts-chip-avg" title="متوسط مبيعات اليوم الواحد المحقق خلال الشهر">
-            <span class="ts-chip-lbl">المتوسط اليومي:</span>
-            <strong id="tsAvgAmt">0 ج</strong>
-          </div>
-          <div class="ts-chip ts-chip-peak" title="أعلى مبيعات محققة في يوم خلال الشهر">
-            <span class="ts-chip-lbl">🚀 أعلى يوم:</span>
-            <strong id="tsPeakDay">—</strong>
-          </div>
-          <div class="ts-chip ts-chip-low" title="أدنى مبيعات محققة في يوم خلال الشهر">
-            <span class="ts-chip-lbl">🔻 أقل يوم:</span>
-            <strong id="tsLowDay">—</strong>
-          </div>
-          <div class="ts-chip ts-chip-today" title="مبيعات اليوم الحالي ومقارنته بمتوسط الشهر">
-            <span class="ts-chip-lbl">⚡ اليوم:</span>
-            <strong id="tsTodayAmt">0 ج</strong>
-            <span id="tsTodayTrendBadge" class="ts-trend-badge">—</span>
+    <!-- ── MAIN APP SHELL (Crisp Slate Content Area) ── -->
+    <main class="saliim-main">
+      <!-- TOPBAR -->
+      <header class="saliim-topbar">
+        <div class="saliim-topbar-right">
+          <button class="saliim-mobile-toggle" onclick="toggleSidebar(true)" aria-label="القائمة الرئيسية">☰</button>
+          <div class="saliim-page-header">
+            <h2 class="saliim-page-title" id="saliimPageTitle">➕ تسجيل قيد جديد</h2>
+            <div class="saliim-breadcrumb" id="saliimBreadcrumb">الرئيسية / العمليات والقيود</div>
           </div>
         </div>
-      </div>
-      <div class="top-sales-ctrls">
-        <div class="ts-type-toggle">
-          <button id="tsBtnLine" class="ts-ctrl-btn ts-active" onclick="setTopSalesChartType('line')" title="عرض رسم بياني انسيابي">📈 منحنى</button>
-          <button id="tsBtnBar" class="ts-ctrl-btn" onclick="setTopSalesChartType('bar')" title="عرض رسم بياني بالأعمدة">📊 أعمدة</button>
+
+        <div class="saliim-topbar-center">
+          <div class="saliim-live-badge">
+            <span class="saliim-live-dot"></span>
+            <span>متصل بالسحابة</span>
+          </div>
         </div>
-        <button id="tsBtnCollapse" class="ts-ctrl-btn ts-collapse-btn" onclick="toggleTopSalesCard()" title="طي أو إظهار الجراف">
-          <span id="tsCollapseIcon">🔼</span> <span id="tsCollapseText">طي</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- Chart Body Container (Collapsible) -->
-    <div id="topSalesChartBody" class="top-sales-body">
-      <div class="top-sales-canvas-wrap">
-        <canvas id="topMonthlySalesChart"></canvas>
-      </div>
-      <div class="top-sales-legend-sub">
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#06b6d4;"></span> مبيعات الأيام</span>
-        <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
-        <span class="ts-leg-item"><span style="background:rgba(99,179,237,.25);border:1px solid rgba(99,179,237,.6);color:#90cdf4;padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:800;">2 ش</span> عدد الشيفتات فوق كل يوم</span>
-      </div>
-    </div>
-  </div>
+        <div class="saliim-topbar-left">
+          <!-- Fallback references for compatibility -->
+          <span id="hPhName" style="display:none;"></span>
+          <span id="hUName" style="display:none;"></span>
+          <span id="hURole" style="display:none;"></span>
 
-  <!-- Tabs -->
-  <div class="tabs" id="mainTabs"></div>
+          <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
+          <button class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
+          <button class="saliim-tb-btn saliim-tb-logout" onclick="doLogout()" title="تسجيل الخروج">خروج ↩</button>
+        </div>
+      </header>
 
-  <!-- Content -->
-  <div class="content">
+      <!-- CONTENT BODY -->
+      <div class="saliim-content-body">
+        <!-- ── ROW OF 5 FINANCIAL KPI CARDS ── -->
+        <div class="saliim-kpi-grid">
+          <!-- 1. العهدة الحالية -->
+          <div class="saliim-kpi-card saliim-kpi-safe" title="الخزينة العامة للصيدلية">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">💼 العهدة الحالية</span>
+              <span class="saliim-kpi-icon">🏦</span>
+            </div>
+            <div class="saliim-kpi-val" id="hBal">0</div>
+            <div class="saliim-kpi-sub">الخزينة العامة (جنيه)</div>
+          </div>
 
-    <!-- ── ADD ENTRY ── -->
-    <div class="pane" id="pane-add">
+          <!-- 2. أونلاين اليوم -->
+          <div class="saliim-kpi-card saliim-kpi-online" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">⚡ أونلاين اليوم</span>
+              <span class="saliim-kpi-badge badge-cyan">اليوم</span>
+            </div>
+            <div class="saliim-kpi-val text-cyan" id="hOnlineToday">0 ج</div>
+            <div class="saliim-kpi-sub">تحصيل المحفظة وانستا لليوم</div>
+          </div>
+
+          <!-- 3. ذمم أونلاين معلقة -->
+          <div class="saliim-kpi-card saliim-kpi-debt" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">⏳ ذمم أونلاين معلقة</span>
+              <span class="saliim-kpi-badge badge-amber">معلق</span>
+            </div>
+            <div class="saliim-kpi-val text-amber" id="hOnlineDebts">0 ج</div>
+            <div class="saliim-kpi-sub">مبالغ قيد الإيداع والتحصيل</div>
+          </div>
+
+          <!-- 4. إجمالي المحفظة -->
+          <div class="saliim-kpi-card saliim-kpi-wallet" id="onlineWalletTotalBox" onclick="openOnlineDebtsModal('all')" title="إجمالي مبيعات المحفظة الإلكترونية ونسبتها المئوية">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">📱 إجمالي المحفظة</span>
+              <span class="saliim-kpi-icon">💳</span>
+            </div>
+            <div class="saliim-kpi-val text-green" id="hWalletTotalVal">0 ج</div>
+            <div class="saliim-kpi-sub" id="hWalletSharePct">(0% من المبيعات)</div>
+          </div>
+
+          <!-- 5. تصفية المحفظة للعهدة -->
+          <div class="saliim-kpi-card saliim-kpi-bridge" id="btnSettleWallet" onclick="openWalletSettleOptions()" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">📥 تصفية للعهدة</span>
+              <span class="bridge-arrow" style="font-size:1.1rem;color:#10b981;font-weight:900;">➔</span>
+            </div>
+            <div class="saliim-kpi-val text-green" id="btnSettleWalletAmt">0 ج</div>
+            <div class="saliim-kpi-sub">تحويل الرصيد للخزينة</div>
+          </div>
+
+          <!-- صناديق التارجت -->
+          <div class="saliim-kpi-card saliim-kpi-target" id="salesTargetBox" style="display:none;">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">🎯 تحقيق التارجت اليومي</span>
+            </div>
+            <div class="saliim-kpi-val" id="targetPct">—</div>
+            <div class="saliim-kpi-sub" id="targetSub">—</div>
+          </div>
+
+          <div class="saliim-kpi-card saliim-kpi-monthly" id="monthlyTargetBox" style="display:none;">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">📅 تارجت الشهر</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <svg width="34" height="34" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+                <circle id="monthRingFill" cx="18" cy="18" r="15" fill="none" stroke="#0284c7" stroke-width="4"
+                  stroke-dasharray="94.25" stroke-dashoffset="94.25" stroke-linecap="round" style="transition:stroke-dashoffset .6s ease;"/>
+              </svg>
+              <div>
+                <div id="monthlyPct" style="font-size:1.15rem;font-weight:900;color:var(--text);">0%</div>
+                <div style="font-size:0.68rem;color:var(--text3);">نسبة الإنجاز</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Today Bar ── -->
+        <div class="saliim-today-card">
+          <div class="saliim-today-head">
+            <div class="saliim-today-title">
+              <span>⚡ حركة اليوم المالية</span>
+              <span class="saliim-today-badge">حسابات اليوم المباشرة</span>
+            </div>
+          </div>
+          <div class="saliim-today-cols">
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-green" id="tRev">0</div>
+              <div class="saliim-today-lbl">📈 إيرادات اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-red" id="tExp">0</div>
+              <div class="saliim-today-lbl">📉 مصاريف اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-blue" id="tOrd">0</div>
+              <div class="saliim-today-lbl">🏭 طلبيات اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-amber" id="tNet">0</div>
+              <div class="saliim-today-lbl">💰 صافي اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-teal">
+                <span id="tWallet">0</span>
+                <span id="tWalletPct" style="font-size:.72rem;font-weight:800;color:#0d9488;">(0%)</span>
+              </div>
+              <div class="saliim-today-lbl">📱 محفظة اليوم</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
+        <div id="topSalesTrendCard" class="top-sales-card">
+          <div class="top-sales-hdr">
+            <div class="top-sales-title-wrap">
+              <div class="top-sales-title">
+                <span style="font-size:1.15rem;">📈</span>
+                <span>حركة مبيعات الشهر</span>
+                <span class="ts-month-badge" id="tsMonthBadge">—</span>
+              </div>
+              <div class="ts-kpi-row" id="tsKpiRow">
+                <div class="ts-chip ts-chip-tot" title="إجمالي مبيعات الشهر الفعلية (بدون الإيداعات)">
+                  <span class="ts-chip-lbl">الإجمالي:</span>
+                  <strong id="tsTotalAmt">0 ج</strong>
+                </div>
+                <div class="ts-chip ts-chip-avg" title="متوسط مبيعات اليوم الواحد المحقق خلال الشهر">
+                  <span class="ts-chip-lbl">المتوسط اليومي:</span>
+                  <strong id="tsAvgAmt">0 ج</strong>
+                </div>
+                <div class="ts-chip ts-chip-peak" title="أعلى مبيعات محققة في يوم خلال الشهر">
+                  <span class="ts-chip-lbl">🚀 أعلى يوم:</span>
+                  <strong id="tsPeakDay">—</strong>
+                </div>
+                <div class="ts-chip ts-chip-low" title="أدنى مبيعات محققة في يوم خلال الشهر">
+                  <span class="ts-chip-lbl">🔻 أقل يوم:</span>
+                  <strong id="tsLowDay">—</strong>
+                </div>
+                <div class="ts-chip ts-chip-today" title="مبيعات اليوم الحالي ومقارنته بمتوسط الشهر">
+                  <span class="ts-chip-lbl">⚡ اليوم:</span>
+                  <strong id="tsTodayAmt">0 ج</strong>
+                  <span id="tsTodayTrendBadge" class="ts-trend-badge">—</span>
+                </div>
+              </div>
+            </div>
+            <div class="top-sales-ctrls">
+              <div class="ts-type-toggle">
+                <button id="tsBtnLine" class="ts-ctrl-btn ts-active" onclick="setTopSalesChartType('line')" title="عرض رسم بياني انسيابي">📈 منحنى</button>
+                <button id="tsBtnBar" class="ts-ctrl-btn" onclick="setTopSalesChartType('bar')" title="عرض رسم بياني بالأعمدة">📊 أعمدة</button>
+              </div>
+              <button id="tsBtnCollapse" class="ts-ctrl-btn ts-collapse-btn" onclick="toggleTopSalesCard()" title="طي أو إظهار الجراف">
+                <span id="tsCollapseIcon">🔼</span> <span id="tsCollapseText">طي</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chart Body Container (Collapsible) -->
+          <div id="topSalesChartBody" class="top-sales-body">
+            <div class="top-sales-canvas-wrap">
+              <canvas id="topMonthlySalesChart"></canvas>
+            </div>
+            <div class="top-sales-legend-sub">
+              <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#06b6d4;"></span> مبيعات الأيام</span>
+              <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
+              <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
+              <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
+              <span class="ts-leg-item"><span style="background:rgba(99,179,237,.25);border:1px solid rgba(99,179,237,.6);color:#90cdf4;padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:800;">2 ش</span> عدد الشيفتات فوق كل يوم</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden tabs bar for JS compatibility -->
+        <div class="tabs" id="mainTabs" style="display:none;"></div>
+
+        <!-- Content -->
+        <div class="content" style="padding:0;max-width:100%;">
+<div class="pane" id="pane-add">
       <div class="card">
         <div class="card-t">✏️ تسجيل قيد جديد</div>
         <div class="type-grid">
@@ -2506,7 +3125,10 @@ function ensureXLSX() {
       </div>
     </div>
 
-  </div><!-- /content -->
+      </div><!-- /content -->
+      </div><!-- /saliim-content-body -->
+    </main><!-- /saliim-main -->
+  </div><!-- /saliim-layout -->
 </div><!-- /scApp -->
 
 <!-- ══════════════════════════════════════════
@@ -3245,6 +3867,90 @@ function refreshActivePane() {
 // ═══════════════════════════════════════════
 //  BUILD APP
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// 🌟 SALIIM SAAS NAVIGATION & SIDEBAR ENGINE
+// ═══════════════════════════════════════════
+function renderSaliimNav() {
+  const isAdmin = me && me.role === 'admin';
+  const canCust = isAdmin || (me && me.permissions && me.permissions.customers === true);
+
+  const navEl = document.getElementById('saliimNavMenu');
+  if (!navEl) return;
+
+  let html = '';
+
+  // 1. العمليات والقيود
+  html += '<div class="saliim-group-title">💼 العمليات والقيود</div>';
+  html += '<div class="saliim-nav-item active" data-tab="add" onclick="swTab(\'add\', this)">'
+        + '<span class="saliim-item-icon">➕</span><span>قيد جديد</span></div>';
+
+  if (isAdmin) {
+    html += '<div class="saliim-nav-item" data-tab="all" onclick="swTab(\'all\', this)">'
+          + '<span class="saliim-item-icon">📋</span><span>كل الحركات</span></div>';
+  } else {
+    html += '<div class="saliim-nav-item" data-tab="mine" onclick="swTab(\'mine\', this)">'
+          + '<span class="saliim-item-icon">📋</span><span>حركاتي</span></div>';
+  }
+
+  if (isAdmin) {
+    html += '<div class="saliim-nav-item" data-tab="sum" onclick="swTab(\'sum\', this)">'
+          + '<span class="saliim-item-icon">📊</span><span>الملخص والأرباح</span></div>';
+    html += '<div class="saliim-nav-item" data-tab="budget" onclick="swTab(\'budget\', this)">'
+          + '<span class="saliim-item-icon">📑</span><span>الموازنة المالية</span></div>';
+  }
+
+  if (canCust) {
+    html += '<div class="saliim-nav-item" data-tab="custfollow" onclick="swTab(\'custfollow\', this)">'
+          + '<span class="saliim-item-icon">👥</span><span>متابعة العملاء</span></div>';
+  }
+
+  // 2. التقارير والمؤشرات (للمدير)
+  if (isAdmin) {
+    html += '<div class="saliim-group-title">📈 التقارير والمؤشرات</div>';
+    html += '<div class="saliim-nav-item" data-tab="salesdb" onclick="swTab(\'salesdb\', this)">'
+          + '<span class="saliim-item-icon">📊</span><span>داشبورد المبيعات</span></div>';
+    html += '<div class="saliim-nav-item" data-tab="monthcmp" onclick="swTab(\'monthcmp\', this)">'
+          + '<span class="saliim-item-icon">📅</span><span>مقارنة الأشهر</span></div>';
+  }
+
+  // 3. شؤون الموظفين
+  html += '<div class="saliim-group-title">⏱ شؤون الموظفين</div>';
+  html += '<div class="saliim-nav-item" data-tab="att" onclick="swTab(\'att\', this)">'
+        + '<span class="saliim-item-icon">⏱</span><span>الحضور والانصراف</span></div>';
+
+  if (isAdmin) {
+    html += '<div class="saliim-nav-item" data-tab="users" onclick="swTab(\'users\', this)">'
+          + '<span class="saliim-item-icon">👥</span><span>الموظفين والصلاحيات</span></div>';
+  }
+
+  // 4. النظام
+  if (isAdmin) {
+    html += '<div class="saliim-group-title">⚙️ النظام</div>';
+    html += '<div class="saliim-nav-item" data-tab="trash" onclick="swTab(\'trash\', this)">'
+          + '<span class="saliim-item-icon">🗑</span><span>سلة المحذوفات</span></div>';
+    html += '<div class="saliim-nav-item" data-tab="set" onclick="swTab(\'set\', this)">'
+          + '<span class="saliim-item-icon">⚙️</span><span>الإعدادات العامة</span></div>';
+  }
+
+  navEl.innerHTML = html;
+}
+
+function toggleSidebar(open) {
+  const sb = document.getElementById('saliimSidebar');
+  const bd = document.getElementById('saliimBackdrop');
+  if (!sb) return;
+  if (open === undefined) {
+    open = !sb.classList.contains('open');
+  }
+  if (open) {
+    sb.classList.add('open');
+    if (bd) bd.classList.add('open');
+  } else {
+    sb.classList.remove('open');
+    if (bd) bd.classList.remove('open');
+  }
+}
+
 function buildApp() {
   document.getElementById('hPhName').textContent = '🏥 '+pharmName;
   document.getElementById('hUName').textContent  = me.name;
