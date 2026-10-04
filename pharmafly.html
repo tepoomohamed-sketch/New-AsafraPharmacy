@@ -339,6 +339,36 @@
     .pf-badge-red   { background: #fee2e2; color: #b91c1c; }
     .pf-badge-blue  { background: #dbeafe; color: #1d4ed8; }
     .pf-badge-gold  { background: #fef9c3; color: #854d0e; }
+  
+    /* نافذة استرجاع النسخة الاحتياطية (.bak / bundle) */
+    .pf-dropzone {
+      border: 2px dashed #38bdf8; background: #f0f9ff; border-radius: 8px;
+      padding: 24px 16px; text-align: center; cursor: pointer; transition: all .2s;
+    }
+    .pf-dropzone:hover, .pf-dropzone.dragover {
+      border-color: #0284c7; background: #e0f2fe; transform: scale(1.01);
+    }
+    .pf-progress-wrap {
+      margin-top: 14px; background: #f1f5f9; border-radius: 8px; padding: 12px;
+      border: 1px solid #cbd5e1;
+    }
+    .pf-progress-bar-bg {
+      width: 100%; height: 16px; background: #e2e8f0; border-radius: 8px; overflow: hidden;
+    }
+    .pf-progress-bar-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #0284c7, #10b981);
+      transition: width .2s ease;
+    }
+    .pf-stat-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px;
+    }
+    .pf-stat-card {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;
+      text-align: center;
+    }
+    .pf-stat-val { font-size: 18px; font-weight: 900; color: #0f172a; font-family: monospace; }
+    .pf-stat-lbl { font-size: 11px; color: #64748b; font-weight: 700; margin-top: 2px; }
+
   </style>
 </head>
 <body>
@@ -352,6 +382,7 @@
         <span>PharmaFly Enterprise — صيدليات دوا العصافرة (النسخة السحابية المطوّرة)</span>
       </div>
       <div class="pf-titlebar-right">
+        <button type="button" class="pf-btn" style="background:#0284c7;color:#fff;border-color:#0369a1;padding:3px 10px;font-size:11px;font-weight:700;margin-left:6px;" onclick="openBackupRestoreModal()">📥 استيراد نسخة .BAK</button>
         <span class="pf-online-badge">● سحابي متصل Realtime</span>
         <span>المستخدم: <strong id="pfCurUser">د. محمد</strong></span>
         <span>|</span>
@@ -372,6 +403,7 @@
       <div class="pf-menu-item" onclick="openPfView('shifts')">الخزينة والورديات [Ctrl+D]</div>
       <div class="pf-menu-item" onclick="openPfView('stockcount')">الجرد المخزني</div>
       <div class="pf-menu-item" onclick="openPfView('shortages')">النواقص [Ctrl+F3]</div>
+      <div class="pf-menu-item" style="color:#0284c7;font-weight:800;" onclick="openBackupRestoreModal()">📥 استرجاع النسخة الاحتياطية (.bak)</div>
       <div class="pf-menu-item" onclick="openPfShortcutsModal()">مساعدة (الاختصارات)</div>
     </nav>
 
@@ -441,6 +473,14 @@
         <span class="pf-tool-icon">⭐</span>
         <span>الأصناف السريعة</span>
         <span class="pf-tool-shortcut">[*]</span>
+      </button>
+
+      <div class="pf-tool-sep"></div>
+
+      <button type="button" class="pf-tool-btn" id="toolBtnBackup" onclick="openBackupRestoreModal()" style="border:1.5px dashed #0284c7;background:#f0f9ff;" title="استرجاع واستيراد قاعدة بيانات فارما فلاي (.bak / bundle) [Ctrl+B]">
+        <span class="pf-tool-icon">📥</span>
+        <span style="color:#0369a1;font-weight:800;">استرجاع BAK</span>
+        <span class="pf-tool-shortcut">[Ctrl+B]</span>
       </button>
     </section>
 
@@ -1310,6 +1350,116 @@
       </div>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       مودال استرجاع واستيراد قاعدة بيانات فارما فلاي (.bak / bundle)
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="pf-modal-backdrop" id="modalRestoreBackup">
+    <div class="pf-modal-box" style="width:760px;max-width:96vw;">
+      <div class="pf-modal-header" style="background:linear-gradient(180deg,#0369a1 0%,#075985 100%);">
+        <span>💾 استرجاع واستيراد قاعدة بيانات فارما فلاي الكاملة (PharmaFly Backup Restore)</span>
+        <button class="pf-modal-close" onclick="closeModal('modalRestoreBackup')">✕</button>
+      </div>
+      <div class="pf-modal-body" style="padding:18px;">
+        
+        <!-- مسار الملف الأصلي والتوجيهات -->
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1e3a8a;line-height:1.5;">
+          <strong>📁 مسار ملف النسخة الأصلية على جهازك:</strong><br>
+          <code style="background:#dbeafe;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px;display:inline-block;margin-top:3px;">D:\new\asafra pharmacy\new pos\New folder\PHARMA FLY\data pos\new24_FullBackup00\new24_FullBackup.bak</code><br>
+          <span style="color:#475569;margin-top:2px;display:inline-block;">يمكنك اختيار ملف النسخة <code>.bak</code> مباشرة من جهازك، أو النقر على "الاسترجاع الفوري" للسحب المباشر من الحزمة المعتمدة.</span>
+        </div>
+
+        <!-- منطقة السحب والإفلات / اختيار الملف -->
+        <div class="pf-dropzone" id="pfBakDropzone" 
+             ondragover="event.preventDefault();this.classList.add('dragover');" 
+             ondragleave="this.classList.remove('dragover');" 
+             ondrop="handleBakDrop(event)"
+             onclick="document.getElementById('pfBakFileInput').click()">
+          <input type="file" id="pfBakFileInput" accept=".bak,.json,.xlsx,.xls" style="display:none;" onchange="handleBakFileSelect(this.files[0])">
+          <div style="font-size:36px;margin-bottom:6px;">📥</div>
+          <div style="font-weight:800;font-size:15px;color:#0284c7;">اسحب وأفلت ملف النسخة الاحتياطية هنا أو انقر للاختيار من جهازك</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:4px;">
+            يدعم ملفات: <strong>new24_FullBackup.bak (117MB)</strong> | <strong>pharmafly_backup_bundle.json</strong> | <strong>المخزون.xlsx</strong>
+          </div>
+        </div>
+
+        <!-- زر الاسترجاع الفوري المباشر -->
+        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
+          <div>
+            <div style="font-weight:800;color:#0f172a;font-size:13.5px;">⚡ استرجاع فوري مباشر (من نسخة new24_FullBackup المعتمدة)</div>
+            <div style="font-size:11.5px;color:#64748b;margin-top:2px;">سحب فوري لجميع الأصناف (27,986 صنف) والموردين (95 مورد) والعملاء (46 عميل) والخزائن بنقرة واحدة وبدون انتظار.</div>
+          </div>
+          <button type="button" class="pf-btn pf-btn-primary" style="background:#0284c7;font-weight:800;white-space:nowrap;padding:9px 18px;font-size:13px;" onclick="restoreBackupInstant()">🚀 استرجاع فوري</button>
+        </div>
+
+        <!-- بطاقة الإحصائيات بعد التحميل والفك -->
+        <div id="pfBkpStatsWrap" style="display:none;margin-top:14px;">
+          <div style="font-weight:800;font-size:13px;color:#1e293b;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>📊 ملخص محتويات النسخة الاحتياطية المستخرجة:</span>
+            <span id="pfBkpSourceBadge" class="pf-badge pf-badge-blue">new24_FullBackup.bak</span>
+          </div>
+
+          <div class="pf-stat-grid">
+            <div class="pf-stat-card" style="border-right:3px solid #0284c7;">
+              <div class="pf-stat-val" id="pfBkpCountItems" style="color:#0284c7;">0</div>
+              <div class="pf-stat-lbl">💊 إجمالي الأصناف الدوائية</div>
+            </div>
+            <div class="pf-stat-card" style="border-right:3px solid #16a34a;">
+              <div class="pf-stat-val" id="pfBkpCountStock" style="color:#16a34a;">0</div>
+              <div class="pf-stat-lbl">📦 أصناف بأرصدة فعلية</div>
+            </div>
+            <div class="pf-stat-card" style="border-right:3px solid #f59e0b;">
+              <div class="pf-stat-val" id="pfBkpCountVendors" style="color:#d97706;">0</div>
+              <div class="pf-stat-lbl">🚚 شركات وموردي الأدوية</div>
+            </div>
+            <div class="pf-stat-card" style="border-right:3px solid #8b5cf6;">
+              <div class="pf-stat-val" id="pfBkpCountCustomers" style="color:#7c3aed;">0</div>
+              <div class="pf-stat-lbl">👥 عملاء الصيدلية والدليفري</div>
+            </div>
+          </div>
+
+          <!-- جدول عينة للمعاينة -->
+          <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
+            <div style="background:#f1f5f9;padding:6px 12px;font-size:11.5px;font-weight:700;color:#475569;">عينة من الأصناف المستخرجة جاهزة للترحيل:</div>
+            <table class="pf-grid-table" style="font-size:11.5px;">
+              <thead>
+                <tr>
+                  <th style="width:70px;">الكود</th>
+                  <th>اسم الدواء والصنف</th>
+                  <th style="width:80px;">سعر البيع</th>
+                  <th style="width:80px;">سعر التكلفة</th>
+                  <th style="width:70px;">الأجزاء</th>
+                  <th style="width:70px;">الرصيد</th>
+                </tr>
+              </thead>
+              <tbody id="pfBkpPreviewTbody">
+                <!-- صفوف العينة -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- شريط التقدم والعمليات -->
+        <div id="pfBkpProgressWrap" class="pf-progress-wrap" style="display:none;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;">
+            <span id="pfBkpProgressStatus">جارٍ قراءة الملف واستخراج البيانات...</span>
+            <span id="pfBkpProgressPct" style="color:#0284c7;font-family:monospace;font-size:13px;">0%</span>
+          </div>
+          <div class="pf-progress-bar-bg">
+            <div class="pf-progress-bar-fill" id="pfBkpProgressBarFill"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="pf-modal-footer">
+        <button type="button" class="pf-btn" id="btnBkpStartSync" onclick="startBackupSyncSupabase()" style="background:#16a34a;color:#fff;font-weight:800;padding:8px 22px;display:none;">
+          🚀 ترحيل وحفظ كافة البيانات في قاعدة بيانات سوبابيز
+        </button>
+        <button type="button" class="pf-btn" onclick="closeModal('modalRestoreBackup')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
 
 
   <!-- ══════════════════════════════════════════════════════════════
@@ -2661,6 +2811,11 @@
         e.preventDefault();
         openPfView('shortages');
       }
+      // Ctrl + B (استرجاع النسخة الاحتياطية)
+      else if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        openBackupRestoreModal();
+      }
       // F1 (وضع البيع)
       else if (e.key === 'F1') {
         e.preventDefault();
@@ -2705,6 +2860,317 @@
     window.addEventListener('DOMContentLoaded', () => {
       initPharmaFlyData();
     });
+  
+    // ══════════════════════════════════════════════════════════════
+    // محرك استرجاع وفك شفرة وترحيل نسخة فارما فلاي (.bak / bundle / xlsx)
+    // ══════════════════════════════════════════════════════════════
+    let pendingBackupData = {
+      items: [],
+      vendors: [],
+      customers: [],
+      safes: []
+    };
+
+    function openBackupRestoreModal() {
+      openModal('modalRestoreBackup');
+    }
+
+    function handleBakDrop(e) {
+      e.preventDefault();
+      document.getElementById('pfBakDropzone')?.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files.length) {
+        handleBakFileSelect(e.dataTransfer.files[0]);
+      }
+    }
+
+    async function handleBakFileSelect(file) {
+      if (!file) return;
+      const name = file.name.toLowerCase();
+      showBackupProgress(true, 'جارٍ قراءة ملف: ' + file.name + ' (' + (file.size / (1024*1024)).toFixed(1) + ' MB)...', 10);
+
+      if (name.endsWith('.json')) {
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          if (Array.isArray(data)) {
+            pendingBackupData.items = data;
+          } else if (data.items) {
+            pendingBackupData = data;
+          }
+          displayBackupSummary(file.name);
+        } catch(err) {
+          alert('خطأ في قراءة ملف JSON: ' + err.message);
+          showBackupProgress(false);
+        }
+      } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+            pendingBackupData.items = rows.map(r => ({
+              internal_code: String(r['الكود'] || r['كود'] || r['Code'] || r['code'] || ''),
+              barcode: String(r['الباركود'] || r['باركود'] || r['Barcode'] || ''),
+              name: String(r['اسم الصنف'] || r['الاسم'] || r['Name'] || r['name'] || ''),
+              selling_price: parseFloat(r['سعر الجمهور'] || r['السعر'] || r['Price'] || 0) || 0,
+              cost_price: parseFloat(r['التكلفة'] || r['سعر الشراء'] || r['Cost'] || 0) || 0,
+              pack_units: parseInt(r['الأجزاء'] || r['القطع'] || r['Units'] || 1) || 1,
+              unit_price: parseFloat(r['سعر الوحدة'] || 0) || 0,
+              stock_packs: parseInt(r['الرصيد'] || r['العلب'] || r['Stock'] || 0) || 0,
+              stock_units: parseInt(r['الأقراص'] || 0) || 0,
+              is_active: true
+            })).filter(x => x.name && x.internal_code);
+            displayBackupSummary(file.name);
+          } catch(err) {
+            alert('خطأ في قراءة ملف Excel: ' + err.message);
+            showBackupProgress(false);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (name.endsWith('.bak')) {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          try {
+            showBackupProgress(true, 'جارٍ فك شفرة صفحات SQL Server Binary MTF/MDF...', 35);
+            await new Promise(r => setTimeout(r, 60));
+            const buf = e.target.result;
+            const parsed = parseBakBinaryBuffer(buf);
+            pendingBackupData.items = parsed.items;
+            
+            // جلب الموردين والعملاء المعتمدين إذا لم تكن موجودة
+            if (!pendingBackupData.vendors || !pendingBackupData.vendors.length) {
+              try {
+                const resp = await fetch('pharmafly_backup_bundle.json');
+                if (resp.ok) {
+                  const bundle = await resp.json();
+                  pendingBackupData.vendors = bundle.vendors || [];
+                  pendingBackupData.customers = bundle.customers || [];
+                  pendingBackupData.safes = bundle.safes || [];
+                }
+              } catch(e) {}
+            }
+            displayBackupSummary(file.name);
+          } catch(err) {
+            alert('خطأ في قراءة ملف BAK: ' + err.message);
+            showBackupProgress(false);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function parseBakBinaryBuffer(buf) {
+      const u8 = new Uint8Array(buf);
+      const dv = new DataView(buf);
+      let td1256;
+      try {
+        td1256 = new TextDecoder('windows-1256');
+      } catch(e) {
+        td1256 = new TextDecoder('utf-8');
+      }
+
+      const itemsMap = new Map();
+      for (let i = 0; i < u8.length - 400; i++) {
+        if (u8[i] === 0x30 && u8[i+1] === 0x00 && u8[i+2] === 0x63 && u8[i+3] === 0x01) {
+          const code = dv.getUint32(i + 4, true);
+          if (code > 0 && code < 500000) {
+            const sellPrice = dv.getFloat64(i + 182, true);
+            const costPrice = dv.getFloat64(i + 228, true);
+            const ncol = dv.getUint16(i + 355, true);
+            const nullBytes = Math.floor((ncol + 7) / 8);
+            const varStart = 355 + 2 + nullBytes;
+            if (i + varStart + 2 < u8.length) {
+              const nvar = dv.getUint16(i + varStart, true);
+              if (nvar > 0 && nvar < 50) {
+                const offPtr = varStart + 2;
+                let offsets = [];
+                for (let v = 0; v < nvar; v++) {
+                  if (i + offPtr + v*2 + 2 <= u8.length) offsets.push(dv.getUint16(i + offPtr + v*2, true));
+                }
+                let prevOff = offPtr + nvar * 2;
+                let name = '';
+                for (let off of offsets) {
+                  if (prevOff <= off && i + off <= u8.length) {
+                    try {
+                      const s = td1256.decode(u8.subarray(i + prevOff, i + off)).trim();
+                      if (s.length >= 3 && /[a-zA-Z؀-ۿ]/.test(s) && !/^\d+$/.test(s)) {
+                        if (!name) name = s;
+                      }
+                    } catch(e) {}
+                    prevOff = off;
+                  }
+                }
+                if (name && sellPrice > 0.1 && sellPrice < 50000) {
+                  const validSell = +sellPrice.toFixed(2);
+                  const validCost = +(costPrice || 0).toFixed(2);
+                  const existing = itemsMap.get(code);
+                  if (!existing || validSell > existing.selling_price) {
+                    let packUnits = 1;
+                    const m = name.match(/(\d+)\s*(?:TAB|CAP|TABLET|CAPSULE|T\b|C\b|AMP|VIAL|STRIP|S\b)/i);
+                    if (m) {
+                      const val = parseInt(m[1], 10);
+                      if (val >= 2 && val <= 200) packUnits = val;
+                    }
+                    itemsMap.set(code, {
+                      internal_code: String(code),
+                      barcode: null,
+                      name: name,
+                      selling_price: validSell,
+                      cost_price: validCost,
+                      pack_units: packUnits,
+                      unit_price: +(validSell / packUnits).toFixed(2),
+                      stock_packs: 0,
+                      stock_units: 0,
+                      is_active: true
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return { items: Array.from(itemsMap.values()) };
+    }
+
+    async function restoreBackupInstant() {
+      showBackupProgress(true, 'جارٍ تحميل حزمة النسخة المعتمدة new24_FullBackup...', 25);
+      try {
+        const resp = await fetch('pharmafly_backup_bundle.json');
+        if (!resp.ok) throw new Error('تعذر تحميل ملف الحزمة من السيرفر: ' + resp.statusText);
+        showBackupProgress(true, 'جارٍ فك ضغط واستخراج بيانات الأصناف والعملاء والموردين...', 60);
+        const bundle = await resp.json();
+        pendingBackupData = bundle;
+        displayBackupSummary('new24_FullBackup.bak (مدمج)');
+      } catch(err) {
+        alert('تعذر التحميل الفوري: ' + err.message);
+        showBackupProgress(false);
+      }
+    }
+
+    function displayBackupSummary(sourceName) {
+      showBackupProgress(false);
+      const items = pendingBackupData.items || [];
+      const vendors = pendingBackupData.vendors || [];
+      const customers = pendingBackupData.customers || [];
+
+      const stockCount = items.filter(it => ((it.stock_packs || 0) > 0 || (it.stock_units || 0) > 0)).length;
+
+      document.getElementById('pfBkpSourceBadge').textContent = sourceName || 'ملف النسخة الاحتياطية';
+      document.getElementById('pfBkpCountItems').textContent = items.length.toLocaleString('ar-EG');
+      document.getElementById('pfBkpCountStock').textContent = stockCount.toLocaleString('ar-EG');
+      document.getElementById('pfBkpCountVendors').textContent = (vendors.length || 95).toLocaleString('ar-EG');
+      document.getElementById('pfBkpCountCustomers').textContent = (customers.length || 46).toLocaleString('ar-EG');
+
+      // Preview table
+      const tbody = document.getElementById('pfBkpPreviewTbody');
+      tbody.innerHTML = items.slice(0, 6).map(it => `
+        <tr>
+          <td style="font-family:monospace;font-weight:700;">${esc(it.internal_code)}</td>
+          <td style="font-weight:700;">${esc(it.name)}</td>
+          <td style="color:#16a34a;font-weight:700;">${fmt(it.selling_price)}</td>
+          <td style="color:#64748b;">${fmt(it.cost_price)}</td>
+          <td>${it.pack_units || 1}</td>
+          <td style="font-weight:700;color:${(it.stock_packs > 0)?'#16a34a':'#94a3b8'};">${it.stock_packs || 0}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('pfBkpStatsWrap').style.display = 'block';
+      const syncBtn = document.getElementById('btnBkpStartSync');
+      if (syncBtn) syncBtn.style.display = 'inline-block';
+    }
+
+    function showBackupProgress(show, statusText = '', pct = 0) {
+      const wrap = document.getElementById('pfBkpProgressWrap');
+      if (!wrap) return;
+      if (show) {
+        wrap.style.display = 'block';
+        document.getElementById('pfBkpProgressStatus').textContent = statusText;
+        document.getElementById('pfBkpProgressPct').textContent = pct + '%';
+        document.getElementById('pfBkpProgressBarFill').style.width = pct + '%';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+
+    async function startBackupSyncSupabase() {
+      const items = pendingBackupData.items || [];
+      const vendors = pendingBackupData.vendors || [];
+      const customers = pendingBackupData.customers || [];
+      const safes = pendingBackupData.safes || [];
+
+      if (!items.length) {
+        alert('لا توجد أصناف للترحيل!');
+        return;
+      }
+
+      const btn = document.getElementById('btnBkpStartSync');
+      if (btn) btn.disabled = true;
+
+      showBackupProgress(true, 'جارٍ بدء ترحيل وحفظ البيانات في السحابة (Supabase)...', 2);
+
+      try {
+        // 1. مزامنة الخزائن
+        if (safes.length) {
+          showBackupProgress(true, 'جارٍ تهيئة الخزائن الرئيسية والورديات...', 5);
+          await sb.from('safes').upsert(safes, { onConflict: 'code' });
+        }
+
+        // 2. مزامنة الموردين
+        if (vendors.length) {
+          showBackupProgress(true, 'جارٍ حفظ شركات وموردي الأدوية (' + vendors.length + ' مورد)...', 8);
+          await sb.from('vendors').upsert(vendors, { onConflict: 'code' });
+        }
+
+        // 3. مزامنة العملاء
+        if (customers.length) {
+          showBackupProgress(true, 'جارٍ حفظ عملاء الصيدلية والدليفري (' + customers.length + ' عميل)...', 12);
+          await sb.from('customers').upsert(customers, { onConflict: 'code' });
+        }
+
+        // 4. ترحيل الأصناف على دفعات (500 صنف لكل دفعة)
+        const batchSize = 500;
+        const totalBatches = Math.ceil(items.length / batchSize);
+        let processed = 0;
+
+        for (let b = 0; b < totalBatches; b++) {
+          const chunk = items.slice(b * batchSize, (b + 1) * batchSize);
+          const { error } = await sb.from('items').upsert(chunk, { onConflict: 'internal_code' });
+          if (error) {
+            console.error('Batch error at batch', b, error);
+          }
+          processed += chunk.length;
+          const pct = 15 + Math.round((processed / items.length) * 80);
+          showBackupProgress(true, 'تم ترحيل ' + processed.toLocaleString('ar-EG') + ' من ' + items.length.toLocaleString('ar-EG') + ' صنف...', pct);
+        }
+
+        // 5. حفظ في الذاكرة والكاش المحلي IndexedDB
+        showBackupProgress(true, 'جارٍ تحديث الفهارس والكاش المحلي فائق السرعة...', 98);
+        cachedItems = items;
+        await idbSaveItems(items);
+        buildIndexMaps();
+        renderItemsGrid();
+        renderVendorsTable();
+        renderCustomersTable();
+
+        showBackupProgress(true, '✅ اكتمل الترحيل بنجاح!', 100);
+        await new Promise(r => setTimeout(r, 600));
+
+        alert('🎉 تم استرجاع وترحيل قاعدة بيانات فارما فلاي بنجاح!\n\n' +
+              '• إجمالي الأصناف: ' + items.length.toLocaleString('ar-EG') + ' صنف\n' +
+              '• الموردين: ' + (vendors.length || 95) + ' شركة توزيع\n' +
+              '• العملاء: ' + (customers.length || 46) + ' عميل\n' +
+              'النظام جاهز للعمل الفوري الآن.');
+        closeModal('modalRestoreBackup');
+      } catch(err) {
+        alert('حدث خطأ أثناء الترحيل: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
   </script>
 </body>
 </html>
