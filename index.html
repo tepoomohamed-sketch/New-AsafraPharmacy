@@ -9699,12 +9699,15 @@ function renderPOSPane() {
   }
 
   if (!sub.length) {
-    document.getElementById('pdKpiGrid').innerHTML=
-      `<div class="nd" style="grid-column:1/-1">
-        <div class="nd-i">📭</div>
-        <p>لا توجد بيانات في هذه الفترة<br>
-        <small style="font-size:.8rem;">استورد ملف POS من الزر العلوي أو غيّر الفترة</small></p>
-      </div>`;
+    const kpiG = document.getElementById('pdKpiGrid');
+    if (kpiG) {
+      kpiG.innerHTML =
+        `<div class="nd" style="grid-column:1/-1">
+          <div class="nd-i">📭</div>
+          <p>لا توجد بيانات في هذه الفترة<br>
+          <small style="font-size:.8rem;">استورد ملف POS من الزر العلوي أو غيّر الفترة</small></p>
+        </div>`;
+    }
     ['pdDailyBar','pdTypePie','pdMarginLine','pdMarginHist'].forEach(id=>{
       const c=document.getElementById(id);
       if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
@@ -9729,6 +9732,8 @@ function renderPOSPane() {
 
 // ── KPI Cards ──
 function pdRenderKPIs(sub, prev, hasCost) {
+  const kpiG = document.getElementById('pdKpiGrid');
+  if (!kpiG) return;
   const r   = sub.reduce((s,e)=>s+(e.revenue||0),0);
   const gp  = sub.reduce((s,e)=>s+(e.profit||0),0);
   const disc= sub.reduce((s,e)=>s+(e.discount||0),0);
@@ -9744,7 +9749,7 @@ function pdRenderKPIs(sub, prev, hasCost) {
     return `<span class="${d>=0?'d-up':'d-dn'}">${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(1)}%</span>`;
   }
 
-  document.getElementById('pdKpiGrid').innerHTML=`
+  kpiG.innerHTML=`
     <div class="pd-kpi pd-kpi-b">
       <div class="pd-kl">🧾 إجمالي الفواتير</div>
       <div class="pd-kv">${sub.length}</div>
