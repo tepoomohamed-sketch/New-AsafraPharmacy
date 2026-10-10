@@ -2582,6 +2582,7 @@ function ensureXLSX() {
           <span id="hUName" style="display:none;"></span>
           <span id="hURole" style="display:none;"></span>
 
+          <button class="saliim-tb-btn" onclick="openLuckyWheelModal()" title="لعبة حظ المكافآت والحوافز 🎡" style="color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);font-weight:800;">🎡 <span class="hide-mobile">لعبة الحظ</span></button>
           <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
           <button class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
           <button class="saliim-tb-btn saliim-tb-logout" onclick="doLogout()" title="تسجيل الخروج">خروج ↩</button>
@@ -2770,7 +2771,12 @@ function ensureXLSX() {
         <div class="content" style="padding:0;max-width:100%;">
 <div class="pane" id="pane-add">
       <div class="card">
-        <div class="card-t">✏️ تسجيل قيد جديد</div>
+        <div class="card-t" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <span>✏️ تسجيل قيد جديد</span>
+          <button type="button" class="btn btn-sm" onclick="openLuckyWheelModal()" style="background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(217,119,6,.25));border:1.5px solid #f59e0b;color:#f59e0b;font-weight:800;border-radius:8px;padding:3px 10px;font-size:0.78rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            🎡 لعبة حظ المكافآت (10 - 50 ج) 🎲
+          </button>
+        </div>
         <div class="type-grid">
           <div class="type-btn tb-r on" onclick="pickType('ايرادات',this)">📈 إيرادات</div>
           <div class="type-btn tb-e"    onclick="pickType('مصاريف',this)">📉 مصاريف</div>
@@ -2793,7 +2799,26 @@ function ensureXLSX() {
             <input type="text" id="eInv" placeholder="اختياري" onkeydown="handleEntryKeyNav(event,'eInv')"/>
             <select id="eInvSel" style="display:none;" onkeydown="handleEntryKeyNav(event,'eInvSel')"><option value="">اختر الموظف...</option></select>
           </div>
-          <div class="fg"><label id="eAmtLbl">💵 المبلغ (جنيه)</label><input type="number" id="eAmt" placeholder="0" min="0" step="0.01" onkeydown="handleEntryKeyNav(event,'eAmt')"/></div>
+          <div class="fg">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1px;">
+              <label id="eAmtLbl" style="margin-bottom:0;">💵 المبلغ (جنيه)</label>
+              <button type="button" id="btnLuckyInc" onclick="openLuckyWheelModal()" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(217,119,6,.25));border:1px solid #f59e0b;color:#f59e0b;padding:1px 6px;font-size:0.7rem;font-weight:800;border-radius:6px;cursor:pointer;">🎲 لِف واكسب!</button>
+            </div>
+            <input type="number" id="eAmt" placeholder="0" min="0" step="0.01" onkeydown="handleEntryKeyNav(event,'eAmt')"/>
+          </div>
+          <div id="incDisburseTypeWrap" style="display:none;grid-column:1 / -1;padding:8px 12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:10px;margin-top:2px;margin-bottom:6px;">
+            <div style="font-size:0.75rem;font-weight:800;color:#f59e0b;margin-bottom:4px;">طريقة صرف الحافز / المكافأة:</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;">
+              <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.8rem;color:var(--text1);">
+                <input type="radio" name="incDisburseType" value="cash_now" checked style="accent-color:#f59e0b;">
+                💵 صُرفت نقداً من الخزينة اليوم (تخصم من العهدة الآن)
+              </label>
+              <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.8rem;color:var(--text1);">
+                <input type="radio" name="incDisburseType" value="with_salary" style="accent-color:#f59e0b;">
+                📅 تُصرف مع الراتب نهاية الشهر (لا تمس الخزينة اليوم وتُضاف لصافي الراتب)
+              </label>
+            </div>
+          </div>
           <div class="fg fg-full">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
               <label for="eNotes" id="eNotesLbl" style="margin-bottom:0;">📝 ملاحظات</label>
@@ -3869,7 +3894,7 @@ function ensureXLSX() {
 const COS = {
   ايرادات:['بداية العهدة','شيفت صباحي','شيفت وسط','شيفت مسائي','شيفت يوم كامل','د.محمد ايداع'],
   طلبيات:['فارما جروب','ميراميديكال','تاج','الابرار','اللوتس','كريم فارما','كيو فارما','تارجت','المجد','مستورد','ماستر كوزمو','نبض','فارما اوفر سيز','شراء ادوية 50%','ميجا ستور','نفرتيتي','الدوليه','ابن خلدون','الاطباء','الصيادلة المصريين','الفا جروب','اليكس سيوتكس','اليكس واي','براند جروب','جرين فارما','جولدن','ديرما ستامب','ميد شيلد','رويال فارما','عابدين','غرناطه','فارما بروفايدرز','فارما ويست','فاروس','لوتس فارم','مارو مستحضرات','ميديسين','نيو طيبة','نيو ميديسن','هيلثى فارم','صيدلية السيوف','ثوريكس','تراست','فيوتشر ميديكال','ص. الطيبي','براند جمالك','سبشيال فارما','3N','سهم','كير','برايم فارما','قنديل'],
-  مصاريف:['رسوم سحب محفظة','رواتب','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
+  مصاريف:['رسوم سحب محفظة','رواتب','حوافز ومكافآت','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
   ارباح:['أرباح الشهر','توزيع أرباح'],
   'اصول ثابتة':['معدات طبية','ثلاجات أدوية','كمبيوترات وسيستم','كاميرات مراقبة','أثاث وديكور','سيارة / عجلة توصيل','برامج وتراخيص','شاشات وأجهزة'],
   'ذمم اونلاين':['انستا باي','محفظة الصيدلية'],
@@ -5048,20 +5073,37 @@ function updateInvField(company) {
   const txtInv = document.getElementById('eInv');
   const selInv = document.getElementById('eInvSel');
   const lbl    = document.getElementById('eInvLbl');
+  const luckyBtn = document.getElementById('btnLuckyInc');
+  const disburseWrap = document.getElementById('incDisburseTypeWrap');
   if (!txtInv || !selInv) return;
 
-  if (company === 'رواتب' || curType === 'خصومات') {
+  const isInc = (company === 'حوافز ومكافآت' || company === 'حوافز' || company === 'مكافآت' || (company||'').includes('حوافز') || (company||'').includes('مكافآت'));
+  const isSal = company === 'رواتب';
+  const isDisc = curType === 'خصومات';
+
+  if (isSal || isInc || isDisc) {
     // populate employee dropdown from attendance list
     selInv.innerHTML = '<option value="">اختر الموظف...</option>';
     const names = attEmpNames.filter(isSalOn);
     names.forEach(n=>{ const o=document.createElement('option'); o.value=o.textContent=n; selInv.appendChild(o); });
     txtInv.style.display = 'none';
     selInv.style.display = '';
-    if (lbl) lbl.textContent = curType === 'خصومات' ? '👤 الموظف المراد الخصم منه' : '👤 اسم الموظف';
+    if (lbl) {
+      if (isDisc) lbl.textContent = '👤 الموظف المراد الخصم منه';
+      else if (isInc) lbl.textContent = '👤 الموظف المستحق للحافز / المكافأة';
+      else lbl.textContent = '👤 اسم الموظف';
+    }
   } else {
     txtInv.style.display = '';
     selInv.style.display = 'none';
     if (lbl) lbl.textContent = '🔢 رقم الفاتورة';
+  }
+
+  if (luckyBtn) {
+    luckyBtn.style.display = isInc ? 'inline-flex' : 'none';
+  }
+  if (disburseWrap) {
+    disburseWrap.style.display = isInc ? 'block' : 'none';
   }
 }
 
@@ -5100,10 +5142,20 @@ async function doSave() {
   btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true;
 
   try {
-    // ايرادات = تضيف | مصاريف/طلبيات/ارباح/اصول ثابتة = تخصم | خصومات = محايدة (لا تمس العهدة)
-    const isNeutral = curType === 'خصومات';
+    const isInc = (co === 'حوافز ومكافآت' || co === 'حوافز' || (co||'').includes('حوافز') || (co||'').includes('مكافآت'));
+    const incRadio = document.querySelector('input[name="incDisburseType"]:checked');
+    const isIncWithSalary = isInc && incRadio && incRadio.value === 'with_salary';
+
+    // ايرادات = تضيف | مصاريف/طلبيات/ارباح/اصول ثابتة = تخصم | خصومات أو حوافز مؤجلة للراتب = محايدة (لا تمس العهدة الآن)
+    const isNeutral = curType === 'خصومات' || isIncWithSalary;
     const isIn = curType==='ايرادات';
     const delta = isNeutral ? 0 : (isIn ? amt : -amt);
+
+    let finalNotes = notes;
+    if (isInc) {
+      const tag = isIncWithSalary ? '[تُصرف مع الراتب نهاية الشهر]' : '[صُرفت نقداً من الخزينة]';
+      if (!finalNotes.includes(tag)) finalNotes = (finalNotes ? finalNotes + ' ' : '') + tag;
+    }
 
     const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
     const newB = isNeutral ? curB : await sbUpdateBalance(delta);
@@ -5111,7 +5163,7 @@ async function doSave() {
     const timeStr = now.toTimeString().slice(0,5); // HH:MM
     const newId = crypto.randomUUID();
     const {error: insErr} = await sb.from('entries').insert({
-      id: newId, date, type:curType, company:co, invoice:inv, amount:amt, notes,
+      id: newId, date, type:curType, company:co, invoice:inv, amount:amt, notes:finalNotes,
       uid: me.uid, uname: me.name, balance: newB, time: timeStr, ts: Date.now()
     });
     if (insErr) throw insErr;
@@ -5890,15 +5942,15 @@ function rebuildInvoiceFilter() {
   const sel   = document.getElementById('fInvoice');
   if (!sel) return;
 
-  // يظهر لو البند = رواتب أو النوع = مصاريف أو النوع = خصومات
-  const showIt = fCo === 'رواتب' || (fCo === '' && fType === 'مصاريف') || fType === 'خصومات';
+  // يظهر لو البند = رواتب أو حوافز أو النوع = مصاريف أو النوع = خصومات
+  const showIt = fCo === 'رواتب' || fCo === 'حوافز ومكافآت' || (fCo === '' && fType === 'مصاريف') || fType === 'خصومات';
   sel.style.display = showIt ? '' : 'none';
 
-  // اجمع أسماء الفاتورة من قيود رواتب
+  // اجمع أسماء الفاتورة من قيود رواتب وحوافز
   const prev = sel.value;
   const invoices = [...new Set(
     entries
-      .filter(e => e.company === 'رواتب' && e.invoice)
+      .filter(e => (e.company === 'رواتب' || e.company === 'حوافز ومكافآت' || (e.company||'').includes('حوافز') || (e.company||'').includes('مكافآت') || e.type === 'خصومات') && e.invoice)
       .map(e => e.invoice)
   )].sort();
 
@@ -11269,8 +11321,21 @@ function attRenderAdmin() {
     ).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
     const incKey = `${attFilter.month}__${n}`;
-    const empInc = parseFloat(attIncentives[incKey]) || 0;
-    const empRemaining = (grossSalary + empInc) - empWithdrawn - empDeduct;
+    const empManualInc = parseFloat(attIncentives[incKey]) || 0;
+
+    const empDailyIncEntries = entries.filter(e =>
+      !e.deleted &&
+      e.type === 'مصاريف' &&
+      (e.company === 'حوافز ومكافآت' || (e.company || '').includes('حوافز') || (e.company || '').includes('مكافآت')) &&
+      e.date && e.date.startsWith(attFilter.month) &&
+      isMatch(e)
+    );
+    const empDailyInc = empDailyIncEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    const empDailyIncCash = empDailyIncEntries.filter(e => (e.notes || '').includes('[صُرفت نقداً')).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+    const empTotalInc = empManualInc + empDailyInc;
+    const empTotalWithdrawn = empWithdrawn + empDailyIncCash;
+    const empRemaining = (grossSalary + empTotalInc) - empTotalWithdrawn - empDeduct;
 
     return `<tr>
       <td><strong>${esc(n)}</strong></td>
@@ -11287,11 +11352,11 @@ function attRenderAdmin() {
       <td>${v.errors>0?`<span style="color:#c53030;font-weight:700;">${v.errors}</span>`:0}</td>
       <td>${rateColHtml}</td>
       <td style="font-weight:800;color:${grossSalary>0?'#5b21b6':'#a0aec0'};">${grossSalary>0?fmt(grossSalary)+' ج':'—'}</td>
-      <td style="font-weight:700;color:#48bb78;">${empInc>0?fmt(empInc)+' ج':'—'}</td>
-      <td style="font-weight:700;color:#f6ad55;">${empWithdrawn>0?fmt(empWithdrawn)+' ج':'—'}</td>
+      <td style="font-weight:700;color:#48bb78;">${empTotalInc>0?fmt(empTotalInc)+' ج'+(empDailyInc>0?` <span style="font-size:.68rem;color:#f59e0b;" title="حوافز يومية: ${fmt(empDailyInc)} ج (${empDailyIncEntries.length} مكافأة)">(${empDailyIncEntries.length}🎁)</span>`:''):'—'}</td>
+      <td style="font-weight:700;color:#f6ad55;" title="${empDailyIncCash>0?`رواتب: ${fmt(empWithdrawn)} ج + حوافز نقدية: ${fmt(empDailyIncCash)} ج`:''}">${empTotalWithdrawn>0?fmt(empTotalWithdrawn)+' ج':'—'}</td>
       <td style="font-weight:700;color:#fc8181;">${empDeduct>0?fmt(empDeduct)+' ج':'—'}</td>
       <td style="font-weight:900;color:${empRemaining>0?'#48bb78':(empRemaining===0?'#63b3ed':'#fc8181')};">
-        ${grossSalary>0 || empInc>0 || empWithdrawn>0 || empDeduct>0 ? fmt(empRemaining)+' ج' : '—'}
+        ${grossSalary>0 || empTotalInc>0 || empTotalWithdrawn>0 || empDeduct>0 ? fmt(empRemaining)+' ج' : '—'}
       </td>
     </tr>`;}).join('');
 
@@ -11937,8 +12002,7 @@ function attShowEmpReport() {
   }
 
   const incKey = `${month}__${name}`;
-  const incAmt = parseFloat(attIncentives[incKey]) || 0;
-  const totalDue = baseSalary + incAmt;
+  const manualIncAmt = parseFloat(attIncentives[incKey]) || 0;
 
   const normN = normAr(name);
   const isMatchEmp = e => {
@@ -11947,7 +12011,23 @@ function attShowEmpReport() {
     return inv === normN || (!inv && nts.includes(normN));
   };
 
-  // المسحوبات السابقة (مصاريف رواتب)
+  // ── حوافز ومكافآت القيود ولعبة الحظ لهذا الموظف في هذا الشهر ──
+  const incEntries = entries.filter(e =>
+    !e.deleted &&
+    e.type === 'مصاريف' &&
+    (e.company === 'حوافز ومكافآت' || (e.company || '').includes('حوافز') || (e.company || '').includes('مكافآت')) &&
+    e.date && e.date.startsWith(month) &&
+    isMatchEmp(e)
+  ).sort((a,b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts||0)-(a.ts||0)));
+
+  const dailyIncAmt = incEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const dailyIncCashNow = incEntries.filter(e => (e.notes||'').includes('[صُرفت نقداً')).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const dailyIncWithSal = incEntries.filter(e => !(e.notes||'').includes('[صُرفت نقداً')).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  const totalIncAmt = manualIncAmt + dailyIncAmt;
+  const totalDue = baseSalary + totalIncAmt;
+
+  // المسحوبات السابقة (مصاريف رواتب + حوافز صُرفت نقداً فوراً من الخزينة)
   const salEntries = entries.filter(e =>
     !e.deleted &&
     e.type === 'مصاريف' &&
@@ -11955,7 +12035,8 @@ function attShowEmpReport() {
     e.date && e.date.startsWith(month) &&
     isMatchEmp(e)
   ).sort((a,b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts||0)-(a.ts||0)));
-  const withdrawnAmt = salEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const salWithdrawnAmt = salEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const totalWithdrawnAmt = salWithdrawnAmt + dailyIncCashNow;
 
   // الخصومات المسجلة
   const discEntries = entries.filter(e =>
@@ -11967,7 +12048,7 @@ function attShowEmpReport() {
   const discAmt = discEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
   // صافي الراتب المتبقي
-  const netRemaining = totalDue - withdrawnAmt - discAmt;
+  const netRemaining = totalDue - totalWithdrawnAmt - discAmt;
 
   // ── تنسيق أيام الإجازة ──
   const fmtDay = ds => {
@@ -12035,7 +12116,10 @@ function attShowEmpReport() {
             style="width:125px;padding:4px 8px;font-size:1.15rem;font-weight:900;border-radius:8px;border:1.5px solid rgba(237,137,54,.6);background:var(--bg1);color:#f6ad55;text-align:center;"
             value="${baseSalary > 0 ? baseSalary : ''}" placeholder="0"
             data-emp="${esc(name)}" data-month="${month}"
-            data-withdrawn="${withdrawnAmt}"
+            data-dailyinc="${dailyIncAmt}"
+            data-dailyinccash="${dailyIncCashNow}"
+            data-salwithdrawn="${salWithdrawnAmt}"
+            data-withdrawn="${totalWithdrawnAmt}"
             data-deduct="${discAmt}"
             oninput="attOnBaseSalaryInput(this)"
             onchange="attSaveManualSalaryDirect(this)"
@@ -12047,39 +12131,57 @@ function attShowEmpReport() {
         </div>
       </div>
 
-      <!-- 2. الحوافز والمكافآت (إدخال يدوي) -->
-      <div class="at-kpi" style="padding:12px 16px;border-color:rgba(72,187,120,.5);background:rgba(72,187,120,.05);" title="أدخل مبلغ الحافز أو المكافأة لهذا الشهر">
+      <!-- 2. حوافز ومكافآت القيود ولعبة الحظ -->
+      <div class="at-kpi" onclick="toggleAttDrawer('attSalIncentivesDrawer')" style="padding:12px 16px;border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.06);cursor:pointer;" title="اضغط لعرض تفاصيل مكافآت القيود ولعبة الحظ">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <div class="at-kl" style="color:#48bb78;font-weight:700;">🎁 الحوافز والمكافآت</div>
+          <div class="at-kl" style="color:#f59e0b;font-weight:800;">🎁 حوافز القيود ولعبة الحظ</div>
+          <button onclick="event.stopPropagation();openLuckyWheelModal('${esc(name)}')" class="btn btn-xs" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:2px 8px;font-size:.72rem;font-weight:800;border-radius:6px;cursor:pointer;box-shadow:0 2px 6px rgba(245,158,11,.4);">🎡 لِف العجلة!</button>
+        </div>
+        <div class="at-kv" style="color:#f59e0b;font-weight:900;">${fmt(dailyIncAmt)} <span class="at-ku">ج</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;font-size:.7rem;color:var(--text3);">
+          <span>${incEntries.length} مكافأة مسجلة 🔍</span>
+          <span style="color:${dailyIncWithSal>0?'#38a169':'var(--text3)'};font-weight:700;">${dailyIncWithSal>0 ? `(+${fmt(dailyIncWithSal)}ج بالراتب)` : ''}</span>
+        </div>
+      </div>
+
+      <!-- 3. حافز إضافي معتمد (إدخال يدوي) -->
+      <div class="at-kpi" style="padding:12px 16px;border-color:rgba(72,187,120,.5);background:rgba(72,187,120,.05);" title="أدخل حافزاً إضافياً معتمداً لهذا الشهر">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div class="at-kl" style="color:#48bb78;font-weight:700;">➕ حافز إضافي معتمد</div>
           <span style="font-size:.68rem;color:#48bb78;background:rgba(72,187,120,.18);padding:1px 6px;border-radius:4px;">إدخال يدوي</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <input type="number" min="0" step="50"
             id="attRepIncentiveInp"
             style="width:115px;padding:4px 8px;font-size:1.15rem;font-weight:800;border-radius:8px;border:1.5px solid rgba(72,187,120,.6);background:var(--bg1);color:#48bb78;text-align:center;"
-            value="${incAmt > 0 ? incAmt : ''}" placeholder="0"
+            value="${manualIncAmt > 0 ? manualIncAmt : ''}" placeholder="0"
             data-emp="${esc(name)}" data-month="${month}"
-            data-withdrawn="${withdrawnAmt}"
+            data-dailyinc="${dailyIncAmt}"
+            data-dailyinccash="${dailyIncCashNow}"
+            data-salwithdrawn="${salWithdrawnAmt}"
+            data-withdrawn="${totalWithdrawnAmt}"
             data-deduct="${discAmt}"
             oninput="attSetIncentives(this)"
             onchange="attSaveIncentiveDirect(this)"
             title="اكتب مبلغ الحافز بالجنيه"/>
           <span style="font-weight:700;color:#48bb78;font-size:.9rem;">ج</span>
         </div>
-        <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">تضاف لحساب الراتب وتُصرف مع المتبقي</div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">إجمالي الحوافز: ${fmt(totalIncAmt)} ج</div>
       </div>
 
-      <!-- 3. المسحوبات السابقة -->
+      <!-- 4. المسحوبات المستلمة -->
       <div class="at-kpi" onclick="toggleAttDrawer('attSalWithdrawnDrawer')" style="padding:12px 16px;border-color:rgba(237,137,54,.55);cursor:pointer;background:rgba(237,137,54,.06);" title="اضغط لعرض تفاصيل المسحوبات">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="at-kl" style="color:#f6ad55;">💸 المسحوبات المستلمة</div>
           <span style="font-size:.7rem;color:#f6ad55;background:rgba(237,137,54,.18);padding:1px 6px;border-radius:4px;">${salEntries.length} قيد</span>
         </div>
-        <div class="at-kv" style="color:#f6ad55;">${fmt(withdrawnAmt)} <span class="at-ku">ج</span></div>
-        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">${salEntries.length ? 'اضغط لعرض التفاصيل 🔍' : 'لا توجد مسحوبات'}</div>
+        <div class="at-kv" style="color:#f6ad55;">${fmt(totalWithdrawnAmt)} <span class="at-ku">ج</span></div>
+        <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">
+          ${totalWithdrawnAmt > 0 ? `رواتب: ${fmt(salWithdrawnAmt)} ج${dailyIncCashNow>0 ? ` + كاش: ${fmt(dailyIncCashNow)} ج` : ''} 🔍` : 'لا توجد مسحوبات'}
+        </div>
       </div>
 
-      <!-- 4. الخصومات المسجلة -->
+      <!-- 5. الخصومات المسجلة -->
       <div class="at-kpi" onclick="toggleAttDrawer('attSalDiscDrawer')" style="padding:12px 16px;border-color:rgba(252,129,129,.55);cursor:pointer;background:rgba(252,129,129,.06);" title="اضغط لعرض تفاصيل الخصومات أو إضافة خصم">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="at-kl" style="color:#fc8181;">✂️ الخصومات المسجلة</div>
@@ -12089,7 +12191,7 @@ function attShowEmpReport() {
         <div style="font-size:.7rem;color:var(--text3);margin-top:2px;">${discEntries.length ? 'اضغط لعرض الأسباب 🔍' : 'لا توجد خصومات'}</div>
       </div>
 
-      <!-- 5. صافي الراتب المتبقي -->
+      <!-- 6. صافي الراتب المتبقي -->
       <div id="attRepNetCard" class="at-kpi" style="padding:12px 16px;${netRemaining > 0 ? 'border-color:rgba(72,187,120,.7);background:rgba(72,187,120,.12);' : (netRemaining === 0 ? 'border-color:rgba(99,179,237,.5);background:rgba(99,179,237,.08);' : 'border-color:rgba(252,129,129,.7);background:rgba(252,129,129,.12);')}">
         <div class="at-kl" style="color:${netRemaining > 0 ? '#68d391' : (netRemaining === 0 ? '#63b3ed' : '#fc8181')};">
           🏷️ صافي الراتب المتبقي
@@ -12113,24 +12215,57 @@ function attShowEmpReport() {
           <span style="font-size:.76rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;">المتبقي: ${fmt(netRemaining)} ج</span>
         </div>
         <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
-          المعادلة: راتب ${fmt(baseSalary)} ج ${incAmt > 0 ? `+ حوافز ${fmt(incAmt)} ج ` : ''}− مسحوبات ${fmt(withdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
+          المعادلة: راتب ${fmt(baseSalary)} ج ${totalIncAmt > 0 ? `+ حوافز ${fmt(totalIncAmt)} ج ` : ''}− مسحوبات ${fmt(totalWithdrawnAmt)} ج − خصومات ${fmt(discAmt)} ج = صافي ${fmt(netRemaining)} ج
         </div>
       </div>
-      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${baseSalary}, ${withdrawnAmt}, ${discAmt}, ${incAmt})"
+      <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRemaining}, '${month}', ${baseSalary}, ${totalWithdrawnAmt}, ${discAmt}, ${totalIncAmt})"
         style="padding:9px 22px;font-size:.92rem;font-weight:900;border-radius:10px;box-shadow:0 4px 14px rgba(72,187,120,.35);cursor:pointer;display:flex;align-items:center;gap:6px;">
         <span>💸 صرف وتسليم ${fmt(netRemaining)} ج من العهدة</span>
       </button>
-    </div>` : ((totalDue > 0 && (withdrawnAmt > 0 || discAmt > 0) && netRemaining === 0) ? `
+    </div>` : ((totalDue > 0 && (totalWithdrawnAmt > 0 || discAmt > 0) && netRemaining === 0) ? `
     <div style="display:flex;align-items:center;gap:10px;background:rgba(99,179,237,.08);border:1px solid rgba(99,179,237,.3);border-radius:12px;padding:10px 16px;margin-bottom:14px;">
       <span style="font-size:1.2rem;">✅</span>
       <div style="font-size:.84rem;font-weight:700;color:#90cdf4;">تم تسوية وصرف كامل راتب شهر ${month} للموظف (${esc(name)}) بالكامل — لا توجد مبالغ متبقية للصرف.</div>
     </div>` : '')}
     </div>
 
+    <!-- تفاصيل حوافز القيود ولعبة الحظ -->
+    <div id="attSalIncentivesDrawer" style="display:none;background:var(--bg2);border:1px solid rgba(245,158,11,.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+        <strong style="color:#f59e0b;font-size:.85rem;">🎁 تفاصيل حوافز القيود ولعبة الحظ (${incEntries.length} مكافأة — إجمالي ${fmt(dailyIncAmt)} ج)</strong>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="openLuckyWheelModal('${esc(name)}')" class="btn btn-xs" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:2px 10px;border-radius:6px;cursor:pointer;font-weight:800;">🎡 مكافأة جديدة بلعبة الحظ</button>
+          <button onclick="toggleAttDrawer('attSalIncentivesDrawer')" style="background:none;border:none;color:var(--text3);cursor:pointer;">✕ إغلاق</button>
+        </div>
+      </div>
+      ${incEntries.length ? `
+      <div class="tbl-w"><table>
+        <thead><tr><th>التاريخ</th><th>الوقت</th><th>المبلغ</th><th>طريقة الصرف</th><th>السبب والملاحظات</th><th>سجله</th></tr></thead>
+        <tbody>
+          ${incEntries.map(e => {
+            const isCash = (e.notes || '').includes('[صُرفت نقداً');
+            return `
+            <tr>
+              <td>${e.date}</td>
+              <td style="font-size:.78rem;color:var(--text3);">${e.time || '—'}</td>
+              <td style="color:#f59e0b;font-weight:900;">${fmt(e.amount)} ج</td>
+              <td>
+                <span style="font-size:.72rem;padding:2px 6px;border-radius:4px;font-weight:700;${isCash ? 'background:rgba(237,137,54,.15);color:#ed8936;' : 'background:rgba(72,187,120,.15);color:#48bb78;'}">
+                  ${isCash ? '💵 نقداً فوراً' : '📅 مع الراتب'}
+                </span>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(e.notes || '')}">${esc(e.notes || 'حافز تشجيعي')}</td>
+              <td>${esc(e.uname || '—')}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>` : '<div style="color:var(--text3);font-size:.8rem;padding:8px;">لا توجد حوافز مسجلة لهذا الشهر بعد — اضغط زر <b>"لِف العجلة"</b> لكسب مكافأة! 🎡</div>'}
+    </div>
+
     <!-- تفاصيل المسحوبات -->
     <div id="attSalWithdrawnDrawer" style="display:none;background:var(--bg2);border:1px solid rgba(237,137,54,.35);border-radius:10px;padding:12px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <strong style="color:#f6ad55;font-size:.85rem;">📋 تفاصيل الرواتب المستلمة (${salEntries.length} قيد — إجمالي ${fmt(withdrawnAmt)} ج)</strong>
+        <strong style="color:#f6ad55;font-size:.85rem;">📋 تفاصيل الرواتب المستلمة (${salEntries.length} قيد — إجمالي ${fmt(salWithdrawnAmt)} ج)</strong>
         <button onclick="toggleAttDrawer('attSalWithdrawnDrawer')" style="background:none;border:none;color:var(--text3);cursor:pointer;">✕ إغلاق</button>
       </div>
       ${salEntries.length ? `
@@ -12300,11 +12435,13 @@ function attUpdateEmpReportCalculations(name, month) {
   const incInp  = document.getElementById('attRepIncentiveInp');
 
   const gross     = baseInp ? Math.max(0, parseFloat(baseInp.value) || 0) : 0;
-  const incVal    = incInp  ? Math.max(0, parseFloat(incInp.value) || 0) : 0;
+  const manualInc = incInp  ? Math.max(0, parseFloat(incInp.value) || 0) : 0;
+  const dailyInc  = baseInp ? parseFloat(baseInp.dataset.dailyinc) || 0 : (incInp ? parseFloat(incInp.dataset.dailyinc) || 0 : 0);
+  const totalInc  = manualInc + dailyInc;
   const withdrawn = baseInp ? parseFloat(baseInp.dataset.withdrawn) || 0 : (incInp ? parseFloat(incInp.dataset.withdrawn) || 0 : 0);
   const deduct    = baseInp ? parseFloat(baseInp.dataset.deduct) || 0 : (incInp ? parseFloat(incInp.dataset.deduct) || 0 : 0);
 
-  const totalDue = gross + incVal;
+  const totalDue = gross + totalInc;
   const netRem   = totalDue - withdrawn - deduct;
 
   const netCard   = document.getElementById('attRepNetCard');
@@ -12335,10 +12472,10 @@ function attUpdateEmpReportCalculations(name, month) {
               <span style="font-size:.76rem;background:rgba(72,187,120,.2);color:#48bb78;padding:2px 8px;border-radius:6px;">المتبقي: ${fmt(netRem)} ج</span>
             </div>
             <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
-              المعادلة: راتب ${fmt(gross)} ج ${incVal > 0 ? `+ حوافز ${fmt(incVal)} ج ` : ''}− مسحوبات ${fmt(withdrawn)} ج − خصومات ${fmt(deduct)} ج = صافي ${fmt(netRem)} ج
+              المعادلة: راتب ${fmt(gross)} ج ${totalInc > 0 ? `+ حوافز ${fmt(totalInc)} ج ` : ''}− مسحوبات ${fmt(withdrawn)} ج − خصومات ${fmt(deduct)} ج = صافي ${fmt(netRem)} ج
             </div>
           </div>
-          <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRem}, '${month}', ${gross}, ${withdrawn}, ${deduct}, ${incVal})"
+          <button class="btn btn-green" onclick="attPayRemainingSalary('${esc(name)}', ${netRem}, '${month}', ${gross}, ${withdrawn}, ${deduct}, ${totalInc})"
             style="padding:9px 22px;font-size:.92rem;font-weight:900;border-radius:10px;box-shadow:0 4px 14px rgba(72,187,120,.35);cursor:pointer;display:flex;align-items:center;gap:6px;">
             <span>💸 صرف وتسليم ${fmt(netRem)} ج من العهدة</span>
           </button>
@@ -16989,6 +17126,468 @@ document.addEventListener('keydown', e => {
   else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
 });
 
+// ═══════════════════════════════════════════════════════════
+//  🎡 LUCKY SPIN WHEEL ENGINE (لعبة حظ المكافآت والحوافز)
+// ═══════════════════════════════════════════════════════════
+const LUCKY_SLICES = [
+  { val: 10, color: '#3b82f6', text: '10 ج' },
+  { val: 15, color: '#10b981', text: '15 ج' },
+  { val: 20, color: '#8b5cf6', text: '20 ج' },
+  { val: 25, color: '#f59e0b', text: '25 ج' },
+  { val: 30, color: '#ec4899', text: '30 ج' },
+  { val: 35, color: '#06b6d4', text: '35 ج' },
+  { val: 40, color: '#f97316', text: '40 ج' },
+  { val: 45, color: '#6366f1', text: '45 ج' },
+  { val: 50, color: '#e11d48', text: '50 ج' }
+];
+
+let _lastEmpLuckyRoll = {}; // empName -> lastAmount
+let _lastGlobalLuckyRoll = null;
+let _lwCurrentAngle = 0;
+let _lwIsSpinning = false;
+let _lwWinningSlice = null;
+let _lwAnimFrame = null;
+
+function openLuckyWheelModal(empName = '') {
+  const modal = document.getElementById('luckyWheelModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  // populate employee dropdown
+  const sel = document.getElementById('lwEmpSelect');
+  if (sel) {
+    sel.innerHTML = '<option value="">اختر الموظف المستحق...</option>';
+    const emps = (attEmpNames && attEmpNames.length ? attEmpNames.filter(isSalOn) : []);
+    emps.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = n;
+      sel.appendChild(opt);
+    });
+    if (empName) {
+      sel.value = empName;
+    } else {
+      const addSel = document.getElementById('eInvSel');
+      if (addSel && addSel.value) sel.value = addSel.value;
+    }
+  }
+
+  // reset form state
+  const resCard = document.getElementById('lwResultCard');
+  if (resCard) resCard.style.display = 'none';
+  const spinBtn = document.getElementById('lwSpinBtn');
+  if (spinBtn) {
+    spinBtn.disabled = false;
+    spinBtn.style.opacity = '1';
+    spinBtn.textContent = '🎲 لِف العجلة الآن!';
+  }
+
+  const reasonInp = document.getElementById('lwReasonInput');
+  if (reasonInp && !reasonInp.value) {
+    reasonInp.value = 'حافز تميز وتشجيع 🌟';
+  }
+
+  // Draw initial wheel
+  setTimeout(() => {
+    drawLuckyWheel(_lwCurrentAngle);
+  }, 50);
+}
+
+function closeLuckyWheelModal() {
+  if (_lwIsSpinning) return;
+  const modal = document.getElementById('luckyWheelModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function resetLuckyWheel() {
+  if (_lwIsSpinning) return;
+  const resCard = document.getElementById('lwResultCard');
+  if (resCard) resCard.style.display = 'none';
+  const spinBtn = document.getElementById('lwSpinBtn');
+  if (spinBtn) {
+    spinBtn.disabled = false;
+    spinBtn.style.opacity = '1';
+    spinBtn.textContent = '🎲 لِف العجلة الآن!';
+  }
+}
+
+function drawLuckyWheel(angle) {
+  const canvas = document.getElementById('luckyWheelCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const r  = cx - 18;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const numSlices = LUCKY_SLICES.length;
+  const sliceRad  = (2 * Math.PI) / numSlices;
+
+  // Outer ring shadow and border
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 12, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1e293b';
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.stroke();
+
+  // Draw outer decorative golden studs
+  for (let i = 0; i < numSlices * 2; i++) {
+    const studAngle = (i * Math.PI) / numSlices;
+    const sx = cx + (r + 6) * Math.cos(studAngle);
+    const sy = cy + (r + 6) * Math.sin(studAngle);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = i % 2 === 0 ? '#fbbf24' : '#ffffff';
+    ctx.fill();
+  }
+
+  // Draw Slices
+  for (let i = 0; i < numSlices; i++) {
+    const s = LUCKY_SLICES[i];
+    const a1 = angle + i * sliceRad;
+    const a2 = a1 + sliceRad;
+
+    // Slice arc
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, a1, a2);
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.fill();
+
+    // Slice border
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.stroke();
+
+    // Text label
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a1 + sliceRad / 2);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 34px Tahoma, Arial, sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.fillText(s.text, r - 35, 0);
+
+    // Decorative coin/star icon on higher values
+    if (s.val >= 40) {
+      ctx.font = '22px Arial';
+      ctx.fillText('⭐', r - 120, 0);
+    }
+    ctx.restore();
+  }
+
+  // Center hub glow and ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function playLuckyTickSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!window._lwAudioCtx) window._lwAudioCtx = new AudioContext();
+    if (window._lwAudioCtx.state === 'suspended') window._lwAudioCtx.resume();
+    const osc = window._lwAudioCtx.createOscillator();
+    const gain = window._lwAudioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600 + Math.random() * 200, window._lwAudioCtx.currentTime);
+    gain.gain.setValueAtTime(0.08, window._lwAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, window._lwAudioCtx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(window._lwAudioCtx.destination);
+    osc.start();
+    osc.stop(window._lwAudioCtx.currentTime + 0.04);
+  } catch(e) {}
+}
+
+function launchLuckyConfetti() {
+  const canvas = document.getElementById('luckyWheelCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444', '#fbbf24'];
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  for (let i = 0; i < 70; i++) {
+    const angle = Math.random() * 2 * Math.PI;
+    const speed = 4 + Math.random() * 9;
+    particles.push({
+      x: cx,
+      y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      size: 5 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      decay: 0.015 + Math.random() * 0.02,
+      rot: Math.random() * 360,
+      vRot: (Math.random() - 0.5) * 12
+    });
+  }
+
+  function frame() {
+    let alive = false;
+    drawLuckyWheel(_lwCurrentAngle);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.25; // gravity
+      p.alpha -= p.decay;
+      p.rot += p.vRot;
+      if (p.alpha > 0) {
+        alive = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.4);
+        ctx.restore();
+      }
+    });
+    if (alive) {
+      requestAnimationFrame(frame);
+    } else {
+      drawLuckyWheel(_lwCurrentAngle);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function spinLuckyWheel() {
+  if (_lwIsSpinning) return;
+
+  const empSel = document.getElementById('lwEmpSelect');
+  const empName = empSel ? empSel.value.trim() : '';
+  if (!empName) {
+    toast('⚠️ يرجى اختيار الموظف المستحق للمكافأة أولاً!', false);
+    if (empSel) empSel.focus();
+    return;
+  }
+
+  // ── خوارزمية الاختيار العشوائي غير المتكرر (Strict Non-Repeating) ──
+  const lastRoll = (_lastEmpLuckyRoll[empName] !== undefined)
+    ? _lastEmpLuckyRoll[empName]
+    : _lastGlobalLuckyRoll;
+
+  // استبعاد آخر رقم حصل عليه هذا الموظف لضمان عدم التكرار المتتالي
+  const availableSlices = LUCKY_SLICES.filter(s => s.val !== lastRoll);
+  const winningSlice = availableSlices[Math.floor(Math.random() * availableSlices.length)];
+  const winningIndex = LUCKY_SLICES.findIndex(s => s.val === winningSlice.val);
+
+  _lwWinningSlice = winningSlice;
+  _lwIsSpinning = true;
+
+  const spinBtn = document.getElementById('lwSpinBtn');
+  if (spinBtn) {
+    spinBtn.disabled = true;
+    spinBtn.style.opacity = '0.6';
+    spinBtn.textContent = '🌀 جاري دوران العجلة...';
+  }
+  const resCard = document.getElementById('lwResultCard');
+  if (resCard) resCard.style.display = 'none';
+
+  // حساب زاوية الوقوف بدقة تحت المؤشر الذهبي (في الأعلى 3*PI/2)
+  const numSlices = LUCKY_SLICES.length;
+  const sliceRad = (2 * Math.PI) / numSlices;
+  const sliceCenter = winningIndex * sliceRad + sliceRad / 2;
+
+  // المؤشر عند 3*PI/2 (270 درجة)
+  const targetPointerAngle = 3 * Math.PI / 2;
+  const targetNorm = ((targetPointerAngle - sliceCenter) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  const currentNorm = ((_lwCurrentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+  let forwardDiff = targetNorm - currentNorm;
+  if (forwardDiff <= 0) forwardDiff += 2 * Math.PI;
+
+  // إضافة دورات كاملة (5 إلى 7 دورات)
+  const totalSpins = 5 + Math.floor(Math.random() * 3);
+  const targetAngle = _lwCurrentAngle + (totalSpins * 2 * Math.PI) + forwardDiff;
+
+  const startAngle = _lwCurrentAngle;
+  const deltaAngle = targetAngle - startAngle;
+  const duration = 3800; // ms
+  const startTime = performance.now();
+  let lastTickIndex = -1;
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(1, elapsed / duration);
+
+    // Easing: Quintic Ease-Out
+    const ease = 1 - Math.pow(1 - progress, 5);
+    _lwCurrentAngle = startAngle + deltaAngle * ease;
+
+    // صوت دقات السنان
+    const currentSliceTick = Math.floor(((_lwCurrentAngle) / sliceRad) % numSlices);
+    if (currentSliceTick !== lastTickIndex && progress < 0.95) {
+      lastTickIndex = currentSliceTick;
+      playLuckyTickSound();
+    }
+
+    drawLuckyWheel(_lwCurrentAngle);
+
+    if (progress < 1) {
+      _lwAnimFrame = requestAnimationFrame(animate);
+    } else {
+      _lwCurrentAngle = targetAngle;
+      drawLuckyWheel(_lwCurrentAngle);
+      _lwIsSpinning = false;
+
+      // تسجيل الرقم لتجنب التكرار في السحبة القادمة
+      _lastEmpLuckyRoll[empName] = winningSlice.val;
+      _lastGlobalLuckyRoll = winningSlice.val;
+
+      // إظهار بطاقة الفوز والاحتفال
+      onLuckyWheelWon(empName, winningSlice);
+    }
+  }
+
+  _lwAnimFrame = requestAnimationFrame(animate);
+}
+
+function onLuckyWheelWon(empName, slice) {
+  const spinBtn = document.getElementById('lwSpinBtn');
+  if (spinBtn) {
+    spinBtn.disabled = false;
+    spinBtn.style.opacity = '1';
+    spinBtn.textContent = '🎲 لِف العجلة مرة أخرى';
+  }
+
+  const resCard = document.getElementById('lwResultCard');
+  const resAmt  = document.getElementById('lwResultAmt');
+  const resMsg  = document.getElementById('lwResultMsg');
+
+  if (resAmt) resAmt.textContent = slice.val;
+  if (resMsg) resMsg.innerHTML = `🎉 مبروك يا <b>${esc(empName)}</b>! فزت بمكافأة بقيمة <span id="lwResultAmt" style="font-size:1.4rem;color:#2f855a;text-decoration:underline;font-weight:900;">${slice.val}</span> جنيه! 🎁`;
+  if (resCard) resCard.style.display = 'block';
+
+  // إطلاق كونفيتي الاحتفال
+  launchLuckyConfetti();
+  toast(`🎉 مبروك يا ${empName}! كسبت مكافأة ${slice.val} ج بلعبة الحظ! 🎡`);
+}
+
+async function confirmSaveLuckyBonus() {
+  if (!_lwWinningSlice) {
+    toast('⚠️ لم يتم تحديد المكافأة بعد!', false);
+    return;
+  }
+  const empSel = document.getElementById('lwEmpSelect');
+  const empName = empSel ? empSel.value.trim() : '';
+  if (!empName) {
+    toast('⚠️ اختر الموظف أولاً!', false);
+    return;
+  }
+
+  const amt = _lwWinningSlice.val;
+  const reasonInp = document.getElementById('lwReasonInput');
+  const reason = (reasonInp && reasonInp.value.trim()) ? reasonInp.value.trim() : 'حافز تشجيعي ولعبة الحظ 🌟';
+
+  const modeRadio = document.querySelector('input[name="lwDisburseMode"]:checked');
+  const isWithSalary = modeRadio && modeRadio.value === 'with_salary';
+
+  const saveBtn = document.getElementById('lwSaveBtn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ جاري التسجيل...';
+  }
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+
+    const tag = isWithSalary ? '[تُصرف مع الراتب نهاية الشهر]' : '[صُرفت نقداً من الخزينة]';
+    const finalNotes = `🎲 مكافأة حظ تميز: ${reason} (رقم غير مكرر) ${tag}`;
+
+    // إذا كانت تُصرف مع الراتب: محايدة (لا تمس الخزينة اليوم) | إذا كانت نقداً: تخصم من الخزينة
+    const isNeutral = isWithSalary;
+    const delta = isNeutral ? 0 : -amt;
+
+    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const newB = isNeutral ? curB : await sbUpdateBalance(delta);
+
+    const { error: insErr } = await sb.from('entries').insert({
+      id: newId,
+      date: today,
+      type: 'مصاريف',
+      company: 'حوافز ومكافآت',
+      invoice: empName,
+      amount: amt,
+      notes: finalNotes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+    if (insErr) throw insErr;
+
+    // إضافة محلياً
+    entries.unshift({
+      id: newId,
+      date: today,
+      type: 'مصاريف',
+      company: 'حوافز ومكافآت',
+      invoice: empName,
+      amount: amt,
+      notes: finalNotes,
+      uid: me.uid,
+      uname: me.name,
+      balance: newB,
+      time: timeStr,
+      ts: Date.now()
+    });
+
+    updToday();
+    if (typeof refreshActivePane === 'function') refreshActivePane();
+    if (typeof attRenderAdmin === 'function') attRenderAdmin();
+    const repName = document.getElementById('attRepEmp')?.value;
+    if (repName === empName && typeof attShowEmpReport === 'function') {
+      attShowEmpReport();
+    }
+
+    toast(`✅ تم تسجيل مكافأة (${amt} ج) للموظف "${empName}" بنجاح!`);
+    closeLuckyWheelModal();
+
+    // إذا كانت شاشة قيد جديد مفتوحة: تعبئة الخانات تلقائياً
+    const paneAdd = document.getElementById('pane-add');
+    if (paneAdd && paneAdd.classList.contains('on')) {
+      const eCo = document.getElementById('eCo');
+      if (eCo) {
+        eCo.value = 'حوافز ومكافآت';
+        coSelectChanged();
+      }
+    }
+  } catch (e) {
+    toast('❌ فشل تسجيل المكافأة: ' + (e.message || e), false);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 اعتماد وتسجيل المكافأة';
+    }
+  }
+}
 
 </script>
 
@@ -17341,6 +17940,100 @@ document.addEventListener('keydown', e => {
       <div id="odModalSummary" style="font-size:.8rem;color:var(--text2);font-weight:700;"></div>
       <button onclick="closeOnlineDebtsModal()" class="btn btn-ghost" style="padding:5px 16px;">إغلاق</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     🎡 مودال عجلة حظ المكافآت والحوافز (10 إلى 50 ج غير مكرر)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="luckyWheelModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="lwModalTitle"
+     onclick="if(event.target===this)closeLuckyWheelModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:440px;width:95%;padding:20px;text-align:center;position:relative;background:var(--bg1);border-radius:18px;border:2px solid rgba(245,158,11,0.5);box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;">
+    
+    <!-- زر الإغلاق -->
+    <button onclick="closeLuckyWheelModal()" style="position:absolute;top:12px;left:14px;background:none;border:none;font-size:1.3rem;color:var(--text3);cursor:pointer;padding:4px 8px;line-height:1;border-radius:6px;" title="إغلاق">✕</button>
+
+    <!-- رأس المودال -->
+    <div style="margin-bottom:12px;">
+      <div id="lwModalTitle" style="font-size:1.25rem;font-weight:900;color:#f59e0b;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span>🎡</span>
+        <span>عجلة حظ المكافآت والتميز</span>
+        <span>✨</span>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-top:3px;">
+        أدر العجلة واكسب حافزاً فورياً بين <b>10 إلى 50 جنيهاً</b> بأرقام غير مكررة!
+      </div>
+    </div>
+
+    <!-- اختيار الموظف والسبب -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;text-align:right;">
+      <div class="fg" style="margin-bottom:8px;">
+        <label style="font-size:0.75rem;font-weight:800;color:var(--text1);margin-bottom:3px;display:block;">👤 الموظف المحظوظ:</label>
+        <select id="lwEmpSelect" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(245,158,11,0.4);background:var(--bg1);color:var(--text1);font-weight:800;font-size:0.9rem;">
+          <option value="">اختر الموظف المستحق...</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label style="font-size:0.75rem;font-weight:800;color:var(--text1);margin-bottom:3px;display:block;">🌟 سبب التميز والمكافأة:</label>
+        <input type="text" id="lwReasonInput" placeholder="مثال: حافز شيفت / بيع صنف بطل / سرعة في العمل"
+               style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;" />
+      </div>
+    </div>
+
+    <!-- حاوية العجلة التفاعلية Canvas -->
+    <div style="position:relative;width:290px;height:290px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">
+      <!-- مؤشر السهم الذهبي في الأعلى -->
+      <div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);z-index:10;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid #f59e0b;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.4));"></div>
+      
+      <!-- الكانفاس -->
+      <canvas id="luckyWheelCanvas" width="580" height="580" style="width:280px;height:280px;border-radius:50%;box-shadow:0 8px 25px rgba(0,0,0,0.25);"></canvas>
+
+      <!-- زر اللف في المنتصف -->
+      <div id="lwCenterPin" style="position:absolute;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle, #fff, #f59e0b);border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:1.1rem;pointer-events:none;z-index:5;">
+        🎁
+      </div>
+    </div>
+
+    <!-- زر دوران العجلة الكبير -->
+    <button id="lwSpinBtn" onclick="spinLuckyWheel()" style="width:100%;padding:11px;font-size:1.05rem;font-weight:900;border:none;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;cursor:pointer;box-shadow:0 4px 15px rgba(245,158,11,0.45);transition:all 0.2s ease;">
+      🎲 لِف العجلة الآن!
+    </button>
+
+    <!-- بطاقة نتيجة الفوز (تظهر بعد الوقوف) -->
+    <div id="lwResultCard" style="display:none;margin-top:14px;background:linear-gradient(135deg,rgba(72,187,120,0.12),rgba(56,161,105,0.08));border:2px solid #48bb78;border-radius:14px;padding:12px 14px;">
+      <div style="font-size:1.1rem;font-weight:900;color:#38a169;margin-bottom:4px;" id="lwResultMsg">
+        🎉 مبروك! فزت بمكافأة بقيمة <span id="lwResultAmt" style="font-size:1.35rem;color:#2f855a;text-decoration:underline;">0</span> ج!
+      </div>
+      <div style="font-size:0.75rem;color:var(--text2);margin-bottom:10px;">
+        تم السحب برقم غير مكرر 🎲
+      </div>
+
+      <!-- طريقة الصرف -->
+      <div style="background:var(--bg1);border:1px solid rgba(72,187,120,0.3);border-radius:8px;padding:8px 10px;margin-bottom:10px;text-align:right;">
+        <div style="font-size:0.72rem;font-weight:800;color:var(--text1);margin-bottom:5px;">طريقة استلام المكافأة:</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:0.78rem;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="radio" name="lwDisburseMode" value="cash_now" checked style="accent-color:#38a169;" />
+            <span>💵 <b>نقداً فوراً من الخزينة</b> (تخصم من العهدة الآن)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="radio" name="lwDisburseMode" value="with_salary" style="accent-color:#38a169;" />
+            <span>📅 <b>تُصرف مع الراتب نهاية الشهر</b> (تُضاف لصافي الراتب)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- أزرار الإجراء -->
+      <div style="display:flex;gap:8px;">
+        <button id="lwSaveBtn" onclick="confirmSaveLuckyBonus()" style="flex:1;padding:9px;background:#38a169;color:#fff;border:none;border-radius:9px;font-weight:900;font-size:0.88rem;cursor:pointer;box-shadow:0 3px 10px rgba(56,161,105,0.35);">
+          💾 اعتماد وتسجيل المكافأة
+        </button>
+        <button onclick="resetLuckyWheel()" class="btn btn-ghost" style="padding:9px 12px;font-size:0.8rem;border-radius:9px;cursor:pointer;">
+          🔄 لفة تانية
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
