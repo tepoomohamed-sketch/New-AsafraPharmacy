@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>صيدلية العصافرة — النسخة المطوّرة</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Readex+Pro:wght@300;400;500;600;700&family=Jost:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <!-- firebase-firestore removed: all data now in Supabase -->
@@ -12,34 +12,71 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <!-- [v13] SheetJS لم تعد تُحمَّل مع الصفحة — تُجلب عند أول استخدام فعلي عبر ensureXLSX() -->
+  <script>
+    (function(){
+      try {
+        var s = localStorage.getItem('asafra_theme') || localStorage.getItem('asafra_new_theme');
+        if (s === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch(e){}
+    })();
+  </script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
-  :root{
-    --bg:#0d0b1a;--bg2:#120f25;--bg3:#1a1730;
-    --card:#1e1b3a;--card2:#25224a;--card3:#2f2c58;
-    --border:rgba(124,58,237,.12);--border2:rgba(124,58,237,.22);
-    --green:#40916c;--green2:#2d6a4f;--green3:#1b4332;
-    --green-glow:rgba(64,145,108,.35);
-    --red:#e53e3e;--blue:#3182ce;--gold:#d69e2e;--purple:#7c3aed;
-    --text:#f1f0ff;--text2:#c4b5fd;--text3:#7c6bab;
-    --accent:#7c3aed;--accent2:#6d28d9;--accent3:#5b21b6;
-    --accent-glow:rgba(124,58,237,.4);
-    --teal:#06b6d4;--teal2:#0891b2;--teal-glow:rgba(6,182,212,.3);
-    --grad-main:linear-gradient(135deg,#3b0764 0%,#6d28d9 50%,#7c3aed 100%);
-    --grad-teal:linear-gradient(135deg,#0891b2 0%,#06b6d4 100%);
-    --shadow-sm:0 2px 8px rgba(0,0,0,.55);
-    --shadow-md:0 4px 20px rgba(0,0,0,.65);
-    --shadow-lg:0 8px 40px rgba(0,0,0,.75);
-    --r:18px;
-    /* ── [v12] متغيرات كانت مستخدمة 46 مرة وغير معرَّفة إطلاقاً ──
-       النتيجة كانت قيمة غير صالحة → وراثة لون الأب أو العودة للافتراضي.
-       أوضح أثر ظهر في نتائج البحث الشامل (--text1 وحده 31 مرة). */
-    --text1:#f1f0ff;                 /* مرادف --text   */
-    --acc:#7c3aed;                   /* مرادف --accent */
-    --border1:rgba(124,58,237,.12);  /* مرادف --border */
-    --bg1:#0d0b1a;                   /* مرادف --bg     */
+  :root {
+    --brand-ink: #0c2338;
+    --brand-ink-2: #142031;
+    --bg: #f7f9fb;
+    --bg2: #eff3f7;
+    --bg3: #e3eaf1;
+    --card: #ffffff;
+    --card2: #f7f9fb;
+    --card3: #eff3f7;
+    --border: #e3eaf1;
+    --border2: #cfdbe7;
+    --green: #10b981;
+    --green2: #059669;
+    --green3: #047857;
+    --green-glow: rgba(16,185,129,.2);
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --gold: #f59e0b;
+    --purple: #8b5cf6;
+    --text: #0c2338;
+    --text1: #0c2338;
+    --text2: #2b405a;
+    --text3: #4d6d8f;
+    --text-faint: #7593b1;
+    --accent: #0077b6;
+    --accent2: #023e8a;
+    --accent3: #03045e;
+    --accent-hi: #00b4d8;
+    --accent-soft: #caf0f8;
+    --accent-glow: rgba(0, 119, 182, 0.22);
+    --acc: #0077b6;
+    --border1: #e3eaf1;
+    --bg1: #f7f9fb;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-glow: rgba(13,148,136,.2);
+    --grad-main: linear-gradient(135deg, #0077b6 0%, #023e8a 100%);
+    --grad-teal: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    --shadow-sm: 0 1px 3px rgba(12, 35, 56, 0.05), 0 1px 2px rgba(12, 35, 56, 0.03);
+    --shadow-md: 0 4px 14px rgba(12, 35, 56, 0.07), 0 2px 4px rgba(12, 35, 56, 0.04);
+    --shadow-lg: 0 12px 28px rgba(12, 35, 56, 0.09), 0 4px 10px rgba(12, 35, 56, 0.05);
+    --r: 14px;
   }
-  body{font-family:'Tajawal',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;line-height:1.5;background-image:radial-gradient(ellipse at 80% 10%,rgba(124,58,237,.12) 0%,transparent 50%),radial-gradient(ellipse at 20% 90%,rgba(6,182,212,.07) 0%,transparent 45%);background-attachment:fixed;}
+  body {
+    font-family: 'Alexandria', 'Readex Pro', 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    direction: rtl;
+    min-height: 100vh;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
   .scr{display:none;min-height:100vh;}
   .scr.on{display:block;}
   #scLoad.on{display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e0845 0%,#3b0764 40%,#5b21b6 75%,#7c3aed 100%);color:white;gap:18px;}
@@ -215,36 +252,16 @@
     65%  { opacity: 1; transform: scale(1.04) translateY(-3px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
   }
-  @keyframes acrobaticFlip {
-    0%   { transform: scale(1) rotate(0deg); }
-    25%  { transform: scale(1.35) rotate(-18deg) translateY(-5px); }
-    50%  { transform: scale(0.9) rotate(16deg); }
-    75%  { transform: scale(1.12) rotate(-6deg); }
-    100% { transform: scale(1) rotate(0deg); }
-  }
-  @keyframes floatAmbient {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50%      { transform: translateY(-5px) rotate(0.6deg); }
-  }
-  @keyframes auraGlow {
-    0%, 100% { box-shadow: 0 0 12px rgba(124, 58, 237, 0.25), inset 0 0 8px rgba(124, 58, 237, 0.15); }
-    50%      { box-shadow: 0 0 26px rgba(147, 51, 234, 0.5), inset 0 0 14px rgba(147, 51, 234, 0.25); }
-  }
+  /* ── Removed flashy button animations per user request ── */
+  .motion-slide-right, .motion-slide-left, .motion-pop { will-change: auto; }
+  .tab-acrobatic, .btn-acrobatic { display: inline-block; }
 
-  .motion-slide-right { animation: slideInRightSpring 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
-  .motion-slide-left  { animation: slideInLeftSpring 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
-  .motion-pop         { animation: popInBounce 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; will-change: transform, opacity; }
-
-  .tab-acrobatic { display: inline-block; animation: acrobaticFlip 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
-  .btn-acrobatic { animation: acrobaticFlip 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
-
-      .today-online-box {
+  .today-online-box {
     background: rgba(49, 151, 149, 0.16) !important;
     border-color: rgba(78, 205, 196, 0.38) !important;
-    animation: floatAmbient 4.8s ease-in-out infinite alternate !important;
   }
   .today-online-box:hover {
-    box-shadow: 0 8px 24px rgba(49, 151, 149, 0.28) !important;
+    box-shadow: 0 4px 14px rgba(49, 151, 149, 0.22) !important;
     border-color: rgba(78, 205, 196, 0.65) !important;
   }
 
@@ -256,13 +273,10 @@
     text-align: center;
     min-width: 135px;
     cursor: pointer;
-    transition: all .25s ease;
-    animation: floatAmbient 4.4s ease-in-out infinite alternate !important;
-    will-change: transform;
+    transition: all .2s ease;
   }
   .online-box:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 24px rgba(49, 130, 206, 0.28);
+    box-shadow: 0 4px 14px rgba(49, 130, 206, 0.22);
     border-color: rgba(99, 179, 237, 0.6);
   }
 
@@ -478,35 +492,27 @@
     line-height: 1.25;
   }
 
-  .bal-box    { animation: floatAmbient 4s ease-in-out infinite, auraGlow 3s infinite ease-in-out !important; will-change: transform; }
-  .target-box { animation: floatAmbient 4.6s ease-in-out infinite alternate !important; will-change: transform; }
+  .bal-box    { will-change: auto; }
+  .target-box { will-change: auto; }
 
-  /* ══ Flying Particles ══ */
+  /* ══ Flying Particles (Disabled per user request) ══ */
   .flying-particle {
-    position: fixed;
-    pointer-events: none;
-    z-index: 999999;
-    user-select: none;
-    font-size: 1.65rem;
-    line-height: 1;
-    transition: none;
-    will-change: transform, opacity;
+    display: none !important;
   }
 
   /* ══ Micro-interactions & Physics ══ */
   .card {
-    transition: transform .26s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .26s ease, border-color .26s ease !important;
+    transition: box-shadow .2s ease, border-color .2s ease !important;
   }
   .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(124, 58, 237, 0.2), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
   }
   .type-btn {
-    transition: transform .22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .22s ease, border-color .2s ease !important;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease !important;
   }
   .type-btn:hover {
-    transform: translateY(-4px) scale(1.03) !important;
-    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.28) !important;
+    transform: none !important;
+    box-shadow: var(--shadow-sm) !important;
   }
   .tab {
     transition: transform .2s cubic-bezier(0.2,0.8,0.2,1), color .2s, border-color .2s, background .2s !important;
@@ -883,14 +889,15 @@
   #bottomNav {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(15,17,23,0.88);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-top: 1px solid rgba(255,255,255,.10);
+    border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom);
-    z-index: 300;
+    z-index: 450;
     height: auto;
     min-height: 56px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   }
   #bottomNav ul {
     display: flex; list-style: none;
@@ -907,14 +914,23 @@
     -webkit-tap-highlight-color: transparent;
   }
   #bottomNav ul li:active { opacity: .65; }
-  #bottomNav ul li .bn-ico { font-size: 1.35rem; line-height: 1; }
+  #bottomNav ul li .bn-ico { font-size: 1.3rem; line-height: 1; }
   #bottomNav ul li .bn-lbl {
-    font-size: .58rem; font-weight: 700;
-    color: rgba(255,255,255,.45);
+    font-size: .62rem; font-weight: 700;
+    color: var(--text3);
     letter-spacing: .2px; white-space: nowrap;
   }
-  #bottomNav ul li.bn-on .bn-ico { filter: drop-shadow(0 0 6px rgba(64,145,108,.9)); }
-  #bottomNav ul li.bn-on .bn-lbl { color: var(--green); }
+  #bottomNav ul li.bn-on .bn-ico { filter: drop-shadow(0 0 4px rgba(2,132,199,.6)); }
+  #bottomNav ul li.bn-on .bn-lbl { color: var(--accent); font-weight: 800; }
+
+  body.dark-mode #bottomNav {
+    background: rgba(11, 19, 43, 0.96);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -2px 14px rgba(0,0,0,0.35);
+  }
+  body.dark-mode #bottomNav ul li .bn-lbl { color: #94a3b8; }
+  body.dark-mode #bottomNav ul li.bn-on .bn-lbl { color: #38bdf8; font-weight: 800; }
+  body.dark-mode #bottomNav ul li.bn-on .bn-ico { filter: drop-shadow(0 0 6px rgba(56,189,248,.6)); }
 
   /* ── Responsive breakpoints ─────────────────── */
 
@@ -1053,67 +1069,1249 @@
   .rp-unpaid{background:rgba(229,62,62,.08);border:1px solid rgba(229,62,62,.25);border-radius:12px;padding:14px 16px;}
   .rp-unpaid-title{font-weight:800;color:#fc8181;margin-bottom:8px;font-size:.88rem;}
 
-  /* ── Midnight Pro: extra polish ─────────────────────────── */
-  .at-clock{font-family:'Inter',monospace!important;}
-  .dkpi-val,.pd-kv,.at-kv,.sv,.bal-amt,.cl-final-val{font-family:'Inter',sans-serif!important;letter-spacing:-.03em;}
-  ::-webkit-scrollbar{width:5px;height:5px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:rgba(124,58,237,.3);border-radius:10px;}
-  ::-webkit-scrollbar-thumb:hover{background:rgba(124,58,237,.5);}
-  input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6) sepia(1) saturate(3) hue-rotate(230deg);}
-  .fg input,.fg select,.fg textarea{background:rgba(26,23,48,.8)!important;border-color:rgba(124,58,237,.22)!important;}
-  .fel{background:rgba(26,23,48,.8)!important;border-color:rgba(124,58,237,.22)!important;}
-  .cfg-ta{background:rgba(18,15,37,.9)!important;border-color:rgba(124,58,237,.22)!important;color:#c4b5fd!important;}
-  .at-rate-inp{background:rgba(26,23,48,.8)!important;border-color:rgba(124,58,237,.22)!important;}
-  .pb{background:rgba(37,34,74,.7)!important;border-color:rgba(124,58,237,.2)!important;}
-  .btn-gray{background:rgba(47,44,88,.8)!important;}
-  select option{background:#1a1730!important;color:#f1f0ff!important;}
-  tbody td{border-bottom:1px solid rgba(124,58,237,.08)!important;}
-  .bkt td{border-bottom:1px solid rgba(124,58,237,.08)!important;}
-  .pl-tbl td{border-bottom:1px solid rgba(124,58,237,.08)!important;}
-  .att-live-in{border-color:rgba(6,182,212,.4)!important;background:rgba(6,182,212,.06)!important;}
-  .att-live-done{border-color:rgba(124,58,237,.35)!important;background:rgba(124,58,237,.06)!important;}
-  .at-kpi-g{border-right-color:var(--accent)!important;}
-  .rc-admin{background:rgba(124,58,237,.25)!important;color:#c4b5fd!important;}
-  .rc-emp{background:rgba(6,182,212,.18)!important;color:#67e8f9!important;}
-  .pos-badge{background:rgba(124,58,237,.15)!important;color:#c4b5fd!important;}
-  .g-logo{text-shadow:0 0 40px rgba(124,58,237,.8);}
-  .at-clock-box{background:rgba(124,58,237,.15)!important;border-color:rgba(124,58,237,.3)!important;}
-  .modal-overlay{background:rgba(0,0,0,.82)!important;}
-  .d-up{color:#06b6d4!important;}.d-dn{color:#fc8181!important;}
-  /* ───────────────────────────────────────────────────────── */
+  
+  /* ── SALIIM SAAS COMPONENT & THEME POLISH ── */
 
-
-  /* ─── Light Mode ─────────────────────────── */
-  body.light-mode {
-    --bg:#f3f4f8;--bg2:#e8eaf0;--bg3:#dde0ea;
-    --card:#ffffff;--card2:#f0f2f8;--card3:#e2e5ee;
-    --border:rgba(100,80,200,.15);--border2:rgba(100,80,200,.25);
-    --text:#1a1635;--text2:#3d3565;--text3:#7c6bab;
-    --shadow-sm:0 2px 8px rgba(0,0,0,.10);
-    --shadow-md:0 4px 20px rgba(0,0,0,.14);
-    /* [v12] نفس المتغيرات الأربعة بقيم الوضع الفاتح */
-    --text1:#1a1635;
-    --acc:#6d28d9;
-    --border1:rgba(100,80,200,.15);
-    --bg1:#f3f4f8;
+  .num, .saliim-kpi-val, .saliim-today-num, .sv, .dkpi-val, .bal-amt, .at-kv, .pd-kv, .cl-final-val {
+    font-family: 'Jost', 'Inter', -apple-system, sans-serif !important;
+    letter-spacing: -0.02em;
   }
-  body.light-mode .hdr{background:linear-gradient(135deg,#4c1d95 0%,#6d28d9 60%,#7c3aed 100%);}
-  body.light-mode .card{background:#fff;border-color:rgba(124,58,237,.18);}
-  body.light-mode .fg input,body.light-mode .fg select,body.light-mode .fg textarea,
-  body.light-mode .fel,body.light-mode .frow .fel{background:#f0f2f8;color:#1a1635;border-color:rgba(124,58,237,.25);}
-  body.light-mode .tabs{background:#eff1f8;}
-  body.light-mode .tab{color:#7c6bab;}
-  body.light-mode .tab.on{color:#6d28d9;}
-  body.light-mode thead th{background:#e8eaf0;color:#3d3565;}
-  body.light-mode tbody tr:hover td{background:rgba(124,58,237,.06);}
-  body.light-mode .modal-box{background:#fff;}
-  body.light-mode .set-sec{background:#fff;}
-  body.light-mode .at-reg-card,.light-mode .at-emp-sec{background:#fff;}
-  body.light-mode #coDropList{background:#fff;border-color:#6d28d9;}
-  body.light-mode .co-opt{color:#1a1635;}
-  body.light-mode .t-bar{background:#e8eaf0;}
 
+  .saliim-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+    direction: rtl;
+    position: relative;
+  }
+  .saliim-sidebar {
+    width: 250px;
+    background: #0b132b;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 500;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    user-select: none;
+    transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .saliim-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 18px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .saliim-logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #0284c7;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(2,132,199,0.35);
+  }
+  .saliim-brand-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.2;
+  }
+  .saliim-brand-sub {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #38bdf8;
+    letter-spacing: 0.4px;
+  }
+  .saliim-sidebar-close {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: auto;
+    padding: 4px;
+  }
+  .saliim-quick-search {
+    margin: 14px 14px 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .saliim-quick-search:hover {
+    background: rgba(255,255,255,0.08);
+    color: #cbd5e1;
+  }
+  .saliim-search-badge {
+    margin-right: auto;
+    font-size: 0.68rem;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #94a3b8;
+  }
+  .saliim-nav-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px;
+  }
+  .saliim-nav-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .saliim-nav-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+  }
+  .saliim-group-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 10px 6px;
+  }
+  .saliim-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    margin-bottom: 2px;
+    text-decoration: none;
+    border-right: 3px solid transparent;
+  }
+  .saliim-nav-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: #f1f5f9;
+  }
+  .saliim-nav-item.active {
+    background: #1c2541;
+    color: #38bdf8;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    border-right-color: #38bdf8;
+  }
+  .saliim-item-icon {
+    font-size: 1.05rem;
+    width: 22px;
+    text-align: center;
+    color: #64748b;
+    transition: color 0.18s;
+  }
+  .saliim-nav-item.active .saliim-item-icon {
+    color: #38bdf8;
+  }
+
+  .saliim-group-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 16px 12px 6px;
+    opacity: 0.9;
+  }
+  .saliim-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 14px;
+    border-radius: 9px;
+    color: #cbd5e1;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    margin-bottom: 3px;
+    text-decoration: none;
+    border-right: 3px solid transparent;
+    user-select: none;
+  }
+  .saliim-nav-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: #ffffff;
+  }
+  .saliim-nav-item.active {
+    background: #1c2541 !important;
+    color: #38bdf8 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    border-right-color: #38bdf8 !important;
+  }
+  .saliim-nav-item.active .saliim-item-icon {
+    color: #38bdf8 !important;
+  }
+
+  .saliim-sidebar-profile {
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.18);
+  }
+  .saliim-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .saliim-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(2,132,199,0.3);
+  }
+  .saliim-profile-name {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .saliim-profile-role {
+    font-size: 0.7rem;
+    color: #94a3b8;
+  }
+  .saliim-btn-logout {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s;
+  }
+  .saliim-btn-logout:hover {
+    color: #ef4444;
+  }
+
+  .saliim-main {
+    flex: 1;
+    margin-right: 250px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--bg);
+    transition: margin-right 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .saliim-topbar {
+    height: 50px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .saliim-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .saliim-mobile-toggle {
+    display: none;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1.25rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .saliim-page-header {
+    display: flex;
+    flex-direction: column;
+  }
+  .saliim-page-title {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .saliim-breadcrumb {
+    font-size: 0.74rem;
+    color: var(--text3);
+    font-weight: 500;
+  }
+  .saliim-topbar-center {
+    display: flex;
+    align-items: center;
+  }
+  .saliim-live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text2);
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+  .saliim-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.25);
+    animation: pulseDot 2s infinite;
+  }
+  .saliim-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .saliim-tb-btn {
+    padding: 7px 12px;
+    border-radius: 9px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: inherit;
+    font-weight: 700;
+  }
+  .saliim-tb-btn:hover {
+    background: var(--card3);
+    color: var(--text);
+    border-color: var(--border2);
+  }
+  .saliim-tb-logout {
+    color: #ef4444;
+    border-color: rgba(239,68,68,0.2);
+    background: #fef2f2;
+  }
+  body.dark-mode .saliim-tb-logout {
+    background: rgba(239,68,68,0.15);
+  }
+  .saliim-tb-logout:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .saliim-content-body {
+    flex: 1;
+    padding: 8px 18px 20px;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .saliim-kpi-grid {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 8px;
+    padding-bottom: 2px;
+  }
+  .saliim-kpi-card {
+    flex: 1 1 0;
+    min-width: 120px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-height: 58px;
+    box-sizing: border-box;
+  }
+  .saliim-kpi-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border2);
+  }
+  .saliim-kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    gap: 4px;
+  }
+  .saliim-kpi-lbl {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .saliim-kpi-icon {
+    font-size: 0.95rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .saliim-kpi-badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .badge-cyan { background: #e0f2fe; color: #0284c7; }
+  .badge-amber { background: #fef3c7; color: #d97706; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .saliim-kpi-val {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--text);
+    font-family: 'Inter', 'Tajawal', sans-serif;
+    line-height: 1.1;
+    margin-bottom: 2px;
+    white-space: nowrap;
+  }
+  .saliim-kpi-sub {
+    font-size: 0.65rem;
+    color: var(--text3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+  }
+  .saliim-kpi-bridge {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.04);
+  }
+  .saliim-kpi-bridge:hover {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: #10b981;
+  }
+
+  .saliim-today-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px 14px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .saliim-today-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    border-left: 1.5px solid var(--border);
+    padding-left: 12px;
+    white-space: nowrap;
+  }
+  .saliim-today-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .saliim-today-badge {
+    display: none;
+  }
+  .saliim-today-cols {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex: 1;
+    gap: 8px;
+  }
+  .saliim-today-col {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 4px;
+    white-space: nowrap;
+  }
+  .saliim-today-col:not(:last-child) {
+    border-left: 1px solid var(--border);
+  }
+  .saliim-today-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text2);
+    order: 1;
+  }
+  .saliim-today-num {
+    font-size: 0.95rem;
+    font-weight: 900;
+    font-family: 'Inter', 'Tajawal', sans-serif;
+    line-height: 1;
+    order: 2;
+  }
+
+  .text-green { color: #10b981 !important; }
+  .text-red { color: #ef4444 !important; }
+  .text-blue { color: #3b82f6 !important; }
+  .text-amber { color: #f59e0b !important; }
+  .text-teal { color: #0d9488 !important; }
+  .text-cyan { color: #0284c7 !important; }
+
+  /* Polished elements in panes */
+  .card {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  .fg label {
+    color: var(--text2) !important;
+  }
+  .fg input, .fg select, .fg textarea, .fel {
+    background: var(--card) !important;
+    border: 1.5px solid var(--border2) !important;
+    color: var(--text) !important;
+    border-radius: 10px !important;
+  }
+  .fg input:focus, .fg select:focus, .fg textarea:focus, .fel:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.15) !important;
+  }
+  thead th {
+    background: var(--card2) !important;
+    color: var(--text2) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  tbody td {
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--text) !important;
+  }
+  tbody tr:hover td {
+    background: rgba(2, 132, 199, 0.03) !important;
+  }
+  .type-btn {
+    background: var(--card2);
+    border: 1.5px solid var(--border);
+    color: var(--text2);
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: 800;
+    transition: all 0.18s;
+  }
+  .type-btn:hover {
+    background: var(--card3);
+    border-color: var(--border2);
+  }
+  .type-btn.on {
+    background: #e0f2fe;
+    border-color: #0284c7;
+    color: #0369a1;
+  }
+  .top-sales-card {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--shadow-sm) !important;
+    padding: 5px 12px !important;
+    margin-bottom: 8px !important;
+  }
+  .top-sales-card.ts-collapsed {
+    padding: 4px 10px !important;
+  }
+  .top-sales-title {
+    font-size: 0.8rem !important;
+  }
+  .ts-chip {
+    padding: 2px 6px !important;
+    font-size: 0.7rem !important;
+    gap: 4px !important;
+    border-radius: 6px !important;
+  }
+  .ts-ctrl-btn {
+    padding: 2px 7px !important;
+    font-size: 0.7rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Compact entry form (#pane-add) to fit on screen without vertical scroll */
+  #pane-add .card {
+    padding: 10px 16px !important;
+    margin-bottom: 6px !important;
+    border-radius: 12px !important;
+  }
+  #pane-add .card-t {
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 6px !important;
+  }
+  #pane-add .type-grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+  }
+  #pane-add .type-btn {
+    padding: 6px 4px !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+  #pane-add .fg-row {
+    gap: 8px !important;
+    margin-bottom: 4px !important;
+  }
+  #pane-add .fg {
+    margin-bottom: 0 !important;
+    gap: 2px !important;
+  }
+  #pane-add .fg label {
+    font-size: 0.74rem !important;
+    margin-bottom: 1px !important;
+  }
+  #pane-add .fg input, #pane-add .fg select {
+    height: 35px !important;
+    padding: 4px 10px !important;
+    font-size: 0.86rem !important;
+    border-radius: 8px !important;
+  }
+  #pane-add .fg.fg-full {
+    grid-column: 1 / -1;
+    margin-top: 6px !important;
+  }
+  #pane-add #saveBtn {
+    margin-top: 6px !important;
+    padding: 7px 24px !important;
+    height: 36px !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    border-radius: 8px !important;
+  }
+  .modal-box {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+  .btn-primary {
+    background: #0284c7 !important;
+    border-radius: 10px !important;
+    color: #fff !important;
+  }
+  .btn-primary:hover {
+    background: #0369a1 !important;
+  }
+  .saliim-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 490;
+    backdrop-filter: blur(2px);
+  }
+  /* ═══════════════════════════════════════════════════════════════════
+     🌙 COMPLETE SALIIM DARK MODE PALETTE & COMPONENT STYLING
+     ═══════════════════════════════════════════════════════════════════ */
+  :root.dark-mode, body.dark-mode {
+    --bg: #0b132b;
+    --bg2: #0f1938;
+    --bg3: #162244;
+    --card: #141e38;
+    --card2: #1a2749;
+    --card3: #22325c;
+    --border: rgba(255, 255, 255, 0.08);
+    --border2: rgba(255, 255, 255, 0.16);
+    --text: #f8fafc;
+    --text1: #f8fafc;
+    --text2: #cbd5e1;
+    --text3: #94a3b8;
+    --text-faint: #64748b;
+    --accent: #38bdf8;
+    --accent2: #0284c7;
+    --accent3: #0369a1;
+    --accent-hi: #7dd3fc;
+    --accent-soft: rgba(56, 189, 248, 0.14);
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --acc: #38bdf8;
+    --brand-ink: #070e1e;
+    --brand-ink-2: #0b132b;
+    --bg1: #0b132b;
+    --border1: rgba(255, 255, 255, 0.08);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Dark mode specific component adjustments */
+  body.dark-mode .saliim-sidebar {
+    background: #080f1d !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+  body.dark-mode .saliim-topbar {
+    background: #111a33 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-tb-btn {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .saliim-tb-btn:hover {
+    background: #22325c !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  body.dark-mode .saliim-live-badge {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #94a3b8 !important;
+  }
+  body.dark-mode .saliim-tb-logout {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #f87171 !important;
+  }
+  body.dark-mode .saliim-tb-logout:hover {
+    background: rgba(239, 68, 68, 0.25) !important;
+    color: #fca5a5 !important;
+  }
+
+  body.dark-mode .saliim-kpi-card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-kpi-card:hover {
+    border-color: rgba(56, 189, 248, 0.3) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+  body.dark-mode .saliim-kpi-val {
+    color: #f8fafc !important;
+  }
+  body.dark-mode .saliim-kpi-lbl {
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .saliim-kpi-sub {
+    color: #94a3b8 !important;
+  }
+  body.dark-mode .badge-cyan {
+    background: rgba(2, 132, 199, 0.22) !important;
+    color: #38bdf8 !important;
+  }
+  body.dark-mode .badge-amber {
+    background: rgba(217, 119, 6, 0.22) !important;
+    color: #fbbf24 !important;
+  }
+  body.dark-mode .badge-green {
+    background: rgba(16, 185, 129, 0.22) !important;
+    color: #34d399 !important;
+  }
+  body.dark-mode .saliim-kpi-bridge {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+  }
+
+  body.dark-mode .saliim-today-card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-today-title {
+    color: #f8fafc !important;
+  }
+  body.dark-mode .saliim-today-head {
+    border-left-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-today-col:not(:last-child) {
+    border-left-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .saliim-today-lbl {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode .top-sales-card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode .ts-chip {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .ts-ctrl-btn {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .ts-ctrl-btn.ts-active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode .card {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+  body.dark-mode .card-t {
+    color: #f8fafc !important;
+  }
+  body.dark-mode .fg label {
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .fg input,
+  body.dark-mode .fg select,
+  body.dark-mode .fg textarea,
+  body.dark-mode .fel {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .fg input::placeholder,
+  body.dark-mode .fel::placeholder {
+    color: #64748b !important;
+  }
+  body.dark-mode .fg input:focus,
+  body.dark-mode .fg select:focus,
+  body.dark-mode .fel:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+  }
+  body.dark-mode select option {
+    background: #141e38 !important;
+    color: #f8fafc !important;
+  }
+
+  body.dark-mode .type-btn {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .type-btn:hover {
+    background: #22325c !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+  }
+  body.dark-mode .type-btn.on {
+    background: rgba(2, 132, 199, 0.3) !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+  }
+
+  body.dark-mode thead th {
+    background: #1a2749 !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  body.dark-mode tbody td {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode tbody tr:hover td {
+    background: rgba(56, 189, 248, 0.06) !important;
+  }
+
+  body.dark-mode .modal-box {
+    background: #141e38 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .modal-header,
+  body.dark-mode .modal-hdr {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .modal-footer,
+  body.dark-mode .modal-ftr {
+    background: #0f1938 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  body.dark-mode .ent-chip {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+  }
+  body.dark-mode .ent-chip:hover {
+    background: #22325c !important;
+    color: #f8fafc !important;
+  }
+  body.dark-mode .ent-chip.ent-chip-on {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+  }
+
+  body.dark-mode .btn-secondary,
+  body.dark-mode .btn-ghost {
+    background: #1a2749 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+  }
+  body.dark-mode .btn-secondary:hover,
+  body.dark-mode .btn-ghost:hover {
+    background: #22325c !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode .text-green { color: #34d399 !important; }
+  body.dark-mode .text-red { color: #f87171 !important; }
+  body.dark-mode .text-blue { color: #60a5fa !important; }
+  body.dark-mode .text-amber { color: #fbbf24 !important; }
+  body.dark-mode .text-teal { color: #2dd4bf !important; }
+  body.dark-mode .text-cyan { color: #38bdf8 !important; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     📱 FULL MOBILE RESPONSIVE SUITE (TABLET & SMARTPHONES)
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* ── 1. Tablet & Below (≤ 1024px) ── */
+  @media (max-width: 1024px) {
+    .saliim-sidebar {
+      transform: translateX(100%);
+      box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25);
+    }
+    .saliim-sidebar.open {
+      transform: translateX(0);
+    }
+    .saliim-sidebar-close {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+    }
+    .saliim-main {
+      margin-right: 0 !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      overflow-x: hidden;
+    }
+    .saliim-mobile-toggle {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    .saliim-content-body {
+      padding: 12px 14px;
+      padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    }
+    .saliim-backdrop.open {
+      display: block;
+    }
+  }
+
+  /* ── 2. Mobile & Phablet (≤ 768px) ── */
+  @media (max-width: 768px) {
+    #bottomNav {
+      display: block !important;
+    }
+
+    /* Topbar */
+    .saliim-topbar {
+      padding: 0 12px !important;
+      height: 52px !important;
+    }
+    .saliim-page-title {
+      font-size: 0.92rem !important;
+      max-width: 170px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .saliim-breadcrumb {
+      display: none !important;
+    }
+    .saliim-topbar-center {
+      display: none !important;
+    }
+    .saliim-tb-btn {
+      padding: 6px 8px !important;
+      font-size: 0.82rem !important;
+    }
+    .saliim-tb-btn span {
+      display: none !important; /* Hide 'Ctrl+K' badge on mobile */
+    }
+
+    /* Financial KPI Cards Grid */
+    .saliim-kpi-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+      overflow-x: visible !important;
+      margin-bottom: 10px !important;
+    }
+    .saliim-kpi-card {
+      min-width: 0 !important;
+      width: 100% !important;
+      padding: 8px 12px !important;
+      min-height: 60px !important;
+    }
+    .saliim-kpi-card.saliim-kpi-safe {
+      grid-column: 1 / -1 !important; /* Treasury card spans full width */
+    }
+    .saliim-kpi-val {
+      font-size: 1.2rem !important;
+    }
+
+    /* Today's Financial Summary Card */
+    .saliim-today-card {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 10px 12px !important;
+      gap: 8px !important;
+      margin-bottom: 10px !important;
+    }
+    .saliim-today-head {
+      border-left: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      padding-left: 0 !important;
+      padding-bottom: 6px !important;
+      width: 100% !important;
+      justify-content: space-between !important;
+    }
+    .saliim-today-cols {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 6px !important;
+      width: 100% !important;
+    }
+    .saliim-today-col {
+      border-left: none !important;
+      border-bottom: none !important;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      text-align: center !important;
+      gap: 3px !important;
+    }
+    .saliim-today-lbl {
+      font-size: 0.68rem !important;
+      order: 1 !important;
+    }
+    .saliim-today-num {
+      font-size: 0.95rem !important;
+      order: 2 !important;
+    }
+
+    /* Top monthly sales trend card */
+    .top-sales-card {
+      padding: 10px 12px !important;
+    }
+    .top-sales-hdr {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+    }
+    .ts-kpi-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 4px !important;
+    }
+    .top-sales-ctrls {
+      justify-content: space-between !important;
+      width: 100% !important;
+    }
+
+    /* ── Entry Form (#pane-add) ── */
+    #pane-add .card {
+      padding: 12px 14px !important;
+    }
+    #pane-add .type-grid {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 6px !important;
+    }
+    #pane-add .type-btn {
+      padding: 8px 4px !important;
+      min-height: 42px !important;
+      font-size: 0.82rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 8px !important;
+    }
+    #pane-add .fg-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+    }
+    #pane-add .fg.fg-full {
+      grid-column: 1 / -1 !important;
+    }
+    #pane-add .fg input, #pane-add .fg select {
+      height: 42px !important;
+      font-size: 15px !important;
+    }
+    #pane-add #saveBtn {
+      min-height: 46px !important;
+      font-size: 1rem !important;
+      width: 100% !important;
+      margin-top: 10px !important;
+    }
+
+    /* ── Filter Rows (.frow) in Panes ── */
+    .frow {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+    .frow .fel {
+      flex: 1 1 calc(50% - 6px) !important;
+      max-width: 100% !important;
+      min-width: 110px !important;
+      height: 38px !important;
+      font-size: 14px !important;
+    }
+    .frow #fSearch, .frow .fel-s {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+      height: 40px !important;
+    }
+
+    /* ── Tables Horizontal Scroll ── */
+    .tbl-w, .table-wrap, .pos-table-wrap {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+    }
+    .tbl-w table, .table-wrap table {
+      min-width: 620px;
+    }
+
+    /* Modals */
+    .modal-box {
+      width: 95vw !important;
+      max-width: 95vw !important;
+      max-height: 88vh !important;
+      padding: 16px !important;
+      border-radius: 16px !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+  }
+
+  /* ── 3. Small Mobile Phones (≤ 480px) ── */
+  @media (max-width: 480px) {
+    .saliim-content-body {
+      padding: 8px 10px;
+      padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    }
+    .saliim-topbar {
+      padding: 0 8px !important;
+    }
+    .saliim-page-title {
+      font-size: 0.88rem !important;
+      max-width: 140px;
+    }
+    .saliim-tb-logout {
+      font-size: 0.76rem !important;
+      padding: 4px 6px !important;
+    }
+
+    /* KPIs */
+    .saliim-kpi-grid {
+      gap: 6px !important;
+    }
+    .saliim-kpi-card {
+      padding: 6px 10px !important;
+      min-height: 54px !important;
+    }
+    .saliim-kpi-val {
+      font-size: 1.1rem !important;
+    }
+    .saliim-kpi-lbl {
+      font-size: 0.7rem !important;
+    }
+
+    /* Today's Cols: 2 columns */
+    .saliim-today-cols {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 5px !important;
+    }
+    .saliim-today-col:last-child {
+      grid-column: 1 / -1 !important;
+      flex-direction: row !important;
+      justify-content: center !important;
+      gap: 8px !important;
+    }
+
+    /* Entry Form */
+    #pane-add .type-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 5px !important;
+    }
+    #pane-add .type-btn:last-child {
+      grid-column: 1 / -1 !important;
+    }
+    #pane-add .fg-row {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 6px !important;
+    }
+    #pane-add .fg input, #pane-add .fg select {
+      font-size: 16px !important; /* Critical to eliminate iOS Safari zooming */
+      height: 42px !important;
+    }
+
+    /* Period chips */
+    #entPeriodChips {
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+  }
+  
   /* ─── Print Styles ─────────────────────────── */
   @media print {
     body{background:#fff!important;color:#000!important;font-size:11pt;}
@@ -1131,6 +2329,7 @@
     .print-hide{display:none!important;}
     .print-btn{display:none!important;}
   }
+
 </style>
 </head>
 <body>
@@ -1261,158 +2460,315 @@ function ensureXLSX() {
 
 <!-- ══════════════ MAIN APP ══════════════ -->
 <div id="scApp" class="scr">
-
-  <!-- Header -->
-  <div class="hdr">
-    <!-- Row 1: Brand, User Profile, Quick Tools (Theme, Search, Logout) & Sales Targets -->
-    <div class="hdr-row-top">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="ph-name" id="hPhName">🏥 صيدلية العصافرة</div>
-        <div class="u-badge">
-          <span id="hUName">—</span>
-          <span class="r-chip" id="hURole">—</span>
+  <div class="saliim-layout">
+    <!-- ── RIGHT SIDEBAR (Dark Navy #0b132b) ── -->
+    <aside class="saliim-sidebar" id="saliimSidebar">
+      <div class="saliim-brand">
+        <div class="saliim-logo-icon">🏥</div>
+        <div class="saliim-brand-text">
+          <div class="saliim-brand-title" id="sidePhName">صيدلية العصافرة</div>
+          <div class="saliim-brand-sub">نظام الإدارة المالية الموحد</div>
         </div>
-        <!-- أزرار التحكم مجمعة بجوار بيانات الحساب في اليمين -->
-        <div style="display:flex;align-items:center;gap:6px;margin-right:4px;">
-          <button id="themeToggle" onclick="toggleTheme()" title="تبديل المظهر"
-            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 11px;color:white;cursor:pointer;font-size:1rem;transition:all .2s;">🌙</button>
-          <button onclick="openGlobalSearch()" title="بحث عالمي (Ctrl+K)"
-            style="background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.35);border-radius:9px;padding:6px 12px;color:white;cursor:pointer;font-size:.82rem;transition:all .2s;display:flex;align-items:center;gap:5px;">
-            <span>🔍</span><span style="opacity:.7;font-size:.7rem;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:1px 4px;">Ctrl+K</span>
-          </button>
-          <button class="btn-logout" onclick="doLogout()" style="padding:6px 13px;">خروج ↩</button>
-        </div>
+        <button class="saliim-sidebar-close" onclick="toggleSidebar(false)" aria-label="إغلاق">✕</button>
       </div>
 
-      <!-- صناديق التارجت في يسار الصف العلوي -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="target-box" id="salesTargetBox" style="display:none;" title="متوسط المبيعات اليومي مقارنةً بالتارجت">
-          <div class="target-lbl">🎯 تحقيق التارجت</div>
-          <div class="target-pct" id="targetPct">—</div>
-          <div class="target-sub" id="targetSub">—</div>
+      <div class="saliim-quick-search" onclick="openGlobalSearch()" title="بحث سريع (Ctrl+K)">
+        <span>🔍</span>
+        <span>بحث سريع...</span>
+        <span class="saliim-search-badge">Ctrl+K</span>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="saliim-nav-scroll" id="saliimNavMenu">
+        <!-- 1. العمليات والقيود -->
+        <div class="saliim-group-title">💼 العمليات والقيود</div>
+        <div class="saliim-nav-item active" data-tab="add" onclick="swTab('add', this)">
+          <span class="saliim-item-icon">➕</span>
+          <span>قيد جديد</span>
         </div>
-        <div id="monthlyTargetBox" style="display:none;align-items:center;gap:8px;background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.25);border-radius:12px;padding:6px 12px;cursor:default;" title="تقدم المبيعات الشهرية">
-          <svg width="34" height="34" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
-            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(124,58,237,.2)" stroke-width="4"/>
-            <circle id="monthRingFill" cx="18" cy="18" r="15" fill="none" stroke="#7c3aed" stroke-width="4"
-              stroke-dasharray="94.25" stroke-dashoffset="94.25" stroke-linecap="round" style="transition:stroke-dashoffset .6s ease;"/>
-          </svg>
-          <div style="text-align:center;">
-            <div style="font-size:.68rem;color:rgba(255,255,255,.75);font-weight:600;">الشهر</div>
-            <div id="monthlyPct" style="font-size:.95rem;font-weight:900;color:#fff;">0%</div>
+        <div class="saliim-nav-item" data-tab="all" id="navItemAll" onclick="swTab('all', this)">
+          <span class="saliim-item-icon">📋</span>
+          <span>كل الحركات</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="mine" id="navItemMine" style="display:none;" onclick="swTab('mine', this)">
+          <span class="saliim-item-icon">📋</span>
+          <span>حركاتي</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="sum" id="navItemSum" onclick="swTab('sum', this)">
+          <span class="saliim-item-icon">📊</span>
+          <span>الملخص والأرباح</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="budget" id="navItemBudget" onclick="swTab('budget', this)">
+          <span class="saliim-item-icon">📑</span>
+          <span>الموازنة المالية</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="custfollow" id="navItemCust" onclick="swTab('custfollow', this)">
+          <span class="saliim-item-icon">👥</span>
+          <span>متابعة العملاء</span>
+        </div>
+
+        <!-- 2. التقارير والمؤشرات -->
+        <div class="saliim-group-title" id="navGroupReports">📈 التقارير والمؤشرات</div>
+        <div class="saliim-nav-item" data-tab="salesdb" id="navItemSalesDb" onclick="swTab('salesdb', this)">
+          <span class="saliim-item-icon">📊</span>
+          <span>داشبورد المبيعات</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="monthcmp" id="navItemMonthCmp" onclick="swTab('monthcmp', this)">
+          <span class="saliim-item-icon">📅</span>
+          <span>مقارنة الأشهر</span>
+        </div>
+
+        <!-- 3. شؤون الموظفين -->
+        <div class="saliim-group-title">⏱ شؤون الموظفين</div>
+        <div class="saliim-nav-item" data-tab="att" onclick="swTab('att', this)">
+          <span class="saliim-item-icon">⏱</span>
+          <span>الحضور والانصراف</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="users" id="navItemUsers" onclick="swTab('users', this)">
+          <span class="saliim-item-icon">👥</span>
+          <span>الموظفين والصلاحيات</span>
+        </div>
+
+        <!-- 4. النظام -->
+        <div class="saliim-group-title" id="navGroupSystem">⚙️ النظام</div>
+        <div class="saliim-nav-item" data-tab="trash" id="navItemTrash" onclick="swTab('trash', this)">
+          <span class="saliim-item-icon">🗑</span>
+          <span>سلة المحذوفات</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="set" id="navItemSet" onclick="swTab('set', this)">
+          <span class="saliim-item-icon">⚙️</span>
+          <span>الإعدادات العامة</span>
+        </div>
+      </nav>
+
+      <!-- Sidebar Profile Box -->
+      <div class="saliim-sidebar-profile">
+        <div class="saliim-profile-info">
+          <div class="saliim-avatar" id="sideUserAvatar">م</div>
+          <div class="saliim-profile-meta">
+            <div class="saliim-profile-name" id="sideUName">—</div>
+            <div class="saliim-profile-role" id="sideURole">—</div>
           </div>
         </div>
+        <button class="saliim-btn-logout" onclick="doLogout()" title="تسجيل الخروج">🚪</button>
       </div>
-    </div>
+    </aside>
 
-    <!-- Row 2: Financial Balances & Wallet-to-Cash Bridge -->
-    <div class="hdr-row-fin">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <!-- ── صندوق ذمم أونلاين اليوم ── -->
-        <div class="online-box today-online-box" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم (متاح للموظفين)">
-          <div class="online-lbl" style="color:#81e6d9;">⚡ أونلاين اليوم</div>
-          <div class="online-val" id="hOnlineToday">0 ج</div>
-        </div>
+    <!-- Mobile Backdrop -->
+    <div class="saliim-backdrop" id="saliimBackdrop" onclick="toggleSidebar(false)"></div>
 
-        <!-- ── صندوق ذمم أونلاين المعلقة (تراكمي) ── -->
-        <div class="online-box" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة (متاح للموظفين)">
-          <div class="online-lbl">⏳ ذمم أونلاين</div>
-          <div class="online-val" id="hOnlineDebts">0 ج</div>
-        </div>
-
-        <!-- ── سهم تحويل وسيط أنيق بين ذمم المحفظة والعهدة ── -->
-        <button id="btnSettleWallet" onclick="openWalletSettleOptions()" class="btn-wallet-bridge" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية (كلي أو جزئي)">
-          <span style="font-size:1.05rem;">📥</span>
-          <span style="font-size:.78rem;font-weight:800;">تصفية المحفظة للعهدة</span>
-          <span id="btnSettleWalletAmt" class="bridge-badge">0 ج</span>
-          <span class="bridge-arrow">➔</span>
-        </button>
-      </div>
-
-      <!-- ── صندوق العهدة الحالية ── -->
-      <div class="bal-box" style="padding:6px 20px;">
-        <div class="bal-lbl">💼 العهدة الحالية</div>
-        <div class="bal-amt" id="hBal">0</div>
-        <div style="font-size:.65rem;opacity:.8;">جنيه مصري</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Today bar -->
-  <div class="t-bar">
-    <div class="ti"><span class="ti-l">إيرادات اليوم:</span><span class="ti-v c-g" id="tRev">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">مصاريف اليوم:</span><span class="ti-v c-r" id="tExp">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">طلبيات اليوم:</span><span class="ti-v c-b" id="tOrd">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-    <div class="ti"><span class="ti-l">صافي اليوم:</span><span class="ti-v c-o" id="tNet">0</span><span style="color:#a0aec0;font-size:.76rem;">ج</span></div>
-  </div>
-
-  <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
-  <div id="topSalesTrendCard" class="top-sales-card">
-    <div class="top-sales-hdr">
-      <div class="top-sales-title-wrap">
-        <div class="top-sales-title">
-          <span style="font-size:1.15rem;">📈</span>
-          <span>حركة مبيعات الشهر</span>
-          <span class="ts-month-badge" id="tsMonthBadge">—</span>
-        </div>
-        <div class="ts-kpi-row" id="tsKpiRow">
-          <div class="ts-chip ts-chip-tot" title="إجمالي مبيعات الشهر الفعلية (بدون الإيداعات)">
-            <span class="ts-chip-lbl">الإجمالي:</span>
-            <strong id="tsTotalAmt">0 ج</strong>
-          </div>
-          <div class="ts-chip ts-chip-avg" title="متوسط مبيعات اليوم الواحد المحقق خلال الشهر">
-            <span class="ts-chip-lbl">المتوسط اليومي:</span>
-            <strong id="tsAvgAmt">0 ج</strong>
-          </div>
-          <div class="ts-chip ts-chip-peak" title="أعلى مبيعات محققة في يوم خلال الشهر">
-            <span class="ts-chip-lbl">🚀 أعلى يوم:</span>
-            <strong id="tsPeakDay">—</strong>
-          </div>
-          <div class="ts-chip ts-chip-low" title="أدنى مبيعات محققة في يوم خلال الشهر">
-            <span class="ts-chip-lbl">🔻 أقل يوم:</span>
-            <strong id="tsLowDay">—</strong>
-          </div>
-          <div class="ts-chip ts-chip-today" title="مبيعات اليوم الحالي ومقارنته بمتوسط الشهر">
-            <span class="ts-chip-lbl">⚡ اليوم:</span>
-            <strong id="tsTodayAmt">0 ج</strong>
-            <span id="tsTodayTrendBadge" class="ts-trend-badge">—</span>
+    <!-- ── MAIN APP SHELL (Crisp Slate Content Area) ── -->
+    <main class="saliim-main">
+      <!-- TOPBAR -->
+      <header class="saliim-topbar">
+        <div class="saliim-topbar-right">
+          <button class="saliim-mobile-toggle" onclick="toggleSidebar(true)" aria-label="القائمة الرئيسية">☰</button>
+          <div class="saliim-page-header">
+            <h2 class="saliim-page-title" id="saliimPageTitle">➕ تسجيل قيد جديد</h2>
+            <div class="saliim-breadcrumb" id="saliimBreadcrumb">الرئيسية / العمليات والقيود</div>
           </div>
         </div>
-      </div>
-      <div class="top-sales-ctrls">
-        <div class="ts-type-toggle">
-          <button id="tsBtnLine" class="ts-ctrl-btn ts-active" onclick="setTopSalesChartType('line')" title="عرض رسم بياني انسيابي">📈 منحنى</button>
-          <button id="tsBtnBar" class="ts-ctrl-btn" onclick="setTopSalesChartType('bar')" title="عرض رسم بياني بالأعمدة">📊 أعمدة</button>
+
+        <div class="saliim-topbar-center">
+          <div class="saliim-live-badge">
+            <span class="saliim-live-dot"></span>
+            <span>متصل بالسحابة</span>
+          </div>
         </div>
-        <button id="tsBtnCollapse" class="ts-ctrl-btn ts-collapse-btn" onclick="toggleTopSalesCard()" title="طي أو إظهار الجراف">
-          <span id="tsCollapseIcon">🔼</span> <span id="tsCollapseText">طي</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- Chart Body Container (Collapsible) -->
-    <div id="topSalesChartBody" class="top-sales-body">
-      <div class="top-sales-canvas-wrap">
-        <canvas id="topMonthlySalesChart"></canvas>
-      </div>
-      <div class="top-sales-legend-sub">
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#06b6d4;"></span> مبيعات الأيام</span>
-        <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
-        <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
-        <span class="ts-leg-item"><span style="background:rgba(99,179,237,.25);border:1px solid rgba(99,179,237,.6);color:#90cdf4;padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:800;">2 ش</span> عدد الشيفتات فوق كل يوم</span>
-      </div>
-    </div>
-  </div>
+        <div class="saliim-topbar-left">
+          <!-- Fallback references for compatibility -->
+          <span id="hPhName" style="display:none;"></span>
+          <span id="hUName" style="display:none;"></span>
+          <span id="hURole" style="display:none;"></span>
 
-  <!-- Tabs -->
-  <div class="tabs" id="mainTabs"></div>
+          <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
+          <button class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
+          <button class="saliim-tb-btn saliim-tb-logout" onclick="doLogout()" title="تسجيل الخروج">خروج ↩</button>
+        </div>
+      </header>
 
-  <!-- Content -->
-  <div class="content">
+      <!-- CONTENT BODY -->
+      <div class="saliim-content-body">
+        <!-- ── ROW OF 5 FINANCIAL KPI CARDS ── -->
+        <div class="saliim-kpi-grid">
+          <!-- 1. العهدة الحالية -->
+          <div class="saliim-kpi-card saliim-kpi-safe" title="الخزينة العامة للصيدلية">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">💼 العهدة الحالية</span>
+              <span class="saliim-kpi-icon">🏦</span>
+            </div>
+            <div class="saliim-kpi-val" id="hBal">0</div>
+            <div class="saliim-kpi-sub">الخزينة العامة (جنيه)</div>
+          </div>
 
-    <!-- ── ADD ENTRY ── -->
-    <div class="pane" id="pane-add">
+          <!-- 2. أونلاين اليوم -->
+          <div class="saliim-kpi-card saliim-kpi-online" id="onlineTodayBox" onclick="openOnlineDebtsModal('today')" title="اضغط لعرض حركات المحفظة وانستا لليوم">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">⚡ أونلاين اليوم</span>
+              <span class="saliim-kpi-badge badge-cyan">اليوم</span>
+            </div>
+            <div class="saliim-kpi-val text-cyan" id="hOnlineToday">0 ج</div>
+            <div class="saliim-kpi-sub">تحصيل المحفظة وانستا لليوم</div>
+          </div>
+
+          <!-- 3. ذمم أونلاين معلقة (تم إخفاؤه بناءً على طلب العميل مع الاحتفاظ بالمعرف للعمليات الخلفية) -->
+          <div class="saliim-kpi-card saliim-kpi-debt" id="onlineDebtsBox" onclick="openOnlineDebtsModal('pending')" style="display:none!important;" title="اضغط لعرض كافة حركات المحفظة وانستا المعلقة">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">⏳ ذمم أونلاين معلقة</span>
+              <span class="saliim-kpi-badge badge-amber">معلق</span>
+            </div>
+            <div class="saliim-kpi-val text-amber" id="hOnlineDebts">0 ج</div>
+            <div class="saliim-kpi-sub">مبالغ قيد الإيداع والتحصيل</div>
+          </div>
+
+          <!-- 4. إجمالي المحفظة -->
+          <div class="saliim-kpi-card saliim-kpi-wallet" id="onlineWalletTotalBox" onclick="openOnlineDebtsModal('all')" title="إجمالي مبيعات المحفظة الإلكترونية ونسبتها المئوية">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">📱 إجمالي المحفظة</span>
+              <span class="saliim-kpi-icon">💳</span>
+            </div>
+            <div class="saliim-kpi-val text-green" id="hWalletTotalVal">0 ج</div>
+            <div class="saliim-kpi-sub" id="hWalletSharePct">(0% من المبيعات)</div>
+          </div>
+
+          <!-- 5. تصفية المحفظة للعهدة -->
+          <div class="saliim-kpi-card saliim-kpi-bridge" id="btnSettleWallet" onclick="openWalletSettleOptions()" style="display:none;" title="تصفية ذمم المحفظة وتحويلها مباشرة إلى العهدة الحالية">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">📥 تصفية للعهدة</span>
+              <span class="bridge-arrow" style="font-size:1.1rem;color:#10b981;font-weight:900;">➔</span>
+            </div>
+            <div class="saliim-kpi-val text-green" id="btnSettleWalletAmt">0 ج</div>
+            <div class="saliim-kpi-sub">تحويل الرصيد للخزينة</div>
+          </div>
+
+          <!-- صناديق التارجت -->
+          <div class="saliim-kpi-card saliim-kpi-target" id="salesTargetBox" style="display:none;">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">🎯 تحقيق التارجت</span>
+            </div>
+            <div class="saliim-kpi-val" id="targetPct">—</div>
+            <div class="saliim-kpi-sub" id="targetSub">—</div>
+          </div>
+
+          <div class="saliim-kpi-card saliim-kpi-monthly" id="monthlyTargetBox" style="display:none;">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">📅 تارجت الشهر</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <svg width="24" height="24" viewBox="0 0 36 36" style="transform:rotate(-90deg);flex-shrink:0;">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+                <circle id="monthRingFill" cx="18" cy="18" r="15" fill="none" stroke="#0284c7" stroke-width="4"
+                  stroke-dasharray="94.25" stroke-dashoffset="94.25" stroke-linecap="round" style="transition:stroke-dashoffset .6s ease;"/>
+              </svg>
+              <div>
+                <div id="monthlyPct" style="font-size:1.05rem;font-weight:900;color:var(--text);line-height:1;">0%</div>
+                <div style="font-size:0.62rem;color:var(--text3);white-space:nowrap;">نسبة الإنجاز</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Today Bar ── -->
+        <div class="saliim-today-card">
+          <div class="saliim-today-head">
+            <div class="saliim-today-title">
+              <span>⚡ حركة اليوم المالية</span>
+              <span class="saliim-today-badge">حسابات اليوم المباشرة</span>
+            </div>
+          </div>
+          <div class="saliim-today-cols">
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-green" id="tRev">0</div>
+              <div class="saliim-today-lbl">📈 إيرادات اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-red" id="tExp">0</div>
+              <div class="saliim-today-lbl">📉 مصاريف اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-blue" id="tOrd">0</div>
+              <div class="saliim-today-lbl">🏭 طلبيات اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-amber" id="tNet">0</div>
+              <div class="saliim-today-lbl">💰 صافي اليوم</div>
+            </div>
+            <div class="saliim-today-col">
+              <div class="saliim-today-num text-teal">
+                <span id="tWallet">0</span>
+                <span id="tWalletPct" style="font-size:.72rem;font-weight:800;color:#0d9488;">(0%)</span>
+              </div>
+              <div class="saliim-today-lbl">📱 محفظة اليوم</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════ TOP MONTHLY SALES TREND GRAPH (مؤشر مبيعات الشهر) ══════════ -->
+        <div id="topSalesTrendCard" class="top-sales-card ts-collapsed">
+          <div class="top-sales-hdr">
+            <div class="top-sales-title-wrap">
+              <div class="top-sales-title">
+                <span style="font-size:1.15rem;">📈</span>
+                <span>حركة مبيعات الشهر</span>
+                <span class="ts-month-badge" id="tsMonthBadge">—</span>
+              </div>
+              <div class="ts-kpi-row" id="tsKpiRow">
+                <div class="ts-chip ts-chip-tot" title="إجمالي مبيعات الشهر الفعلية (بدون الإيداعات)">
+                  <span class="ts-chip-lbl">الإجمالي:</span>
+                  <strong id="tsTotalAmt">0 ج</strong>
+                </div>
+                <div class="ts-chip ts-chip-avg" title="متوسط مبيعات اليوم الواحد المحقق خلال الشهر">
+                  <span class="ts-chip-lbl">المتوسط اليومي:</span>
+                  <strong id="tsAvgAmt">0 ج</strong>
+                </div>
+                <div class="ts-chip ts-chip-peak" title="أعلى مبيعات محققة في يوم خلال الشهر">
+                  <span class="ts-chip-lbl">🚀 أعلى يوم:</span>
+                  <strong id="tsPeakDay">—</strong>
+                </div>
+                <div class="ts-chip ts-chip-low" title="أدنى مبيعات محققة في يوم خلال الشهر">
+                  <span class="ts-chip-lbl">🔻 أقل يوم:</span>
+                  <strong id="tsLowDay">—</strong>
+                </div>
+                <div class="ts-chip ts-chip-today" title="مبيعات اليوم الحالي ومقارنته بمتوسط الشهر">
+                  <span class="ts-chip-lbl">⚡ اليوم:</span>
+                  <strong id="tsTodayAmt">0 ج</strong>
+                  <span id="tsTodayTrendBadge" class="ts-trend-badge">—</span>
+                </div>
+              </div>
+            </div>
+            <div class="top-sales-ctrls">
+              <div class="ts-type-toggle">
+                <button id="tsBtnLine" class="ts-ctrl-btn ts-active" onclick="setTopSalesChartType('line')" title="عرض رسم بياني انسيابي">📈 منحنى</button>
+                <button id="tsBtnBar" class="ts-ctrl-btn" onclick="setTopSalesChartType('bar')" title="عرض رسم بياني بالأعمدة">📊 أعمدة</button>
+              </div>
+              <button id="tsBtnCollapse" class="ts-ctrl-btn ts-collapse-btn" onclick="toggleTopSalesCard()" title="طي أو إظهار الجراف">
+                <span id="tsCollapseIcon">🔽</span> <span id="tsCollapseText">إظهار الجراف</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chart Body Container (Collapsible) -->
+          <div id="topSalesChartBody" class="top-sales-body">
+            <div class="top-sales-canvas-wrap">
+              <canvas id="topMonthlySalesChart"></canvas>
+            </div>
+            <div class="top-sales-legend-sub">
+              <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#06b6d4;"></span> مبيعات الأيام</span>
+              <span class="ts-leg-item"><span class="ts-leg-line" style="border-top:2px dashed #f6ad55;"></span> خط متوسط الشهر (<span id="tsAvgSubLbl">0 ج</span>) — يفصل بين الصعود 🟢 والهبوط 🔴</span>
+              <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#10b981;border:2px solid #fff;"></span> أعلى نقطة صعود</span>
+              <span class="ts-leg-item"><span class="ts-leg-dot" style="background:#f43f5e;border:2px solid #fff;"></span> أدنى نقطة هبوط</span>
+              <span class="ts-leg-item"><span style="background:rgba(99,179,237,.25);border:1px solid rgba(99,179,237,.6);color:#90cdf4;padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:800;">2 ش</span> عدد الشيفتات فوق كل يوم</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden tabs bar for JS compatibility -->
+        <div class="tabs" id="mainTabs" style="display:none;"></div>
+
+        <!-- Content -->
+        <div class="content" style="padding:0;max-width:100%;">
+<div class="pane" id="pane-add">
       <div class="card">
         <div class="card-t">✏️ تسجيل قيد جديد</div>
         <div class="type-grid">
@@ -1574,6 +2930,9 @@ function ensureXLSX() {
       <!-- ② 8 KPI Cards -->
       <div class="dkpi-grid" id="dKpiGrid"></div>
 
+      <!-- ②.1 تحليل وسائل الدفع والمحافظ الإلكترونية -->
+      <div id="dPayMethodAnalysis"></div>
+
       <!-- ③ Charts Row 1 -->
       <div class="ch-row">
         <div class="ch-card"><div class="ch-t">📊 إيرادات ومصاريف يومياً (آخر 30 يوم)</div><canvas id="barC" height="220"></canvas></div>
@@ -1630,173 +2989,7 @@ function ensureXLSX() {
 
     </div>
 
-    <!-- pane-pos removed -->
-    <div class="pane" id="pane-pos" style="display:none!important">
-
-      <!-- Blue Header -->
-      <div class="pd-hdr">
-        <div>
-          <div class="pd-hdr-title">🏪 داشبورد المبيعات الفعلي — POS</div>
-          <div style="font-size:.75rem;opacity:.8;" id="pdHdrSub">—</div>
-        </div>
-        <div class="pd-hdr-actions">
-          <label class="btn btn-sm btn-blue" style="cursor:pointer;">
-            📂 استيراد POS
-            <input type="file" accept=".xlsx,.xls" onchange="importPOS(event)" style="display:none;"/>
-          </label>
-          <button class="btn btn-sm btn-blue" onclick="pdExportCSV()">⬇️ CSV</button>
-        </div>
-      </div>
-
-      <!-- Filter Panel -->
-      <div class="pos-filter-panel" id="posFilterPanel">
-
-        <!-- Row 1: Period + import info -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">📅 الفترة:</span>
-          <div class="pf-chips" id="pfPeriodChips">
-            <div class="pf-chip" onclick="pdSetFilter('period','today',this)">اليوم</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','week',this)">الأسبوع</div>
-            <div class="pf-chip on" onclick="pdSetFilter('period','month',this)">هذا الشهر</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','lastMonth',this)">الشهر الماضي</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','quarter',this)">الربع</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','year',this)">هذا العام</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','all',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('period','custom',this)">📆 مخصص</div>
-          </div>
-          <span class="pf-import-info" id="pdImportInfo"></span>
-        </div>
-
-        <!-- Row 1b: Custom date range (hidden unless period=custom) -->
-        <div class="pos-filter-row" id="pfCustomRow" style="display:none;">
-          <span class="pos-filter-label">من–إلى:</span>
-          <div class="pf-date-wrap">
-            <input type="date" class="pf-date" id="pfDateFrom" onchange="pdApplyFilters()"/>
-            <span style="color:var(--text3);font-size:.8rem;">←</span>
-            <input type="date" class="pf-date" id="pfDateTo" onchange="pdApplyFilters()"/>
-          </div>
-        </div>
-
-        <!-- Row 2: Type + Status -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">💳 النوع:</span>
-          <div class="pf-chips" id="pfTypeChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('type','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','نقدية',this)">نقدية</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','توصيل للمنازل',this)">توصيل</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','آجلة',this)">آجلة</div>
-            <div class="pf-chip" onclick="pdSetFilter('type','نقدية غير مسددة',this)">غير مسددة</div>
-          </div>
-          <span class="pos-filter-label" style="margin-right:14px;">✅ السداد:</span>
-          <div class="pf-chips" id="pfStatusChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('status','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('status','مسددة',this)">مسددة</div>
-            <div class="pf-chip" onclick="pdSetFilter('status','غير مسددة',this)">غير مسددة</div>
-          </div>
-        </div>
-
-        <!-- Row 3: Margin + Discount -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">📊 الهامش:</span>
-          <div class="pf-chips" id="pfMarginChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('margin','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','neg',this)" style="border-color:#c53030;color:#c53030;">خسارة</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','low',this)">&lt;10%</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','mid',this)">10–30%</div>
-            <div class="pf-chip" onclick="pdSetFilter('margin','high',this)">&gt;30%</div>
-          </div>
-          <span class="pos-filter-label" style="margin-right:14px;">💸 الخصم:</span>
-          <div class="pf-chips" id="pfDiscChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('hasDiscount','',this)">الكل</div>
-            <div class="pf-chip" onclick="pdSetFilter('hasDiscount','yes',this)">بخصم</div>
-            <div class="pf-chip" onclick="pdSetFilter('hasDiscount','no',this)">بدون خصم</div>
-          </div>
-        </div>
-
-        <!-- Row 4: Day of week + Customer search + Reset -->
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">📆 اليوم:</span>
-          <div class="pf-chips" id="pfDayChips">
-            <div class="pf-chip on on-g" onclick="pdSetFilter('dayOfWeek','',this)">كل الأيام</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','6',this)">سبت</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','0',this)">أحد</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','1',this)">اثنين</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','2',this)">ثلاثاء</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','3',this)">أربعاء</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','4',this)">خميس</div>
-            <div class="pf-chip" onclick="pdSetFilter('dayOfWeek','5',this)">جمعة</div>
-          </div>
-        </div>
-        <div class="pos-filter-row">
-          <span class="pos-filter-label">🔍 العميل:</span>
-          <input type="text" class="pf-search" id="pfCustomerSearch"
-            placeholder="ابحث باسم العميل أو كود البيع..."
-            oninput="pdApplyFilters()"/>
-          <button class="pf-clear" onclick="pdClearFilters()">↺ إعادة تعيين</button>
-        </div>
-
-      </div>
-
-      <!-- KPI Grid -->
-      <div class="pd-kpi-grid" id="pdKpiGrid"></div>
-
-      <!-- Charts Row 1: Daily Bar + Type Comparison -->
-      <div class="ch-row">
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">📊 المبيعات اليومية <small>(مبيعات · تكلفة · ربح)</small></div>
-          <canvas id="pdDailyBar" height="230"></canvas>
-        </div>
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">🔄 مقارنة أنواع البيع</div>
-          <div id="pdTypeCmp"></div>
-          <canvas id="pdTypePie" height="160" style="margin-top:10px;"></canvas>
-        </div>
-      </div>
-
-      <!-- Charts Row 2: Margin Line + Histogram -->
-      <div class="ch-row">
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">📈 منحنى الهامش اليومي</div>
-          <canvas id="pdMarginLine" height="210"></canvas>
-        </div>
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">📉 توزيع هامش الربح <small>(عدد الفواتير بكل نطاق)</small></div>
-          <canvas id="pdMarginHist" height="210"></canvas>
-        </div>
-      </div>
-
-      <!-- Row 3: Discount + Top Customers -->
-      <div class="ch-row">
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">💸 تحليل الخصومات</div>
-          <div id="pdDiscAnalysis"></div>
-        </div>
-        <div class="pd-ch-card">
-          <div class="pd-ch-title">👥 أكبر العملاء <small>المسميين فقط</small></div>
-          <div id="pdTopCustomers"></div>
-        </div>
-      </div>
-
-      <!-- Insights -->
-      <div class="pd-ch-card" style="margin-bottom:18px;">
-        <div class="pd-ch-title">💡 رؤى ومؤشرات تنبيه</div>
-        <div id="pdInsightsBox"></div>
-      </div>
-
-      <!-- Invoices Table -->
-      <div class="pd-ch-card" style="margin-bottom:22px;">
-        <div class="pd-ch-title">
-          📋 قائمة الفواتير
-          <span style="font-size:.77rem;color:#a0aec0;font-weight:400;" id="pdTblCount"></span>
-        </div>
-        <!-- filters moved to panel above -->
-        <div class="tbl-w"><div id="pdTblHolder"></div></div>
-        <div class="pgr" id="pdTblPgr"></div>
-      </div>
-
-    </div>
-
-    <!-- ── ATTENDANCE (all users) ── -->
+<!-- ── ATTENDANCE (all users) ── -->
     <div class="pane" id="pane-att">
 
       <!-- Green Header with live clock -->
@@ -2660,7 +3853,10 @@ function ensureXLSX() {
       </div>
     </div>
 
-  </div><!-- /content -->
+      </div><!-- /content -->
+      </div><!-- /saliim-content-body -->
+    </main><!-- /saliim-main -->
+  </div><!-- /saliim-layout -->
 </div><!-- /scApp -->
 
 <!-- ══════════════════════════════════════════
@@ -2731,7 +3927,7 @@ let attIncentives = {};  // from meta/attendanceIncentives { "YYYY-MM__name": in
 let attSalaryTypes    = {};  // from meta/attendanceSalaryTypes { name: 'hourly' | 'fixed' }
 let attFixedSalaries  = {};  // from meta/attendanceFixedSalaries { name: fixedAmount }
 let attManualSalaries = {};  // from meta/attendanceManualSalaries { "YYYY-MM__name": manualSalary }
-let walletSettlePin = '1234'; // الرقم السري لتصفية المحفظة والذمم إلى العهدة
+let walletSettlePin = (function(){ try { return localStorage.getItem('asafra_wallet_pin') || '1234'; } catch(e){ return '1234'; } })(); // الرقم السري لتصفية المحفظة والذمم إلى العهدة
 let attAttOff     = new Set();  // موظفين مستبعَدين من الحضور
 let attSalOff     = new Set();  // موظفين مستبعَدين من الرواتب
 let attFilter     = { month: '', emp: '', dateFrom: '', dateTo: '' }; // attendance filter state
@@ -2883,7 +4079,6 @@ async function auditAndSyncBalance(applyFix = false) {
         renderAuditResult(rpcRes);
         if (applyFix) {
           toast('✅ تم تصحيح ومطابقة رصيد الخزينة بنجاح');
-          fireFlyingParticles(document.getElementById('btnFixBal'), ['⚡', '💰', '✨', '🎉'], 22);
           listenBalance();
         }
         if (btn) btn.disabled = false;
@@ -3150,11 +4345,24 @@ async function setPermission(uid, key, value) {
 }
 
 async function delUser(uid, name) {
-  if (!confirm(`حذف حساب "${name}"؟\nقيوده السابقة ستبقى.`)) return;
-  await sb.from('users').delete().eq('id', uid);
-  delete users[uid];
-  renderUsersTab();
-  toast('🗑 تم حذف الحساب');
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: حذف الحسابات مخصص للمدير فقط', false);
+    return;
+  }
+  if (uid === me?.uid) {
+    toast('⚠️ لا يمكنك حذف حسابك الحالي أثناء تسجيل الدخول', false);
+    return;
+  }
+  if (!confirm(`حذف حساب "${name}"؟\nقيوده السابقة ستبقى محفوظة في النظام ولن تُحذف.`)) return;
+  try {
+    const { error } = await sb.from('users').delete().eq('id', uid);
+    if (error) throw error;
+    delete users[uid];
+    renderUsersTab();
+    toast('🗑 تم حذف الحساب بنجاح');
+  } catch(e) {
+    toast('❌ فشل حذف الحساب: ' + (e.message || e), false);
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -3236,9 +4444,21 @@ function listenBalance() {
   unsubB = () => sb.removeChannel(sbChanBalance);
 }
 
-// إعادة تحميل الرصيد لما النت يرجع
+// إعادة المزامنة الشاملة عند استعادة الاتصال بالإنترنت
 window.addEventListener('online', () => {
-  setTimeout(() => { if (me) listenBalance(); }, 1500);
+  toast('🟢 تم استعادة الاتصال بالإنترنت — جاري المزامنة...', true);
+  setTimeout(() => {
+    if (me) {
+      try { listenBalance(); } catch(e){}
+      try { listenEntries(); } catch(e){}
+      try { loadAndListenWalletPin(); } catch(e){}
+      try { fetchEntriesDebounced(300); } catch(e){}
+    }
+  }, 1200);
+});
+
+window.addEventListener('offline', () => {
+  toast('⚠️ انقطع الاتصال بالإنترنت — تحقق من شبكة الصيدلية', false);
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -3374,12 +4594,110 @@ function refreshActivePane() {
 // ═══════════════════════════════════════════
 //  BUILD APP
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// 🌟 SALIIM SAAS NAVIGATION & SIDEBAR ENGINE
+// ═══════════════════════════════════════════
+function renderSaliimNav() {
+  const isAdmin = me && me.role === 'admin';
+  const canCust = isAdmin || (me && me.permissions && me.permissions.customers === true);
+
+  const navEl = document.getElementById('saliimNavMenu');
+  if (!navEl) return;
+
+  let html = '';
+
+  // 1. العمليات والقيود
+  html += '<div class="saliim-group-title">💼 العمليات والقيود</div>';
+  html += '<div class="saliim-nav-item active" data-tab="add" onclick="swTab(\'add\', this)">'
+        + '<span class="saliim-item-icon">➕</span><span>قيد جديد</span></div>';
+
+  if (isAdmin) {
+    html += '<div class="saliim-nav-item" data-tab="all" onclick="swTab(\'all\', this)">'
+          + '<span class="saliim-item-icon">📋</span><span>كل الحركات</span></div>';
+  } else {
+    html += '<div class="saliim-nav-item" data-tab="mine" onclick="swTab(\'mine\', this)">'
+          + '<span class="saliim-item-icon">📋</span><span>حركاتي</span></div>';
+  }
+
+  if (isAdmin) {
+    html += '<div class="saliim-nav-item" data-tab="sum" onclick="swTab(\'sum\', this)">'
+          + '<span class="saliim-item-icon">📊</span><span>الملخص والأرباح</span></div>';
+    html += '<div class="saliim-nav-item" data-tab="budget" onclick="swTab(\'budget\', this)">'
+          + '<span class="saliim-item-icon">📑</span><span>الموازنة المالية</span></div>';
+  }
+
+  if (canCust) {
+    html += '<div class="saliim-nav-item" data-tab="custfollow" onclick="swTab(\'custfollow\', this)">'
+          + '<span class="saliim-item-icon">👥</span><span>متابعة العملاء</span></div>';
+  }
+
+  // 2. التقارير والمؤشرات (للمدير)
+  if (isAdmin) {
+    html += '<div class="saliim-group-title">📈 التقارير والمؤشرات</div>';
+    html += '<div class="saliim-nav-item" data-tab="salesdb" onclick="swTab(\'salesdb\', this)">'
+          + '<span class="saliim-item-icon">📊</span><span>داشبورد المبيعات</span></div>';
+    html += '<div class="saliim-nav-item" data-tab="monthcmp" onclick="swTab(\'monthcmp\', this)">'
+          + '<span class="saliim-item-icon">📅</span><span>مقارنة الأشهر</span></div>';
+  }
+
+  // 3. شؤون الموظفين
+  html += '<div class="saliim-group-title">⏱ شؤون الموظفين</div>';
+  html += '<div class="saliim-nav-item" data-tab="att" onclick="swTab(\'att\', this)">'
+        + '<span class="saliim-item-icon">⏱</span><span>الحضور والانصراف</span></div>';
+
+  if (isAdmin) {
+    html += '<div class="saliim-nav-item" data-tab="users" onclick="swTab(\'users\', this)">'
+          + '<span class="saliim-item-icon">👥</span><span>الموظفين والصلاحيات</span></div>';
+  }
+
+  // 4. النظام
+  if (isAdmin) {
+    html += '<div class="saliim-group-title">⚙️ النظام</div>';
+    html += '<div class="saliim-nav-item" data-tab="trash" onclick="swTab(\'trash\', this)">'
+          + '<span class="saliim-item-icon">🗑</span><span>سلة المحذوفات</span></div>';
+    html += '<div class="saliim-nav-item" data-tab="set" onclick="swTab(\'set\', this)">'
+          + '<span class="saliim-item-icon">⚙️</span><span>الإعدادات العامة</span></div>';
+  }
+
+  navEl.innerHTML = html;
+}
+
+function toggleSidebar(open) {
+  const sb = document.getElementById('saliimSidebar');
+  const bd = document.getElementById('saliimBackdrop');
+  if (!sb) return;
+  if (open === undefined) {
+    open = !sb.classList.contains('open');
+  }
+  if (open) {
+    sb.classList.add('open');
+    if (bd) bd.classList.add('open');
+  } else {
+    sb.classList.remove('open');
+    if (bd) bd.classList.remove('open');
+  }
+}
+
 function buildApp() {
   document.getElementById('hPhName').textContent = '🏥 '+pharmName;
+  const sidePh = document.getElementById('sidePhName');
+  if (sidePh) sidePh.textContent = pharmName;
+
   document.getElementById('hUName').textContent  = me.name;
+  const sideU = document.getElementById('sideUName');
+  if (sideU) sideU.textContent = me.name;
+
+  const sideAvatar = document.getElementById('sideUserAvatar');
+  if (sideAvatar) sideAvatar.textContent = (me.name || 'م').trim().charAt(0);
+
   const rc = document.getElementById('hURole');
   rc.textContent = me.role==='admin' ? '👑 مدير' : '👤 موظف';
   rc.className   = 'r-chip '+(me.role==='admin'?'rc-admin':'rc-emp');
+
+  const sideR = document.getElementById('sideURole');
+  if (sideR) sideR.textContent = me.role==='admin' ? '👑 مدير النظام' : '👤 موظف صيدلية';
+
+  renderSaliimNav();
 
   const isAdmin = me.role==='admin';
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
@@ -3463,75 +4781,51 @@ function bnSwitch(name, liEl) {
 }
 
 // ═══════════════════════════════════════════
-//  MOTION & FLYING PARTICLES ENGINE 🚀✨
+//  PARTICLES & ANIMATION (DISABLED PER REQUEST)
 // ═══════════════════════════════════════════
-function fireFlyingParticles(originEl, icons = ['💵', '💊', '✨', '🎉', '⚡', '🚀'], count = 18) {
-  try {
-    let startX, startY;
-    if (originEl && originEl.getBoundingClientRect) {
-      const r = originEl.getBoundingClientRect();
-      startX = r.left + r.width / 2;
-      startY = r.top + r.height / 2;
-    } else {
-      startX = window.innerWidth / 2;
-      startY = window.innerHeight / 2;
-    }
-
-    for (let i = 0; i < count; i++) {
-      const p = document.createElement('div');
-      p.className = 'flying-particle';
-      p.textContent = icons[Math.floor(Math.random() * icons.length)];
-      document.body.appendChild(p);
-
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.7;
-      const dist = 60 + Math.random() * 140;
-      const destX = startX + Math.cos(angle) * dist;
-      const destY = startY + Math.sin(angle) * dist - (30 + Math.random() * 80);
-      const rot = (Math.random() - 0.5) * 600;
-      const scale = 0.7 + Math.random() * 0.9;
-      const duration = 650 + Math.random() * 450;
-
-      p.style.left = startX + 'px';
-      p.style.top = startY + 'px';
-      p.style.transform = 'translate(-50%, -50%) scale(0.2)';
-      p.style.opacity = '1';
-
-      const startTime = performance.now();
-      function step(now) {
-        const elapsed = now - startTime;
-        const prog = Math.min(elapsed / duration, 1);
-        const ease = 1 - Math.pow(1 - prog, 2.5);
-        const curX = startX + (destX - startX) * ease;
-        const curY = startY + (destY - startY) * ease + Math.pow(prog, 2) * 85;
-        const curScale = (1 - prog * 0.25) * scale;
-        const curOp = prog > 0.55 ? 1 - (prog - 0.55) / 0.45 : 1;
-
-        p.style.left = curX + 'px';
-        p.style.top = curY + 'px';
-        p.style.transform = `translate(-50%, -50%) scale(${curScale}) rotate(${rot * ease}deg)`;
-        p.style.opacity = curOp;
-
-        if (prog < 1) {
-          requestAnimationFrame(step);
-        } else {
-          p.remove();
-        }
-      }
-      requestAnimationFrame(step);
-    }
-  } catch(e) { console.warn('Particle error', e); }
+function fireFlyingParticles() {
+  // Neutralized per user request: zero emoji particles or flashy bursts on click
+  return;
 }
 
 function swTab(name, el) {
+  // ── Sync Saliim Sidebar Active Item ──
+  document.querySelectorAll('.saliim-nav-item').forEach(it => {
+    if (it.getAttribute('data-tab') === name) {
+      it.classList.add('active');
+    } else {
+      it.classList.remove('active');
+    }
+  });
+
+  // ── Sync Saliim Topbar Title & Breadcrumb ──
+  const titles = {
+    'add': { title: '➕ تسجيل قيد جديد', bc: 'الرئيسية / العمليات والقيود' },
+    'all': { title: '📋 سجل كل الحركات المالية', bc: 'الرئيسية / العمليات والقيود' },
+    'mine': { title: '📋 سجل حركاتي اليومية', bc: 'الرئيسية / العمليات والقيود' },
+    'sum': { title: '📊 الملخص المالي والأرباح', bc: 'الرئيسية / التقارير' },
+    'budget': { title: '📑 الموازنة المالية الشاملة', bc: 'الرئيسية / التقارير' },
+    'salesdb': { title: '📊 داشبورد تحليل المبيعات', bc: 'التقارير / مؤشرات الأداء' },
+    'monthcmp': { title: '📅 مقارنة الأشهر والنمو', bc: 'التقارير / مؤشرات الأداء' },
+    'custfollow': { title: '👥 كشف حساب ومتابعة العملاء', bc: 'العملاء / الذمم الآجلة' },
+    'att': { title: '⏱ الحضور والانصراف والورديات', bc: 'شؤون الموظفين / البصمة' },
+    'users': { title: '👥 إدارة الموظفين والصلاحيات', bc: 'النظام / شؤون الموظفين' },
+    'trash': { title: '🗑 سلة المحذوفات', bc: 'النظام / الاسترجاع' },
+    'set': { title: '⚙️ إعدادات النظام', bc: 'النظام / التهيئة' }
+  };
+  const tInfo = titles[name] || { title: name, bc: 'الرئيسية' };
+  const ptEl = document.getElementById('saliimPageTitle');
+  if (ptEl) ptEl.textContent = tInfo.title;
+  const pbEl = document.getElementById('saliimBreadcrumb');
+  if (pbEl) pbEl.textContent = tInfo.bc;
+
+  // Close mobile drawer on navigation
+  toggleSidebar(false);
+
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
   if (el) {
     el.classList.add('on');
-    // شقلبظة التاب وقفزة بهلوانية
-    el.classList.remove('tab-acrobatic');
-    void el.offsetWidth;
-    el.classList.add('tab-acrobatic');
-    fireFlyingParticles(el, ['✨', '💫', '⚡', '🌟'], 5);
   }
   // Sync bottom nav active state when top tab clicked
   document.querySelectorAll('#bottomNav li').forEach(l=>l.classList.remove('bn-on'));
@@ -3540,25 +4834,8 @@ function swTab(name, el) {
   const pane = document.getElementById('pane-'+name);
   if (pane) {
     pane.classList.add('on');
-    // حركة دخول العناصر والبطاقات من اليمين واليسار بالتتابع
-    const items = pane.querySelectorAll('.card, .set-sec, .pd-card, .table-wrap, .fg-row');
-    items.forEach((c, idx) => {
-      c.classList.remove('motion-slide-right', 'motion-slide-left');
-      void c.offsetWidth;
-      if (idx % 2 === 0) {
-        c.classList.add('motion-slide-right');
-      } else {
-        c.classList.add('motion-slide-left');
-      }
-      c.style.animationDelay = (idx * 0.05) + 's';
-    });
-    setTimeout(() => {
-      items.forEach(c => {
-        c.classList.remove('motion-slide-right', 'motion-slide-left');
-        c.style.animationDelay = '';
-      });
-    }, 600);
   }
+
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
   if (name==='sum')   renderSum();
@@ -3586,10 +4863,6 @@ function pickType(t, el) {
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('on'));
   if (el) {
     el.classList.add('on');
-    el.classList.remove('btn-acrobatic');
-    void el.offsetWidth;
-    el.classList.add('btn-acrobatic');
-    fireFlyingParticles(el, ['✨', '💫', '🎯'], 4);
   }
   
   // ── مسح البند لو مش من قائمة التاب الجديد ──
@@ -3845,7 +5118,6 @@ async function doSave() {
 
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
     updateOnlineDebtsHeader();
-    fireFlyingParticles(document.getElementById('btnSave') || document.querySelector('.btn-primary'), ['💵', '💊', '✨', '🎉', '⚡', '🚀'], 24);
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
     if (typeof hideCoDrop === 'function') hideCoDrop();
     checkNotesSenderValidation();
@@ -3974,13 +5246,20 @@ async function saveEdit() {
 }
 
 async function resetAll() {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: تصفير البيانات مخصص للمدير فقط', false);
+    return;
+  }
   if (!confirm('⚠️ تصفير الكل: سيُحذف كل الحركات ويصبح الرصيد صفراً!\nهذه العملية لا يمكن التراجع عنها.')) return;
-  // [v12] تأكيد كتابي — الحماية السابقة كانت نقرتين على «موافق»،
-  // وبعض المتصفحات تكبت confirm() فيمر الحذف الكامل بلا أي تأكيد.
+  const pinInput = prompt('🔒 أدخل الرقم السري الخاص بالمدير للمتابعة:');
+  if (!pinInput || pinInput.trim() !== walletSettlePin) {
+    toast('❌ الرقم السري غير صحيح — تم إلغاء العملية فوراً لحماية البيانات', false);
+    return;
+  }
   const _typed = prompt('لتأكيد حذف كل البيانات نهائياً اكتب اسم الصيدلية بالضبط:\n\n' + pharmName);
   if (_typed === null) return;
   if (_typed.trim() !== pharmName.trim()) { toast('❌ الاسم غير مطابق — تم إلغاء العملية', false); return; }
-  // [v12] إجبار نسخة احتياطية قبل عملية لا رجعة فيها
+  // إجبار نسخة احتياطية قبل عملية لا رجعة فيها
   try { await doManualBackup(); }
   catch(_e) {
     if (!confirm('⚠️ تعذّر أخذ نسخة احتياطية.\nهل تريد المتابعة رغم ذلك؟')) return;
@@ -4468,9 +5747,13 @@ function trashChkChange() {
 
 // ── حذف نهائي للمحدد ──
 async function permDeleteSelected() {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: الحذف النهائي مخصص للمدير فقط', false);
+    return;
+  }
   const ids = [...document.querySelectorAll('.trash-chk:checked')].map(c => c.dataset.id);
   if (!ids.length) return;
-  if (!confirm(`⚠️ حذف نهائي لـ ${ids.length} بند؟\nهذه العملية لا يمكن التراجع عنها.`)) return;
+  if (!confirm(`⚠️ حذف نهائي لـ ${ids.length} بند؟\nهذه العملية لا يمكن التراجع عنها نهائياً.`)) return;
   try {
     const {error} = await sb.from('entries').delete().in('id', ids);
     if (error) throw error;
@@ -4481,9 +5764,13 @@ async function permDeleteSelected() {
 
 // ── حذف نهائي لبند واحد ──
 async function permDeleteOne(id) {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: الحذف النهائي مخصص للمدير فقط', false);
+    return;
+  }
   const e = trashedEntries.find(x => x.id === id);
   if (!e) return;
-  if (!confirm(`⚠️ حذف نهائي لهذا البند؟\n${e.type} — ${esc(e.company||'')} — ${fmt(e.amount)}\n\nلا يمكن التراجع عن هذا الإجراء.`)) return;
+  if (!confirm(`⚠️ حذف نهائي لهذا البند؟\n${e.type} — ${esc(e.company||'')} — ${fmt(e.amount)}\n\nلا يمكن التراجع عن هذا الإجراء نهائياً.`)) return;
   try {
     const {error} = await sb.from('entries').delete().eq('id', id);
     if (error) throw error;
@@ -4507,7 +5794,6 @@ async function restoreEntry(id) {
     if (error) throw error;
     await sbUpdateBalance(delta);
     toast('✅ تم استعادة القيد بنجاح');
-    fireFlyingParticles(null, ['🚀', '✨', '♻️', '💫', '🎉'], 20);
     // refresh both lists
     fetchTrash();
     fetchEntries();
@@ -4943,6 +6229,24 @@ function renderOnlineDebtsModalList() {
     summary.innerHTML = `إجمالي المعلق التراكمي: <strong style="color:#f6ad55;">${fmt(pAmt)} ج</strong>`;
   }
 
+  // ── تحديث كروت التحليل الإحصائي في مودال الذمم ──
+  const elStatTotal = document.getElementById('odStatTotalWallet');
+  const elStatSettled = document.getElementById('odStatSettledWallet');
+  const elStatPending = document.getElementById('odStatPendingWallet');
+  const elStatShare = document.getElementById('odStatWalletShare');
+
+  const allWallets = entries.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company||'').includes('محفظة') || !(e.company||'').includes('انستا')));
+  const wTot = allWallets.reduce((s, e) => s + (parseFloat(e.amount)||0), 0);
+  const wPend = allWallets.filter(e => !isSettled(e)).reduce((s, e) => s + (parseFloat(e.amount)||0), 0);
+  const wSet = Math.max(0, wTot - wPend);
+  const totalRev = entries.filter(e => e.type === 'ايرادات' && !e.deleted).reduce((s, e) => s + (parseFloat(e.amount)||0), 0);
+  const wShare = totalRev > 0 ? (wTot / totalRev * 100).toFixed(1) : 0;
+
+  if (elStatTotal) elStatTotal.textContent = `${fmt(wTot)} ج`;
+  if (elStatSettled) elStatSettled.textContent = `${fmt(wSet)} ج`;
+  if (elStatPending) elStatPending.textContent = `${fmt(wPend)} ج`;
+  if (elStatShare) elStatShare.textContent = `${wShare}%`;
+
   if (!list.length) {
     container.innerHTML = '<div style="text-align:center;padding:35px;color:var(--text3);font-size:.85rem;">لا توجد حركات أونلاين مطابقة لهذا الفلتر</div>';
     return;
@@ -5013,6 +6317,8 @@ function renderOnlineDebtsModalList() {
 function updateOnlineDebtsHeader() {
   const elTotal = document.getElementById('hOnlineDebts');
   const elToday = document.getElementById('hOnlineToday');
+  const elWalletTotal = document.getElementById('hWalletTotalVal');
+  const elWalletShare = document.getElementById('hWalletSharePct');
 
   const td = todayStr();
   const nonDeleted = entries.filter(e => e.type === 'ذمم اونلاين' && !e.deleted);
@@ -5038,6 +6344,22 @@ function updateOnlineDebtsHeader() {
     if (co.includes('انستا')) instaToday += amt;
     else walletToday += amt;
   });
+
+  // 3. حساب إجمالي مبيعات المحفظة التراكمي ونسبتها من المبيعات (بند دائم للتحليل)
+  const allWalletEntries = nonDeleted.filter(e => (e.company || '').includes('محفظة') || !(e.company || '').includes('انستا'));
+  const allWalletTotal = allWalletEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const curMonth = td.slice(0, 7);
+  const monthWalletTotal = allWalletEntries.filter(e => e.date?.startsWith(curMonth)).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const monthRevs = entries.filter(e => e.date?.startsWith(curMonth) && e.type === 'ايرادات' && !e.deleted).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const walletPct = monthRevs > 0 ? ((monthWalletTotal / monthRevs) * 100).toFixed(1) : (allWalletTotal > 0 ? '100' : '0');
+
+  if (elWalletTotal) {
+    elWalletTotal.textContent = `${fmt(allWalletTotal)} ج`;
+    elWalletTotal.title = `إجمالي مبيعات المحفظة التراكمي: ${fmt(allWalletTotal)} ج | مبيعات شهر (${curMonth}): ${fmt(monthWalletTotal)} ج`;
+  }
+  if (elWalletShare) {
+    elWalletShare.textContent = `(${walletPct}% من مبيعات الشهر)`;
+  }
 
   // ── تحديث صندوق المعلق التراكمي (Box 1) ──
   if (elTotal) {
@@ -5117,6 +6439,15 @@ function updToday() {
   document.getElementById('tExp').textContent=fmt(x);
   document.getElementById('tOrd').textContent=fmt(o);
   document.getElementById('tNet').textContent=fmt(r-x-o-p-a-dh);
+
+  // ── تحديث محفظة اليوم ونسبتها في شريط اليوم ──
+  const todayWallet = ts.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company||'').includes('محفظة') || !(e.company||'').includes('انستا'))).reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const todayWalletPct = r > 0 ? ((todayWallet / r) * 100).toFixed(1) : 0;
+  const elTWallet = document.getElementById('tWallet');
+  const elTWalletPct = document.getElementById('tWalletPct');
+  if (elTWallet) elTWallet.textContent = fmt(todayWallet);
+  if (elTWalletPct) elTWalletPct.textContent = `(${todayWalletPct}%)`;
+
   renderTopMonthlySalesChart();
 }
 
@@ -5152,12 +6483,16 @@ function toggleTopSalesCard() {
 
 function initTopSalesCardState() {
   try {
-    const isCollapsed = localStorage.getItem('asafra_top_sales_collapsed') === '1';
-    if (isCollapsed) {
-      const card = document.getElementById('topSalesTrendCard');
+    const isExpanded = localStorage.getItem('asafra_top_sales_collapsed') === '0';
+    const card = document.getElementById('topSalesTrendCard');
+    const icon = document.getElementById('tsCollapseIcon');
+    const txt = document.getElementById('tsCollapseText');
+    if (isExpanded) {
+      if (card) card.classList.remove('ts-collapsed');
+      if (icon) icon.textContent = '🔼';
+      if (txt) txt.textContent = 'طي';
+    } else {
       if (card) card.classList.add('ts-collapsed');
-      const icon = document.getElementById('tsCollapseIcon');
-      const txt = document.getElementById('tsCollapseText');
       if (icon) icon.textContent = '🔽';
       if (txt) txt.textContent = 'إظهار الجراف';
     }
@@ -5288,7 +6623,7 @@ function renderTopMonthlySalesChart() {
     try { topSalesChart.destroy(); } catch(e){}
   }
 
-  const isDark = !document.body.classList.contains('light-mode');
+  const isDark = document.body.classList.contains('dark-mode');
   const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
   const tickColor = isDark ? '#a0aec0' : '#4a5568';
 
@@ -5735,6 +7070,24 @@ function renderSum() {
   const ordCnt = sub.filter(e=>e.type==='طلبيات').length;
   const avgOrd = ordCnt>0 ? o/ordCnt : 0;
 
+  // ── تحليلات مبيعات المحفظة الإلكترونية ووسائل الدفع ──
+  const walletSub = sub.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا')));
+  const walletTotal = walletSub.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const walletPending = walletSub.filter(e => !isSettled(e)).reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const walletSettled = Math.max(0, walletTotal - walletPending);
+  const prWalletSub = prev.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && ((e.company || '').includes('محفظة') || !(e.company || '').includes('انستا')));
+  const prWalletTotal = prWalletSub.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const walletSharePct = r > 0 ? (walletTotal / r * 100) : 0;
+
+  const instaSub = sub.filter(e => e.type === 'ذمم اونلاين' && !e.deleted && (e.company || '').includes('انستا'));
+  const instaTotal = instaSub.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const instaSharePct = r > 0 ? (instaTotal / r * 100) : 0;
+
+  const cashShare = Math.max(0, r - walletTotal - instaTotal);
+  const cashSharePct = r > 0 ? (cashShare / r * 100) : 0;
+  const digitalTotal = walletTotal + instaTotal;
+  const digitalSharePct = r > 0 ? (digitalTotal / r * 100) : 0;
+
   // ── أيام الاسترداد ──
   const activeDays = [...new Set(sub.map(e=>e.date).filter(Boolean))].length || 1;
   const dailyRevAvg = r / activeDays;
@@ -5797,8 +7150,21 @@ function renderSum() {
       <div class="dkpi-val" style="color:#81e6d9;">${fmt(a)}<span class="dkpi-unit"> ج</span></div>
       <div class="dkpi-delta">${delta(a,pa)}</div>
     </div>`:''}
+    <div class="dkpi" style="border-color:rgba(72,187,120,.4);background:rgba(72,187,120,.07);">
+      <div class="dkpi-lbl" style="color:#48bb78;display:flex;justify-content:space-between;align-items:center;">
+        <span>📱 مبيعات المحفظة</span>
+        <span style="font-size:.7rem;padding:1px 6px;border-radius:4px;background:rgba(72,187,120,.2);color:#68d391;font-weight:800;">${walletSharePct.toFixed(1)}% من المبيعات</span>
+      </div>
+      <div class="dkpi-val" style="color:#38a169;">${fmt(walletTotal)}<span class="dkpi-unit"> ج</span></div>
+      <div class="dkpi-delta">
+        <span style="font-size:.74rem;color:var(--text2);display:block;margin-bottom:2px;">
+          ${walletPending > 0 ? `⏳ معلق: <strong style="color:#f6ad55;">${fmt(walletPending)} ج</strong> | ` : ''}✅ مصفى للعهدة: <strong style="color:#68d391;">${fmt(walletSettled)} ج</strong>
+        </span>
+        ${delta(walletTotal, prWalletTotal)}
+      </div>
+    </div>
     ${dh>0?`<div class="dkpi" style="border-color:rgba(183,148,244,.35);background:rgba(183,148,244,.06);">
-      <div class="dkpi-lbl" style="color:#b794f4;">⏳ ذمم أونلاين</div>
+      <div class="dkpi-lbl" style="color:#b794f4;">⏳ ذمم أونلاين معلقة</div>
       <div class="dkpi-val" style="color:#b794f4;">${fmt(dhPending)}<span class="dkpi-unit"> ج</span></div>
       <div class="dkpi-delta"><span class="${dhPending>0?'d-dn':'d-up'}">${dhPending>0?`⚠️ ${dhPending===dh?'كل الذمم معلقة':'بعض الذمم معلقة'}`:'✅ كل الذمم مُسوَّاة'}</span></div>
     </div>`:(pendingOnlineAmt()>0?`<div class="dkpi" style="border-color:rgba(183,148,244,.35);background:rgba(183,148,244,.06);">
@@ -5838,6 +7204,69 @@ function renderSum() {
       <div class="dkpi-delta"><span class="d-na">${ordCnt} طلبية</span></div>
     </div>
     ${renderTargetAchievement(sub, prev)}`;
+
+  // ── ② لوحة تحليل وسائل الدفع والمحافظ الإلكترونية ──
+  const elPayAnalysis = document.getElementById('dPayMethodAnalysis');
+  if (elPayAnalysis) {
+    elPayAnalysis.innerHTML = `
+      <div class="card" style="margin-bottom:18px;background:var(--bg1);border:1.5px solid rgba(72,187,120,.25);border-radius:14px;padding:16px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div>
+            <div style="font-weight:900;font-size:1rem;color:var(--text1);display:flex;align-items:center;gap:8px;">
+              <span>💳 تحليل وسائل الدفع والتحصيل الإلكتروني</span>
+              <span style="font-size:.72rem;padding:2px 8px;border-radius:12px;background:rgba(72,187,120,.15);color:#48bb78;font-weight:800;">
+                إجمالي الدفع الإلكتروني: ${fmt(digitalTotal)} ج (${digitalSharePct.toFixed(1)}%)
+              </span>
+            </div>
+            <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">مقارنة نسب المبيعات المدفوعة نقداً (كاش) مقابل المحافظ الإلكترونية وإنستاباي</div>
+          </div>
+          <button type="button" onclick="openOnlineDebtsModal('all')" class="btn btn-sm btn-ghost" style="font-size:.78rem;padding:4px 12px;border:1px solid var(--border);cursor:pointer;">
+            📋 كشف حركات المحفظة
+          </button>
+        </div>
+
+        <!-- شريط التوزيع النسبي التفاعلي -->
+        <div style="height:14px;border-radius:8px;background:rgba(255,255,255,.05);display:flex;overflow:hidden;margin-bottom:14px;border:1px solid var(--border);">
+          <div style="width:${cashSharePct}%;background:#48bb78;transition:width .4s;" title="كاش: ${cashSharePct.toFixed(1)}%"></div>
+          <div style="width:${walletSharePct}%;background:#38b2ac;transition:width .4s;" title="محفظة: ${walletSharePct.toFixed(1)}%"></div>
+          <div style="width:${instaSharePct}%;background:#63b3ed;transition:width .4s;" title="انستا باي: ${instaSharePct.toFixed(1)}%"></div>
+        </div>
+
+        <!-- 3 أعمدة تحليلية -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+          <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;border-right:3px solid #48bb78;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:.8rem;color:var(--text2);font-weight:700;">💵 نقدية / كاش (الدرج)</span>
+              <span style="font-size:.75rem;font-weight:900;color:#48bb78;">${cashSharePct.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:1.15rem;font-weight:900;color:var(--text1);">${fmt(cashShare)} <span style="font-size:.75rem;color:var(--text3);">ج</span></div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">مبيعات نقدية مباشرة بالخزينة</div>
+          </div>
+
+          <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;border-right:3px solid #38b2ac;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:.8rem;color:var(--text2);font-weight:700;">📱 محافظ إلكترونية (فودافون/وي/اتصالات)</span>
+              <span style="font-size:.75rem;font-weight:900;color:#38b2ac;">${walletSharePct.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:1.15rem;font-weight:900;color:#38b2ac;">${fmt(walletTotal)} <span style="font-size:.75rem;color:var(--text3);">ج</span></div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">
+              ${walletPending > 0 ? `<span style="color:#f6ad55;">⏳ معلق: ${fmt(walletPending)} ج</span> | ` : ''}
+              <span style="color:#68d391;">✅ مصفى للعهدة: ${fmt(walletSettled)} ج</span>
+            </div>
+          </div>
+
+          <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;border-right:3px solid #63b3ed;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:.8rem;color:var(--text2);font-weight:700;">⚡ تحويلات بنكية (انستا باي InstaPay)</span>
+              <span style="font-size:.75rem;font-weight:900;color:#63b3ed;">${instaSharePct.toFixed(1)}%</span>
+            </div>
+            <div style="font-size:1.15rem;font-weight:900;color:#63b3ed;">${fmt(instaTotal)} <span style="font-size:.75rem;color:var(--text3);">ج</span></div>
+            <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">مدفوعات فورية عبر الحساب البنكي</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   // ── ② BAR CHART: يومياً ──
   const dm={};
@@ -6684,15 +8113,24 @@ async function getBkpData() {
     from += step;
   }
 
-  const [{data: att}, {data: metas}] = await Promise.all([
-    sb.from('attendance').select('*').order('ts'),
-    sb.from('meta').select('*')
+  const [{data: att}, {data: metas}, {data: allSales}, {data: allItems}, {data: allShifts}] = await Promise.all([
+    sb.from('attendance').select('*').order('ts').catch(()=>({data:[]})),
+    sb.from('meta').select('*').catch(()=>({data:[]})),
+    sb.from('sales').select('*').order('ts', { ascending: false }).limit(2000).catch(()=>({data:[]})),
+    sb.from('items').select('*').order('name').catch(()=>({data:[]})),
+    sb.from('shift_handovers').select('*').order('id', { ascending: false }).limit(500).catch(()=>({data:[]}))
   ]);
+
   return {
+    version: '3.0',
     date: new Date().toISOString(),
+    pharmacy: 'صيدليات دوا العصافرة',
     entries: allEnts,
     attendance: att || [],
-    meta: metas || []
+    meta: metas || [],
+    sales: allSales || [],
+    items: allItems || [],
+    shift_handovers: allShifts || []
   };
 }
 
@@ -6970,6 +8408,10 @@ function closeWalletPinModal() {
 }
 
 async function saveWalletPinFromSettings() {
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: تغيير الرقم السري مخصص للمدير فقط', false);
+    return;
+  }
   const inp = document.getElementById('walletPinSettingsInp');
   const val = (inp?.value || '').trim();
   if (!val || val.length < 3) {
@@ -6980,7 +8422,7 @@ async function saveWalletPinFromSettings() {
   try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
   try {
     await sbSetMeta('walletSettlePin', { pin: walletSettlePin });
-    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة (${walletSettlePin}) بنجاح`);
+    toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة بنجاح`);
   } catch(e) {
     toast('❌ فشل حفظ الرقم السري: ' + (e.message || e), false);
   }
@@ -6993,7 +8435,11 @@ function togglePinSettingsVisibility() {
 }
 
 async function changeWalletPinPrompt() {
-  const oldP = prompt('أدخل الرقم السري الحالي (الافتراضي: 1234):');
+  if (me?.role !== 'admin') {
+    toast('❌ غير مصرح: تغيير الرقم السري مخصص للمدير فقط', false);
+    return;
+  }
+  const oldP = prompt('أدخل الرقم السري الحالي:');
   if (oldP === null) return;
   if (oldP !== walletSettlePin) {
     toast('❌ الرقم السري الحالي غير صحيح', false);
@@ -7072,6 +8518,48 @@ async function chooseSettleOption(opt) {
     const coFilter = document.getElementById('odCompanyFilter');
     if (coFilter) { coFilter.value = 'محفظة'; renderOnlineDebtsModalList(); }
     toast('💡 حدد الحركات المراد تصفيتها بالـ Checkbox واضغط "تصفية الحركات المحددة"');
+  }
+}
+
+async function markEntriesSettledInDbAndMemory(entryIds, revId) {
+  if (!entryIds || !entryIds.length) return;
+  const tag = 'settled:' + revId;
+
+  // 1. تحديث الذاكرة المحلية فوراً لضمان عدم ظهورها كمعلقة في واجهة المستخدم
+  entries.forEach(e => {
+    if (entryIds.includes(e.id)) {
+      e.invoice = tag;
+    }
+  });
+
+  // 2. تحديث قاعدة بيانات Supabase بنظام الدُفعات (Batching) مع الإعادة الفردية في حالة التعثر
+  const chunkSize = 25;
+  for (let i = 0; i < entryIds.length; i += chunkSize) {
+    const chunk = entryIds.slice(i, i + chunkSize);
+    try {
+      const { error: updErr } = await sb.from('entries')
+        .update({ invoice: tag })
+        .in('id', chunk);
+      if (updErr) {
+        console.warn('Batch update chunk failed, retrying individually:', updErr);
+        for (const singleId of chunk) {
+          try {
+            await sb.from('entries').update({ invoice: tag }).eq('id', singleId);
+          } catch (e2) {
+            console.error('Error settling single entry:', singleId, e2);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Chunk exception, fallback to single:', err);
+      for (const singleId of chunk) {
+        try {
+          await sb.from('entries').update({ invoice: tag }).eq('id', singleId);
+        } catch (e2) {
+          console.error('Error settling single entry:', singleId, e2);
+        }
+      }
+    }
   }
 }
 
@@ -7175,14 +8663,7 @@ async function settlePartialWalletAmount(targetAmt) {
     }
 
     if (fullySettledIds.length > 0) {
-      const { error: updErr } = await sb.from('entries')
-        .update({ invoice: 'settled:' + revId })
-        .in('id', fullySettledIds);
-      if (updErr) throw updErr;
-
-      walletDebts.forEach(d => {
-        if (fullySettledIds.includes(d.id)) d.invoice = 'settled:' + revId;
-      });
+      await markEntriesSettledInDbAndMemory(fullySettledIds, revId);
     }
 
     if (splitEntry) {
@@ -7448,14 +8929,7 @@ async function settleSelectedWalletDebts() {
       if (feeErr) console.warn('fee insert error:', feeErr);
     }
 
-    const { error: updErr } = await sb.from('entries')
-      .update({ invoice: 'settled:' + revId })
-      .in('id', selectedIds);
-    if (updErr) throw updErr;
-
-    selectedEntries.forEach(e => {
-      e.invoice = 'settled:' + revId;
-    });
+    await markEntriesSettledInDbAndMemory(selectedIds, revId);
 
     entries.unshift({
       id: revId,
@@ -7625,16 +9099,8 @@ async function settleAllWalletDebts() {
       if (feeErr) console.warn('fee insert error:', feeErr);
     }
 
-    // 3. تحديث جميع قيود المحفظة في Supabase لتصبح مسواة
-    const { error: updErr } = await sb.from('entries')
-      .update({ invoice: 'settled:' + revId })
-      .in('id', walletIds);
-    if (updErr) throw new Error(updErr.message);
-
-    // 4. تحديث الذاكرة المحلية
-    walletDebts.forEach(e => {
-      e.invoice = 'settled:' + revId;
-    });
+    // 3. تحديث جميع قيود المحفظة في الذاكرة وقاعدة البيانات لتصبح مسواة
+    await markEntriesSettledInDbAndMemory(walletIds, revId);
 
     entries.unshift({
       id: revId,
@@ -8420,12 +9886,15 @@ function renderPOSPane() {
   }
 
   if (!sub.length) {
-    document.getElementById('pdKpiGrid').innerHTML=
-      `<div class="nd" style="grid-column:1/-1">
-        <div class="nd-i">📭</div>
-        <p>لا توجد بيانات في هذه الفترة<br>
-        <small style="font-size:.8rem;">استورد ملف POS من الزر العلوي أو غيّر الفترة</small></p>
-      </div>`;
+    const kpiG = document.getElementById('pdKpiGrid');
+    if (kpiG) {
+      kpiG.innerHTML =
+        `<div class="nd" style="grid-column:1/-1">
+          <div class="nd-i">📭</div>
+          <p>لا توجد بيانات في هذه الفترة<br>
+          <small style="font-size:.8rem;">استورد ملف POS من الزر العلوي أو غيّر الفترة</small></p>
+        </div>`;
+    }
     ['pdDailyBar','pdTypePie','pdMarginLine','pdMarginHist'].forEach(id=>{
       const c=document.getElementById(id);
       if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
@@ -8450,6 +9919,8 @@ function renderPOSPane() {
 
 // ── KPI Cards ──
 function pdRenderKPIs(sub, prev, hasCost) {
+  const kpiG = document.getElementById('pdKpiGrid');
+  if (!kpiG) return;
   const r   = sub.reduce((s,e)=>s+(e.revenue||0),0);
   const gp  = sub.reduce((s,e)=>s+(e.profit||0),0);
   const disc= sub.reduce((s,e)=>s+(e.discount||0),0);
@@ -8465,7 +9936,7 @@ function pdRenderKPIs(sub, prev, hasCost) {
     return `<span class="${d>=0?'d-up':'d-dn'}">${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(1)}%</span>`;
   }
 
-  document.getElementById('pdKpiGrid').innerHTML=`
+  kpiG.innerHTML=`
     <div class="pd-kpi pd-kpi-b">
       <div class="pd-kl">🧾 إجمالي الفواتير</div>
       <div class="pd-kv">${sub.length}</div>
@@ -9379,7 +10850,6 @@ async function attRecord() {
     };
     const { error: insErr } = await sb.from('attendance').insert(rec);
     if (insErr) throw new Error(insErr.message || JSON.stringify(insErr));
-    fireFlyingParticles(btn, ['⏱️', '✅', '✨', '👏', '🌟'], 20);
 
     const lastEl=document.getElementById('attLastRec');
     if (lastEl) lastEl.textContent=`✅ آخر تسجيل: ${type} لـ "${name}" الساعة ${time}`;
@@ -11020,7 +12490,6 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
 
     updToday();
     toast(`✅ تم صرف باقي الراتب بنجاح (${fmt(remAmt)} ج) وتحديث العهدة — ${empName}`);
-    fireFlyingParticles(document.querySelector('#attEmpReport') || document.body, ['💵', '✨', '🎉', '💰'], 25);
     attShowEmpReport();
   } catch (e) {
     toast('❌ فشل صرف الراتب: ' + arErr(e), false);
@@ -15153,20 +16622,31 @@ function custSubSwitch(name){
 // 🌙  DARK / LIGHT MODE
 // ═══════════════════════════════════════════════════════════════════
 function toggleTheme(){
-  var isLight=document.body.classList.toggle('light-mode');
-  localStorage.setItem('asafra_new_theme',isLight?'light':'dark');
-  document.getElementById('themeToggle').textContent=isLight?'☀️':'🌙';
-  renderTopMonthlySalesChart();
+  var isDark = document.body.classList.toggle('dark-mode');
+  document.documentElement.classList.toggle('dark-mode', isDark);
+  document.body.classList.remove('light-mode');
+  try {
+    localStorage.setItem('asafra_theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('asafra_new_theme', isDark ? 'dark' : 'light');
+  } catch(e){}
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  try { renderTopMonthlySalesChart(); } catch(e){}
 }
 (function(){
-  var saved=localStorage.getItem('asafra_new_theme');
-  if(saved==='light'){
-    document.body.classList.add('light-mode');
-    document.addEventListener('DOMContentLoaded',function(){
-      var btn=document.getElementById('themeToggle');
-      if(btn)btn.textContent='☀️';
+  try {
+    var saved = localStorage.getItem('asafra_theme') || localStorage.getItem('asafra_new_theme');
+    if (saved === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      var isDark = document.body.classList.contains('dark-mode');
+      var btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = isDark ? '☀️' : '🌙';
     });
-  }
+  } catch(e){}
 })();
 
 
@@ -15509,6 +16989,7 @@ document.addEventListener('keydown', e => {
   else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
 });
 
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -15792,6 +17273,26 @@ document.addEventListener('keydown', e => {
       </div>
     </div>
 
+    <!-- شريط الإحصائيات والتحليل المالي للمحفظة -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;">
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">📱 إجمالي مبيعات المحفظة</div>
+        <div id="odStatTotalWallet" style="font-size:1rem;font-weight:900;color:#48bb78;">0 ج</div>
+      </div>
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">✅ مصفى للعهدة (مسوّى)</div>
+        <div id="odStatSettledWallet" style="font-size:1rem;font-weight:900;color:#68d391;">0 ج</div>
+      </div>
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">⏳ رصيد معلق بالمحفظة</div>
+        <div id="odStatPendingWallet" style="font-size:1rem;font-weight:900;color:#f6ad55;">0 ج</div>
+      </div>
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:2px;">📊 نسبة مبيعات المحفظة</div>
+        <div id="odStatWalletShare" style="font-size:1rem;font-weight:900;color:#63b3ed;">0%</div>
+      </div>
+    </div>
+
     <!-- فلاتر المودال -->
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:rgba(255,255,255,.03);padding:8px 12px;border-radius:10px;border:1px solid var(--border);">
       <div style="display:flex;gap:4px;background:var(--bg1);padding:3px;border-radius:8px;border:1px solid var(--border);">
@@ -15842,6 +17343,7 @@ document.addEventListener('keydown', e => {
     </div>
   </div>
 </div>
+
 
 </body>
 </html>

@@ -252,36 +252,16 @@
     65%  { opacity: 1; transform: scale(1.04) translateY(-3px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
   }
-  @keyframes acrobaticFlip {
-    0%   { transform: scale(1) rotate(0deg); }
-    25%  { transform: scale(1.35) rotate(-18deg) translateY(-5px); }
-    50%  { transform: scale(0.9) rotate(16deg); }
-    75%  { transform: scale(1.12) rotate(-6deg); }
-    100% { transform: scale(1) rotate(0deg); }
-  }
-  @keyframes floatAmbient {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50%      { transform: translateY(-5px) rotate(0.6deg); }
-  }
-  @keyframes auraGlow {
-    0%, 100% { box-shadow: 0 0 12px rgba(124, 58, 237, 0.25), inset 0 0 8px rgba(124, 58, 237, 0.15); }
-    50%      { box-shadow: 0 0 26px rgba(147, 51, 234, 0.5), inset 0 0 14px rgba(147, 51, 234, 0.25); }
-  }
+  /* ── Removed flashy button animations per user request ── */
+  .motion-slide-right, .motion-slide-left, .motion-pop { will-change: auto; }
+  .tab-acrobatic, .btn-acrobatic { display: inline-block; }
 
-  .motion-slide-right { animation: slideInRightSpring 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
-  .motion-slide-left  { animation: slideInLeftSpring 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
-  .motion-pop         { animation: popInBounce 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; will-change: transform, opacity; }
-
-  .tab-acrobatic { display: inline-block; animation: acrobaticFlip 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
-  .btn-acrobatic { animation: acrobaticFlip 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
-
-      .today-online-box {
+  .today-online-box {
     background: rgba(49, 151, 149, 0.16) !important;
     border-color: rgba(78, 205, 196, 0.38) !important;
-    animation: floatAmbient 4.8s ease-in-out infinite alternate !important;
   }
   .today-online-box:hover {
-    box-shadow: 0 8px 24px rgba(49, 151, 149, 0.28) !important;
+    box-shadow: 0 4px 14px rgba(49, 151, 149, 0.22) !important;
     border-color: rgba(78, 205, 196, 0.65) !important;
   }
 
@@ -293,13 +273,10 @@
     text-align: center;
     min-width: 135px;
     cursor: pointer;
-    transition: all .25s ease;
-    animation: floatAmbient 4.4s ease-in-out infinite alternate !important;
-    will-change: transform;
+    transition: all .2s ease;
   }
   .online-box:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 24px rgba(49, 130, 206, 0.28);
+    box-shadow: 0 4px 14px rgba(49, 130, 206, 0.22);
     border-color: rgba(99, 179, 237, 0.6);
   }
 
@@ -515,35 +492,27 @@
     line-height: 1.25;
   }
 
-  .bal-box    { animation: floatAmbient 4s ease-in-out infinite, auraGlow 3s infinite ease-in-out !important; will-change: transform; }
-  .target-box { animation: floatAmbient 4.6s ease-in-out infinite alternate !important; will-change: transform; }
+  .bal-box    { will-change: auto; }
+  .target-box { will-change: auto; }
 
-  /* ══ Flying Particles ══ */
+  /* ══ Flying Particles (Disabled per user request) ══ */
   .flying-particle {
-    position: fixed;
-    pointer-events: none;
-    z-index: 999999;
-    user-select: none;
-    font-size: 1.65rem;
-    line-height: 1;
-    transition: none;
-    will-change: transform, opacity;
+    display: none !important;
   }
 
   /* ══ Micro-interactions & Physics ══ */
   .card {
-    transition: transform .26s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow .26s ease, border-color .26s ease !important;
+    transition: box-shadow .2s ease, border-color .2s ease !important;
   }
   .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(124, 58, 237, 0.2), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
   }
   .type-btn {
-    transition: transform .22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .22s ease, border-color .2s ease !important;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease !important;
   }
   .type-btn:hover {
-    transform: translateY(-4px) scale(1.03) !important;
-    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.28) !important;
+    transform: none !important;
+    box-shadow: var(--shadow-sm) !important;
   }
   .tab {
     transition: transform .2s cubic-bezier(0.2,0.8,0.2,1), color .2s, border-color .2s, background .2s !important;
@@ -920,14 +889,15 @@
   #bottomNav {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(15,17,23,0.88);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-top: 1px solid rgba(255,255,255,.10);
+    border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom);
-    z-index: 300;
+    z-index: 450;
     height: auto;
     min-height: 56px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   }
   #bottomNav ul {
     display: flex; list-style: none;
@@ -944,14 +914,23 @@
     -webkit-tap-highlight-color: transparent;
   }
   #bottomNav ul li:active { opacity: .65; }
-  #bottomNav ul li .bn-ico { font-size: 1.35rem; line-height: 1; }
+  #bottomNav ul li .bn-ico { font-size: 1.3rem; line-height: 1; }
   #bottomNav ul li .bn-lbl {
-    font-size: .58rem; font-weight: 700;
-    color: rgba(255,255,255,.45);
+    font-size: .62rem; font-weight: 700;
+    color: var(--text3);
     letter-spacing: .2px; white-space: nowrap;
   }
-  #bottomNav ul li.bn-on .bn-ico { filter: drop-shadow(0 0 6px rgba(64,145,108,.9)); }
-  #bottomNav ul li.bn-on .bn-lbl { color: var(--green); }
+  #bottomNav ul li.bn-on .bn-ico { filter: drop-shadow(0 0 4px rgba(2,132,199,.6)); }
+  #bottomNav ul li.bn-on .bn-lbl { color: var(--accent); font-weight: 800; }
+
+  body.dark-mode #bottomNav {
+    background: rgba(11, 19, 43, 0.96);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -2px 14px rgba(0,0,0,0.35);
+  }
+  body.dark-mode #bottomNav ul li .bn-lbl { color: #94a3b8; }
+  body.dark-mode #bottomNav ul li.bn-on .bn-lbl { color: #38bdf8; font-weight: 800; }
+  body.dark-mode #bottomNav ul li.bn-on .bn-ico { filter: drop-shadow(0 0 6px rgba(56,189,248,.6)); }
 
   /* ── Responsive breakpoints ─────────────────── */
 
@@ -2027,20 +2006,310 @@
   body.dark-mode .text-teal { color: #2dd4bf !important; }
   body.dark-mode .text-cyan { color: #38bdf8 !important; }
 
+  /* ═══════════════════════════════════════════════════════════════════
+     📱 FULL MOBILE RESPONSIVE SUITE (TABLET & SMARTPHONES)
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* ── 1. Tablet & Below (≤ 1024px) ── */
   @media (max-width: 1024px) {
-    .saliim-sidebar { transform: translateX(100%); }
-    .saliim-sidebar.open { transform: translateX(0); }
-    .saliim-sidebar-close { display: block; }
-    .saliim-main { margin-right: 0; }
-    .saliim-mobile-toggle { display: block; }
-    .saliim-content-body { padding: 16px; }
-    .saliim-backdrop.open { display: block; }
+    .saliim-sidebar {
+      transform: translateX(100%);
+      box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25);
+    }
+    .saliim-sidebar.open {
+      transform: translateX(0);
+    }
+    .saliim-sidebar-close {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+    }
+    .saliim-main {
+      margin-right: 0 !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      overflow-x: hidden;
+    }
+    .saliim-mobile-toggle {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    .saliim-content-body {
+      padding: 12px 14px;
+      padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    }
+    .saliim-backdrop.open {
+      display: block;
+    }
   }
+
+  /* ── 2. Mobile & Phablet (≤ 768px) ── */
   @media (max-width: 768px) {
-    .saliim-kpi-grid { grid-template-columns: 1fr; }
-    .saliim-today-cols { flex-direction: column; gap: 12px; }
-    .saliim-today-col:not(:last-child) { border-left: none; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-    .saliim-topbar { padding: 0 16px; }
+    #bottomNav {
+      display: block !important;
+    }
+
+    /* Topbar */
+    .saliim-topbar {
+      padding: 0 12px !important;
+      height: 52px !important;
+    }
+    .saliim-page-title {
+      font-size: 0.92rem !important;
+      max-width: 170px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .saliim-breadcrumb {
+      display: none !important;
+    }
+    .saliim-topbar-center {
+      display: none !important;
+    }
+    .saliim-tb-btn {
+      padding: 6px 8px !important;
+      font-size: 0.82rem !important;
+    }
+    .saliim-tb-btn span {
+      display: none !important; /* Hide 'Ctrl+K' badge on mobile */
+    }
+
+    /* Financial KPI Cards Grid */
+    .saliim-kpi-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+      overflow-x: visible !important;
+      margin-bottom: 10px !important;
+    }
+    .saliim-kpi-card {
+      min-width: 0 !important;
+      width: 100% !important;
+      padding: 8px 12px !important;
+      min-height: 60px !important;
+    }
+    .saliim-kpi-card.saliim-kpi-safe {
+      grid-column: 1 / -1 !important; /* Treasury card spans full width */
+    }
+    .saliim-kpi-val {
+      font-size: 1.2rem !important;
+    }
+
+    /* Today's Financial Summary Card */
+    .saliim-today-card {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 10px 12px !important;
+      gap: 8px !important;
+      margin-bottom: 10px !important;
+    }
+    .saliim-today-head {
+      border-left: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      padding-left: 0 !important;
+      padding-bottom: 6px !important;
+      width: 100% !important;
+      justify-content: space-between !important;
+    }
+    .saliim-today-cols {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 6px !important;
+      width: 100% !important;
+    }
+    .saliim-today-col {
+      border-left: none !important;
+      border-bottom: none !important;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      text-align: center !important;
+      gap: 3px !important;
+    }
+    .saliim-today-lbl {
+      font-size: 0.68rem !important;
+      order: 1 !important;
+    }
+    .saliim-today-num {
+      font-size: 0.95rem !important;
+      order: 2 !important;
+    }
+
+    /* Top monthly sales trend card */
+    .top-sales-card {
+      padding: 10px 12px !important;
+    }
+    .top-sales-hdr {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+    }
+    .ts-kpi-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 4px !important;
+    }
+    .top-sales-ctrls {
+      justify-content: space-between !important;
+      width: 100% !important;
+    }
+
+    /* ── Entry Form (#pane-add) ── */
+    #pane-add .card {
+      padding: 12px 14px !important;
+    }
+    #pane-add .type-grid {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 6px !important;
+    }
+    #pane-add .type-btn {
+      padding: 8px 4px !important;
+      min-height: 42px !important;
+      font-size: 0.82rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 8px !important;
+    }
+    #pane-add .fg-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+    }
+    #pane-add .fg.fg-full {
+      grid-column: 1 / -1 !important;
+    }
+    #pane-add .fg input, #pane-add .fg select {
+      height: 42px !important;
+      font-size: 15px !important;
+    }
+    #pane-add #saveBtn {
+      min-height: 46px !important;
+      font-size: 1rem !important;
+      width: 100% !important;
+      margin-top: 10px !important;
+    }
+
+    /* ── Filter Rows (.frow) in Panes ── */
+    .frow {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+    .frow .fel {
+      flex: 1 1 calc(50% - 6px) !important;
+      max-width: 100% !important;
+      min-width: 110px !important;
+      height: 38px !important;
+      font-size: 14px !important;
+    }
+    .frow #fSearch, .frow .fel-s {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+      height: 40px !important;
+    }
+
+    /* ── Tables Horizontal Scroll ── */
+    .tbl-w, .table-wrap, .pos-table-wrap {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+    }
+    .tbl-w table, .table-wrap table {
+      min-width: 620px;
+    }
+
+    /* Modals */
+    .modal-box {
+      width: 95vw !important;
+      max-width: 95vw !important;
+      max-height: 88vh !important;
+      padding: 16px !important;
+      border-radius: 16px !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+  }
+
+  /* ── 3. Small Mobile Phones (≤ 480px) ── */
+  @media (max-width: 480px) {
+    .saliim-content-body {
+      padding: 8px 10px;
+      padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    }
+    .saliim-topbar {
+      padding: 0 8px !important;
+    }
+    .saliim-page-title {
+      font-size: 0.88rem !important;
+      max-width: 140px;
+    }
+    .saliim-tb-logout {
+      font-size: 0.76rem !important;
+      padding: 4px 6px !important;
+    }
+
+    /* KPIs */
+    .saliim-kpi-grid {
+      gap: 6px !important;
+    }
+    .saliim-kpi-card {
+      padding: 6px 10px !important;
+      min-height: 54px !important;
+    }
+    .saliim-kpi-val {
+      font-size: 1.1rem !important;
+    }
+    .saliim-kpi-lbl {
+      font-size: 0.7rem !important;
+    }
+
+    /* Today's Cols: 2 columns */
+    .saliim-today-cols {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 5px !important;
+    }
+    .saliim-today-col:last-child {
+      grid-column: 1 / -1 !important;
+      flex-direction: row !important;
+      justify-content: center !important;
+      gap: 8px !important;
+    }
+
+    /* Entry Form */
+    #pane-add .type-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 5px !important;
+    }
+    #pane-add .type-btn:last-child {
+      grid-column: 1 / -1 !important;
+    }
+    #pane-add .fg-row {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 6px !important;
+    }
+    #pane-add .fg input, #pane-add .fg select {
+      font-size: 16px !important; /* Critical to eliminate iOS Safari zooming */
+      height: 42px !important;
+    }
+
+    /* Period chips */
+    #entPeriodChips {
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
   }
   
   /* ─── Print Styles ─────────────────────────── */
@@ -3810,7 +4079,6 @@ async function auditAndSyncBalance(applyFix = false) {
         renderAuditResult(rpcRes);
         if (applyFix) {
           toast('✅ تم تصحيح ومطابقة رصيد الخزينة بنجاح');
-          fireFlyingParticles(document.getElementById('btnFixBal'), ['⚡', '💰', '✨', '🎉'], 22);
           listenBalance();
         }
         if (btn) btn.disabled = false;
@@ -4513,63 +4781,11 @@ function bnSwitch(name, liEl) {
 }
 
 // ═══════════════════════════════════════════
-//  MOTION & FLYING PARTICLES ENGINE 🚀✨
+//  PARTICLES & ANIMATION (DISABLED PER REQUEST)
 // ═══════════════════════════════════════════
-function fireFlyingParticles(originEl, icons = ['💵', '💊', '✨', '🎉', '⚡', '🚀'], count = 18) {
-  try {
-    let startX, startY;
-    if (originEl && originEl.getBoundingClientRect) {
-      const r = originEl.getBoundingClientRect();
-      startX = r.left + r.width / 2;
-      startY = r.top + r.height / 2;
-    } else {
-      startX = window.innerWidth / 2;
-      startY = window.innerHeight / 2;
-    }
-
-    for (let i = 0; i < count; i++) {
-      const p = document.createElement('div');
-      p.className = 'flying-particle';
-      p.textContent = icons[Math.floor(Math.random() * icons.length)];
-      document.body.appendChild(p);
-
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.7;
-      const dist = 60 + Math.random() * 140;
-      const destX = startX + Math.cos(angle) * dist;
-      const destY = startY + Math.sin(angle) * dist - (30 + Math.random() * 80);
-      const rot = (Math.random() - 0.5) * 600;
-      const scale = 0.7 + Math.random() * 0.9;
-      const duration = 650 + Math.random() * 450;
-
-      p.style.left = startX + 'px';
-      p.style.top = startY + 'px';
-      p.style.transform = 'translate(-50%, -50%) scale(0.2)';
-      p.style.opacity = '1';
-
-      const startTime = performance.now();
-      function step(now) {
-        const elapsed = now - startTime;
-        const prog = Math.min(elapsed / duration, 1);
-        const ease = 1 - Math.pow(1 - prog, 2.5);
-        const curX = startX + (destX - startX) * ease;
-        const curY = startY + (destY - startY) * ease + Math.pow(prog, 2) * 85;
-        const curScale = (1 - prog * 0.25) * scale;
-        const curOp = prog > 0.55 ? 1 - (prog - 0.55) / 0.45 : 1;
-
-        p.style.left = curX + 'px';
-        p.style.top = curY + 'px';
-        p.style.transform = `translate(-50%, -50%) scale(${curScale}) rotate(${rot * ease}deg)`;
-        p.style.opacity = curOp;
-
-        if (prog < 1) {
-          requestAnimationFrame(step);
-        } else {
-          p.remove();
-        }
-      }
-      requestAnimationFrame(step);
-    }
-  } catch(e) { console.warn('Particle error', e); }
+function fireFlyingParticles() {
+  // Neutralized per user request: zero emoji particles or flashy bursts on click
+  return;
 }
 
 function swTab(name, el) {
@@ -4610,11 +4826,6 @@ function swTab(name, el) {
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
   if (el) {
     el.classList.add('on');
-    // شقلبظة التاب وقفزة بهلوانية
-    el.classList.remove('tab-acrobatic');
-    void el.offsetWidth;
-    el.classList.add('tab-acrobatic');
-    fireFlyingParticles(el, ['✨', '💫', '⚡', '🌟'], 5);
   }
   // Sync bottom nav active state when top tab clicked
   document.querySelectorAll('#bottomNav li').forEach(l=>l.classList.remove('bn-on'));
@@ -4623,24 +4834,6 @@ function swTab(name, el) {
   const pane = document.getElementById('pane-'+name);
   if (pane) {
     pane.classList.add('on');
-    // حركة دخول العناصر والبطاقات من اليمين واليسار بالتتابع
-    const items = pane.querySelectorAll('.card, .set-sec, .pd-card, .table-wrap, .fg-row');
-    items.forEach((c, idx) => {
-      c.classList.remove('motion-slide-right', 'motion-slide-left');
-      void c.offsetWidth;
-      if (idx % 2 === 0) {
-        c.classList.add('motion-slide-right');
-      } else {
-        c.classList.add('motion-slide-left');
-      }
-      c.style.animationDelay = (idx * 0.05) + 's';
-    });
-    setTimeout(() => {
-      items.forEach(c => {
-        c.classList.remove('motion-slide-right', 'motion-slide-left');
-        c.style.animationDelay = '';
-      });
-    }, 600);
   }
 
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
@@ -4670,10 +4863,6 @@ function pickType(t, el) {
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('on'));
   if (el) {
     el.classList.add('on');
-    el.classList.remove('btn-acrobatic');
-    void el.offsetWidth;
-    el.classList.add('btn-acrobatic');
-    fireFlyingParticles(el, ['✨', '💫', '🎯'], 4);
   }
   
   // ── مسح البند لو مش من قائمة التاب الجديد ──
@@ -4929,7 +5118,6 @@ async function doSave() {
 
     toast('✅ تم حفظ القيد بنجاح — '+me.name);
     updateOnlineDebtsHeader();
-    fireFlyingParticles(document.getElementById('btnSave') || document.querySelector('.btn-primary'), ['💵', '💊', '✨', '🎉', '⚡', '🚀'], 24);
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
     if (typeof hideCoDrop === 'function') hideCoDrop();
     checkNotesSenderValidation();
@@ -5606,7 +5794,6 @@ async function restoreEntry(id) {
     if (error) throw error;
     await sbUpdateBalance(delta);
     toast('✅ تم استعادة القيد بنجاح');
-    fireFlyingParticles(null, ['🚀', '✨', '♻️', '💫', '🎉'], 20);
     // refresh both lists
     fetchTrash();
     fetchEntries();
@@ -10663,7 +10850,6 @@ async function attRecord() {
     };
     const { error: insErr } = await sb.from('attendance').insert(rec);
     if (insErr) throw new Error(insErr.message || JSON.stringify(insErr));
-    fireFlyingParticles(btn, ['⏱️', '✅', '✨', '👏', '🌟'], 20);
 
     const lastEl=document.getElementById('attLastRec');
     if (lastEl) lastEl.textContent=`✅ آخر تسجيل: ${type} لـ "${name}" الساعة ${time}`;
@@ -12304,7 +12490,6 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
 
     updToday();
     toast(`✅ تم صرف باقي الراتب بنجاح (${fmt(remAmt)} ج) وتحديث العهدة — ${empName}`);
-    fireFlyingParticles(document.querySelector('#attEmpReport') || document.body, ['💵', '✨', '🎉', '💰'], 25);
     attShowEmpReport();
   } catch (e) {
     toast('❌ فشل صرف الراتب: ' + arErr(e), false);
