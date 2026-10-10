@@ -2506,6 +2506,11 @@ function ensureXLSX() {
           <span class="saliim-item-icon">👥</span>
           <span>متابعة العملاء</span>
         </div>
+        <div class="saliim-nav-item" data-tab="tasks" id="navItemTasks" onclick="swTab('tasks', this)">
+          <span class="saliim-item-icon">📌</span>
+          <span>المهام والتاسكات</span>
+          <span class="badge" id="navTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span>
+        </div>
 
         <!-- 2. التقارير والمؤشرات -->
         <div class="saliim-group-title" id="navGroupReports">📈 التقارير والمؤشرات</div>
@@ -2582,6 +2587,10 @@ function ensureXLSX() {
           <span id="hUName" style="display:none;"></span>
           <span id="hURole" style="display:none;"></span>
 
+          <button class="saliim-tb-btn" onclick="swTab('tasks')" title="دفتر المهام والتاسكات 📌" style="color:#0284c7;border-color:rgba(2,132,199,0.4);background:rgba(2,132,199,0.08);font-weight:800;position:relative;">
+            📌 <span class="hide-mobile">المهام</span>
+            <span id="topbarTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
+          </button>
           <button class="saliim-tb-btn" onclick="openLuckyWheelModal()" title="لعبة حظ المكافآت والحوافز 🎡" style="color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);font-weight:800;">🎡 <span class="hide-mobile">لعبة الحظ</span></button>
           <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
           <button class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
@@ -2920,7 +2929,228 @@ function ensureXLSX() {
       </div>
     </div>
 
-    <!-- ── SUMMARY (admin) ── -->
+    
+    <!-- ── TASKS & TO-DO (Manager & Staff Collaboration) ── -->
+    <div class="pane" id="pane-tasks">
+      <!-- 1. Header Card with Title and Actions -->
+      <div class="card" style="margin-bottom:14px;border:1.5px solid rgba(2,132,199,0.25);background:linear-gradient(180deg,var(--bg1),var(--bg2));">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:10px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:1.4rem;">📌</span>
+              <h2 style="font-size:1.15rem;font-weight:900;color:var(--text1);margin:0;">دفتر المهام والتاسكات اليومية</h2>
+              <span class="badge" style="background:rgba(2,132,199,0.15);color:#0284c7;font-weight:800;border:1px solid rgba(2,132,199,0.3);font-size:0.75rem;">مشترك للإدارة والموظفين</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text2);margin-top:4px;">
+              سجل وتابع أوردرات بكرة، مرتجعات الشركات، نواقص الشيفت، وتكليفات العمل لحظياً بين الفريق.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-p" onclick="toggleTaskCreateDrawer()" style="background:linear-gradient(135deg,#0284c7,#0369a1);border:none;border-radius:10px;padding:8px 16px;font-weight:800;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;box-shadow:0 3px 12px rgba(2,132,199,0.3);cursor:pointer;">
+              ➕ إضافة مهمة جديدة
+            </button>
+            <button type="button" class="btn btn-ghost" onclick="fetchTasks(true)" title="تحديث المهام" style="padding:8px 12px;border-radius:10px;font-size:0.85rem;cursor:pointer;">
+              🔄 تحديث
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Stats Badges -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
+          <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px 10px;text-align:center;">
+            <div style="font-size:0.7rem;color:var(--text3);font-weight:700;">📌 إجمالي المهام</div>
+            <div id="tasksStatTotal" style="font-size:1.2rem;font-weight:900;color:var(--text1);">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:8px 10px;text-align:center;">
+            <div style="font-size:0.7rem;color:#f59e0b;font-weight:700;">⏳ قيد الانتظار</div>
+            <div id="tasksStatPending" style="font-size:1.2rem;font-weight:900;color:#f59e0b;">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:8px 10px;text-align:center;">
+            <div style="font-size:0.7rem;color:#3b82f6;font-weight:700;">🔄 جاري العمل</div>
+            <div id="tasksStatInProgress" style="font-size:1.2rem;font-weight:900;color:#3b82f6;">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:8px 10px;text-align:center;">
+            <div style="font-size:0.7rem;color:#ef4444;font-weight:700;">🔴 عاجلة وهامة</div>
+            <div id="tasksStatUrgent" style="font-size:1.2rem;font-weight:900;color:#ef4444;">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:8px 10px;text-align:center;">
+            <div style="font-size:0.7rem;color:#10b981;font-weight:700;">✅ مُنجزة</div>
+            <div id="tasksStatDone" style="font-size:1.2rem;font-weight:900;color:#10b981;">0</div>
+          </div>
+        </div>
+
+        <!-- Quick Presets Row -->
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <div style="font-size:0.75rem;font-weight:800;color:var(--text2);margin-bottom:6px;">⚡ اختصارات سريعة لكتابة المهام الشائعة:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" onclick="openTaskPreset('orders')" style="background:rgba(2,132,199,0.08);color:#0284c7;border:1px solid rgba(2,132,199,0.3);border-radius:8px;font-size:0.76rem;font-weight:800;cursor:pointer;">
+              📦 أوردر بكرة / طلبيات
+            </button>
+            <button type="button" class="btn btn-sm" onclick="openTaskPreset('returns')" style="background:rgba(139,92,246,0.08);color:#8b5cf6;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-size:0.76rem;font-weight:800;cursor:pointer;">
+              🔄 مرتجع من شركة
+            </button>
+            <button type="button" class="btn btn-sm" onclick="openTaskPreset('shortages')" style="background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:0.76rem;font-weight:800;cursor:pointer;">
+              💊 نواقص علاجية عاجلة
+            </button>
+            <button type="button" class="btn btn-sm" onclick="openTaskPreset('customer')" style="background:rgba(16,185,129,0.08);color:#10b981;border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:0.76rem;font-weight:800;cursor:pointer;">
+              👥 متابعة وحجز عميل
+            </button>
+            <button type="button" class="btn btn-sm" onclick="openTaskPreset('shift')" style="background:rgba(245,158,11,0.08);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:0.76rem;font-weight:800;cursor:pointer;">
+              ⏰ تسليم وردية وعهدة
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Task Creation Drawer / Form Card -->
+      <div id="tasksCreateDrawer" class="card" style="display:none;margin-bottom:14px;border:2px solid #0284c7;box-shadow:0 8px 24px rgba(2,132,199,0.15);">
+        <div class="card-t" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <span id="taskFormHeaderTitle" style="color:#0284c7;font-weight:900;">✏️ تسجيل مهمة أو تكليف جديد</span>
+          <button type="button" onclick="closeTaskCreateDrawer()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 8px;">✕</button>
+        </div>
+
+        <form id="taskCreateForm" onsubmit="handleTaskFormSubmit(event)">
+          <input type="hidden" id="taskEditId" value="" />
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:10px;">
+            <!-- Category -->
+            <div class="fg">
+              <label>📂 نوع وتصنيف المهمة</label>
+              <select id="taskInpCategory" required onchange="handleTaskCategoryChange()">
+                <option value="orders">📦 أوردر وطلبيات شركات</option>
+                <option value="returns">🔄 مرتجع من شركة</option>
+                <option value="shortages">💊 نواقص وأدوية عاجلة</option>
+                <option value="customer">👥 متابعة عميل / حجز علاج</option>
+                <option value="shift">⏰ تسليم وردية وملاحظات عهدة</option>
+                <option value="cleaning">🧹 نظافة وترتيب الصيدلية</option>
+                <option value="general">📝 مهمة عامة أخرى</option>
+              </select>
+            </div>
+
+            <!-- Priority -->
+            <div class="fg">
+              <label>⚡ درجة الأهمية</label>
+              <select id="taskInpPriority" required>
+                <option value="normal">🔵 عادي (Normal)</option>
+                <option value="important" selected>🟡 هام (Important)</option>
+                <option value="urgent">🔴 عاجل جداً (Urgent)</option>
+              </select>
+            </div>
+
+            <!-- Target / Due Date -->
+            <div class="fg">
+              <label>📅 الموعد المطلوب / التاريخ</label>
+              <input type="date" id="taskInpDueDate" required />
+            </div>
+
+            <!-- Shift / Time Target -->
+            <div class="fg">
+              <label>⏱ الوردية / الوقت المستهدف</label>
+              <select id="taskInpDueShift">
+                <option value="any">أي وقت خلال اليوم</option>
+                <option value="morning">الوردية الصباحية</option>
+                <option value="night">الوردية المسائية</option>
+                <option value="specific">ساعة محددة (تُذكر في التفاصيل)</option>
+              </select>
+            </div>
+
+            <!-- Assigned To -->
+            <div class="fg">
+              <label>🎯 المكلف بالتنفيذ</label>
+              <select id="taskInpAssignedTo">
+                <option value="all">الجميع (أي موظف في الوردية)</option>
+                <option value="admin">👑 المدير فقط</option>
+              </select>
+            </div>
+
+            <!-- Author Name (Locked / Display) -->
+            <div class="fg">
+              <label>✍️ كاتب المهمة</label>
+              <input type="text" id="taskInpAuthor" readonly style="background:var(--bg2);color:var(--text2);cursor:not-allowed;" />
+            </div>
+          </div>
+
+          <!-- Task Title -->
+          <div class="fg" style="margin-bottom:10px;">
+            <label>📌 عنوان المهمة / المطلوب باختصار *</label>
+            <input type="text" id="taskInpTitle" required placeholder="مثال: أوردر شركة ابن سينا بكرة الساعة 11 ص، مرتجع كرتونة المتحدة..." style="font-weight:700;" />
+          </div>
+
+          <!-- Task Notes / Details -->
+          <div class="fg" style="margin-bottom:14px;">
+            <label>📝 تفاصيل أو توجيهات إضافية (أرقام أصناف، اسم المندوب، هاتف عميل، إلخ):</label>
+            <textarea id="taskInpNotes" rows="3" placeholder="اكتب هنا أي تفاصيل مساعدة لزملائك في الوردية..." style="width:100%;border:1px solid var(--border);background:var(--bg1);color:var(--text1);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" class="btn btn-ghost" onclick="closeTaskCreateDrawer()" style="border-radius:10px;padding:8px 16px;cursor:pointer;">
+              إلغاء
+            </button>
+            <button type="submit" id="taskFormSubmitBtn" class="btn btn-p" style="background:#0284c7;border:none;border-radius:10px;padding:8px 20px;font-weight:900;cursor:pointer;">
+              💾 نشر المهمة للجميع
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 3. Filters & Search Card -->
+      <div class="card" style="margin-bottom:14px;padding:12px 14px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <!-- Search box -->
+          <div style="flex:2;min-width:180px;position:relative;">
+            <input type="text" id="taskFilterSearch" placeholder="🔍 بحث في المهام، الشركات، الأصناف، أو الموظفين..."
+                   oninput="renderTasksList()"
+                   style="width:100%;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;" />
+          </div>
+
+          <!-- Status Filter -->
+          <div style="flex:1;min-width:130px;">
+            <select id="taskFilterStatus" onchange="renderTasksList()"
+                    style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;font-weight:700;">
+              <option value="all">كل الحالات</option>
+              <option value="pending" selected>⏳ قيد الانتظار</option>
+              <option value="in_progress">🔄 جاري العمل عليها</option>
+              <option value="active">⚡ النشطة (معلقة + جاري العمل)</option>
+              <option value="done">✅ المكتملة والمُنجزة</option>
+            </select>
+          </div>
+
+          <!-- Category Filter -->
+          <div style="flex:1;min-width:130px;">
+            <select id="taskFilterCategory" onchange="renderTasksList()"
+                    style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;">
+              <option value="all">كل التصنيفات</option>
+              <option value="orders">📦 أوردرات وطلبيات</option>
+              <option value="returns">🔄 مرتجعات شركات</option>
+              <option value="shortages">💊 نواقص علاجية</option>
+              <option value="customer">👥 متابعة عملاء</option>
+              <option value="shift">⏰ تسليم وردية</option>
+              <option value="cleaning">🧹 نظافة وترتيب</option>
+              <option value="general">📝 أخرى</option>
+            </select>
+          </div>
+
+          <!-- Priority Filter -->
+          <div style="flex:1;min-width:110px;">
+            <select id="taskFilterPriority" onchange="renderTasksList()"
+                    style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;">
+              <option value="all">كل الأولويات</option>
+              <option value="urgent">🔴 عاجل جداً</option>
+              <option value="important">🟡 هام</option>
+              <option value="normal">🔵 عادي</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Tasks Feed List Container -->
+      <div id="tasksListContainer" style="display:flex;flex-direction:column;gap:10px;">
+        <!-- Filled dynamically by renderTasksList() -->
+      </div>
+    </div>
+
+<!-- ── SUMMARY (admin) ── -->
     <div class="pane" id="pane-sum">
 
       <!-- ① Period Selector -->
@@ -4656,6 +4886,11 @@ function renderSaliimNav() {
           + '<span class="saliim-item-icon">👥</span><span>متابعة العملاء</span></div>';
   }
 
+  // المهام والتاسكات (مشترك للمدير والموظفين)
+  html += '<div class="saliim-nav-item" data-tab="tasks" id="navItemTasks" onclick="swTab(\'tasks\', this)">'
+        + '<span class="saliim-item-icon">📌</span><span>المهام والتاسكات</span>'
+        + '<span class="badge" id="navTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
+
   // 2. التقارير والمؤشرات (للمدير)
   if (isAdmin) {
     html += '<div class="saliim-group-title">📈 التقارير والمؤشرات</div>';
@@ -4723,6 +4958,7 @@ function buildApp() {
   if (sideR) sideR.textContent = me.role==='admin' ? '👑 مدير النظام' : '👤 موظف صيدلية';
 
   renderSaliimNav();
+  initTasksSync();
 
   const isAdmin = me.role==='admin';
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
@@ -4736,6 +4972,7 @@ function buildApp() {
     ${isAdmin ? '<div class="tab" onclick="swTab(\'salesdb\',this)">📊 داشبورد المبيعات</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'monthcmp\',this)">📅 مقارنة الأشهر</div>' : ''}
     ${canCust ? '<div class="tab" onclick="swTab(\'custfollow\',this)">👥 العملاء</div>' : ''}
+    <div class="tab" onclick="swTab('tasks',this)">📌 المهام</div>
 <div class="tab" onclick="swTab('att',this)">⏱ الحضور</div>
     ${isAdmin ? '<div class="tab" onclick="swTab(\'users\',this)">👥 الموظفين</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'trash\',this)">🗑 المحذوفات</div>' : ''}
@@ -4751,16 +4988,18 @@ function buildApp() {
   {
     const isAdm = me.role==='admin';
     const adminItems = [
-      {tab:'add',  ico:'➕', lbl:'قيد'},
-      {tab:'all',  ico:'📋', lbl:'حركات'},
-      {tab:'sum',  ico:'📊', lbl:'ملخص'},
-      {tab:'att',  ico:'⏱', lbl:'حضور'},
-      {tab:'set',  ico:'⚙️', lbl:'إعدادات'},
+      {tab:'add',   ico:'➕', lbl:'قيد'},
+      {tab:'all',   ico:'📋', lbl:'حركات'},
+      {tab:'tasks', ico:'📌', lbl:'مهام'},
+      {tab:'sum',   ico:'📊', lbl:'ملخص'},
+      {tab:'att',   ico:'⏱', lbl:'حضور'},
+      {tab:'set',   ico:'⚙️', lbl:'إعدادات'},
     ];
     const empItems = [
-      {tab:'add',  ico:'➕', lbl:'قيد'},
-      {tab:'mine', ico:'📋', lbl:'حركاتي'},
-      {tab:'att',  ico:'⏱', lbl:'حضور'},
+      {tab:'add',   ico:'➕', lbl:'قيد'},
+      {tab:'mine',  ico:'📋', lbl:'حركاتي'},
+      {tab:'tasks', ico:'📌', lbl:'مهام'},
+      {tab:'att',   ico:'⏱', lbl:'حضور'},
     ];
     const items = isAdm ? adminItems : empItems;
     bnEl.innerHTML = '<ul>' + items.map(it =>
@@ -4828,6 +5067,7 @@ function swTab(name, el) {
     'add': { title: '➕ تسجيل قيد جديد', bc: 'الرئيسية / العمليات والقيود' },
     'all': { title: '📋 سجل كل الحركات المالية', bc: 'الرئيسية / العمليات والقيود' },
     'mine': { title: '📋 سجل حركاتي اليومية', bc: 'الرئيسية / العمليات والقيود' },
+    'tasks': { title: '📌 دفتر المهام والتاسكات اليومية', bc: 'الرئيسية / المهام والتكليفات' },
     'sum': { title: '📊 الملخص المالي والأرباح', bc: 'الرئيسية / التقارير' },
     'budget': { title: '📑 الموازنة المالية الشاملة', bc: 'الرئيسية / التقارير' },
     'salesdb': { title: '📊 داشبورد تحليل المبيعات', bc: 'التقارير / مؤشرات الأداء' },
@@ -4863,6 +5103,7 @@ function swTab(name, el) {
 
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
+  if (name==='tasks') initTasksPane();
   if (name==='sum')   renderSum();
   if (name==='att')   { if (!unsubAtt) listenAttendance(); renderAttPane(); }
   if (name==='budget')    { initBudgetPane(); }
@@ -17589,6 +17830,702 @@ async function confirmSaveLuckyBonus() {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// 📌 PHARMACY TASKS & COLLABORATION ENGINE (دفتر المهام والتاسكات)
+// ═══════════════════════════════════════════════════════════════
+
+let pharmacyTasks = [];
+let sbTasksChan = null;
+let currentTaskCompletingId = null;
+
+// Initial Load and Realtime Sync
+function initTasksSync() {
+  // Load cached tasks instantly
+  try {
+    const cached = localStorage.getItem('asafra_pharmacy_tasks');
+    if (cached) {
+      pharmacyTasks = JSON.parse(cached) || [];
+      updateTasksBadges();
+      const pane = document.getElementById('pane-tasks');
+      if (pane && pane.classList.contains('on')) renderTasksList();
+    }
+  } catch (e) {
+    console.warn('Error reading cached tasks:', e);
+  }
+
+  fetchTasks();
+  listenTasksRealtime();
+}
+
+async function fetchTasks(showToast = false) {
+  try {
+    const metaVal = await sbGetMeta('pharmacy_tasks');
+    if (metaVal && Array.isArray(metaVal.tasks)) {
+      pharmacyTasks = metaVal.tasks;
+    } else if (!pharmacyTasks || pharmacyTasks.length === 0) {
+      pharmacyTasks = [];
+    }
+    try {
+      localStorage.setItem('asafra_pharmacy_tasks', JSON.stringify(pharmacyTasks));
+    } catch(e){}
+
+    updateTasksBadges();
+    const pane = document.getElementById('pane-tasks');
+    if (pane && pane.classList.contains('on')) {
+      renderTasksList();
+    }
+    if (showToast) toast('✅ تم تحديث قائمة المهام');
+  } catch (e) {
+    console.error('fetchTasks error:', e);
+    if (showToast) toast('⚠️ تعذر جلب المهام: ' + (e.message || e));
+  }
+}
+
+function listenTasksRealtime() {
+  if (sbTasksChan) {
+    try { sb.removeChannel(sbTasksChan); } catch(e){}
+    sbTasksChan = null;
+  }
+  if (!sb) return;
+
+  sbTasksChan = sb.channel('pharmacy-tasks-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'meta' }, payload => {
+      if (payload && payload.new && payload.new.key === 'pharmacy_tasks') {
+        const val = payload.new.value;
+        if (val && Array.isArray(val.tasks)) {
+          const oldLen = (pharmacyTasks || []).length;
+          pharmacyTasks = val.tasks;
+          try { localStorage.setItem('asafra_pharmacy_tasks', JSON.stringify(pharmacyTasks)); } catch(e){}
+          updateTasksBadges();
+          const pane = document.getElementById('pane-tasks');
+          if (pane && pane.classList.contains('on')) renderTasksList();
+
+          if (val.tasks.length > oldLen) {
+            toast('📌 تنبيه: تم نشر مهمة جديدة في الصيدلية!');
+          }
+        }
+      }
+    })
+    .subscribe();
+}
+
+async function saveTasksToStorage(newTasksArray, successMsg) {
+  pharmacyTasks = newTasksArray;
+  try {
+    localStorage.setItem('asafra_pharmacy_tasks', JSON.stringify(pharmacyTasks));
+  } catch (e) {}
+
+  updateTasksBadges();
+  renderTasksList();
+
+  try {
+    await sbSetMeta('pharmacy_tasks', { tasks: pharmacyTasks });
+    if (successMsg) toast(successMsg);
+  } catch (e) {
+    console.error('saveTasksToStorage error:', e);
+    toast('⚠️ تم الحفظ محلياً فقط (تأكد من الاتصال): ' + (e.message || e));
+  }
+}
+
+function updateTasksBadges() {
+  const activeTasks = (pharmacyTasks || []).filter(t => t.status === 'pending' || t.status === 'in_progress');
+  const count = activeTasks.length;
+
+  // Nav badges
+  const navBadge = document.getElementById('navTasksBadge');
+  if (navBadge) {
+    if (count > 0) {
+      navBadge.style.display = 'inline-block';
+      navBadge.textContent = count;
+    } else {
+      navBadge.style.display = 'none';
+    }
+  }
+
+  // Topbar badge
+  const tbBadge = document.getElementById('topbarTasksBadge');
+  if (tbBadge) {
+    if (count > 0) {
+      tbBadge.style.display = 'inline-block';
+      tbBadge.textContent = count;
+    } else {
+      tbBadge.style.display = 'none';
+    }
+  }
+
+  // Stat badges in pane
+  const elTotal = document.getElementById('tasksStatTotal');
+  const elPending = document.getElementById('tasksStatPending');
+  const elInProg = document.getElementById('tasksStatInProgress');
+  const elUrgent = document.getElementById('tasksStatUrgent');
+  const elDone = document.getElementById('tasksStatDone');
+
+  if (elTotal) {
+    const total = (pharmacyTasks || []).length;
+    const pending = (pharmacyTasks || []).filter(t => t.status === 'pending').length;
+    const inProg = (pharmacyTasks || []).filter(t => t.status === 'in_progress').length;
+    const urgent = (pharmacyTasks || []).filter(t => t.priority === 'urgent' && t.status !== 'done').length;
+    const done = (pharmacyTasks || []).filter(t => t.status === 'done').length;
+
+    elTotal.textContent = total;
+    elPending.textContent = pending;
+    elInProg.textContent = inProg;
+    elUrgent.textContent = urgent;
+    elDone.textContent = done;
+  }
+}
+
+function initTasksPane() {
+  populateTaskFormOptions();
+  renderTasksList();
+  updateTasksBadges();
+}
+
+function populateTaskFormOptions() {
+  const authorInp = document.getElementById('taskInpAuthor');
+  if (authorInp) {
+    const currentName = (me && (me.name || me.username)) || 'موظف';
+    authorInp.value = currentName;
+  }
+
+  const dateInp = document.getElementById('taskInpDueDate');
+  if (dateInp && !dateInp.value) {
+    dateInp.value = todayStr();
+  }
+
+  // Populate Assigned To dropdown
+  const assignedSel = document.getElementById('taskInpAssignedTo');
+  if (assignedSel) {
+    const curVal = assignedSel.value || 'all';
+    assignedSel.innerHTML = '<option value="all">الجميع (أي موظف في الوردية)</option><option value="admin">👑 المدير فقط</option>';
+
+    const names = Array.from(new Set([
+      ...(attEmpNames || []),
+      ...((typeof users !== 'undefined' && Array.isArray(users)) ? users.map(u => u.name || u.username) : [])
+    ])).filter(Boolean);
+
+    names.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      opt.textContent = '👤 ' + n;
+      assignedSel.appendChild(opt);
+    });
+    assignedSel.value = curVal;
+  }
+}
+
+function toggleTaskCreateDrawer() {
+  const drawer = document.getElementById('tasksCreateDrawer');
+  if (!drawer) return;
+  if (drawer.style.display === 'none' || !drawer.style.display) {
+    openTaskCreateDrawer();
+  } else {
+    closeTaskCreateDrawer();
+  }
+}
+
+function openTaskCreateDrawer(presetCategory = null, presetTitle = '', presetPriority = 'important') {
+  populateTaskFormOptions();
+  const drawer = document.getElementById('tasksCreateDrawer');
+  if (!drawer) return;
+
+  const editIdInp = document.getElementById('taskEditId');
+  if (editIdInp) editIdInp.value = '';
+
+  const headerTitle = document.getElementById('taskFormHeaderTitle');
+  if (headerTitle) headerTitle.textContent = '✏️ تسجيل مهمة أو تكليف جديد';
+
+  const submitBtn = document.getElementById('taskFormSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '💾 نشر المهمة للجميع';
+
+  const catSel = document.getElementById('taskInpCategory');
+  if (catSel && presetCategory) catSel.value = presetCategory;
+
+  const priSel = document.getElementById('taskInpPriority');
+  if (priSel) priSel.value = presetPriority;
+
+  const titleInp = document.getElementById('taskInpTitle');
+  if (titleInp) titleInp.value = presetTitle;
+
+  const notesInp = document.getElementById('taskInpNotes');
+  if (notesInp) notesInp.value = '';
+
+  drawer.style.display = 'block';
+  drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  if (titleInp) setTimeout(() => titleInp.focus(), 100);
+}
+
+function closeTaskCreateDrawer() {
+  const drawer = document.getElementById('tasksCreateDrawer');
+  if (drawer) drawer.style.display = 'none';
+  const form = document.getElementById('taskCreateForm');
+  if (form) form.reset();
+  const editIdInp = document.getElementById('taskEditId');
+  if (editIdInp) editIdInp.value = '';
+}
+
+function openTaskPreset(type) {
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const dateInp = document.getElementById('taskInpDueDate');
+
+  if (type === 'orders') {
+    openTaskCreateDrawer('orders', 'أوردر بكرة شركة ', 'important');
+    if (dateInp) dateInp.value = tomorrow;
+    const shiftSel = document.getElementById('taskInpDueShift');
+    if (shiftSel) shiftSel.value = 'morning';
+  } else if (type === 'returns') {
+    openTaskCreateDrawer('returns', 'مرتجع شركة ', 'important');
+    const notesInp = document.getElementById('taskInpNotes');
+    if (notesInp) notesInp.value = 'مندوب الشركة هيمر لاستلام كرتونة المرتجع رقم [ ] وإعطاء الإشعار.';
+  } else if (type === 'shortages') {
+    openTaskCreateDrawer('shortages', 'نواقص عاجلة للوردية: ', 'urgent');
+  } else if (type === 'customer') {
+    openTaskCreateDrawer('customer', 'متابعة عميل: أ/ ', 'normal');
+  } else if (type === 'shift') {
+    openTaskCreateDrawer('shift', 'ملاحظات تسليم الشيفت والعهدة: ', 'important');
+  }
+}
+
+function handleTaskCategoryChange() {
+  const cat = document.getElementById('taskInpCategory')?.value;
+  const titleInp = document.getElementById('taskInpTitle');
+  if (!titleInp || titleInp.value.trim()) return;
+
+  if (cat === 'orders') titleInp.placeholder = 'مثال: أوردر شركة المتحدة بكرة الساعة 11 ص...';
+  else if (cat === 'returns') titleInp.placeholder = 'مثال: مرتجع شركة ابن سينا كرتونة رقم 40...';
+  else if (cat === 'shortages') titleInp.placeholder = 'مثال: نواقص كيتولاك وكونكور مطلوبين عاجل...';
+  else if (cat === 'customer') titleInp.placeholder = 'مثال: متابعة عميل أ/ محمد لاستلام حقنة إبريكس...';
+  else if (cat === 'shift') titleInp.placeholder = 'مثال: تسليم الوردية ومراجعة عهدة الكاشير...';
+}
+
+async function handleTaskFormSubmit(e) {
+  if (e) e.preventDefault();
+
+  const editId = document.getElementById('taskEditId')?.value;
+  const category = document.getElementById('taskInpCategory')?.value || 'general';
+  const priority = document.getElementById('taskInpPriority')?.value || 'normal';
+  const dueDate = document.getElementById('taskInpDueDate')?.value || todayStr();
+  const dueShift = document.getElementById('taskInpDueShift')?.value || 'any';
+  const assignedTo = document.getElementById('taskInpAssignedTo')?.value || 'all';
+  const author = document.getElementById('taskInpAuthor')?.value || (me && (me.name || me.username)) || 'موظف';
+  const title = (document.getElementById('taskInpTitle')?.value || '').trim();
+  const notes = (document.getElementById('taskInpNotes')?.value || '').trim();
+
+  if (!title) {
+    toast('⚠️ يرجى كتابة عنوان أو نص المهمة', false);
+    return;
+  }
+
+  const submitBtn = document.getElementById('taskFormSubmitBtn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جارٍ الحفظ...'; }
+
+  try {
+    let updatedList = [...(pharmacyTasks || [])];
+
+    if (editId) {
+      // Edit existing
+      const idx = updatedList.findIndex(t => t.id === editId);
+      if (idx !== -1) {
+        updatedList[idx] = {
+          ...updatedList[idx],
+          category,
+          priority,
+          dueDate,
+          dueShift,
+          assignedTo,
+          title,
+          notes,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      await saveTasksToStorage(updatedList, '✅ تم تحديث المهمة بنجاح');
+    } else {
+      // New task
+      const newTask = {
+        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        title,
+        category,
+        priority,
+        status: 'pending',
+        dueDate,
+        dueShift,
+        assignedTo,
+        author,
+        notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completedAt: null,
+        completedBy: null,
+        completionNote: null
+      };
+      updatedList.unshift(newTask);
+      await saveTasksToStorage(updatedList, '✅ تم نشر المهمة بنجاح لكافة الفريق');
+    }
+
+    closeTaskCreateDrawer();
+  } catch (err) {
+    console.error('Error saving task:', err);
+    toast('❌ فشل حفظ المهمة: ' + (err.message || err), false);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💾 نشر المهمة للجميع';
+    }
+  }
+}
+
+function renderTasksList() {
+  const container = document.getElementById('tasksListContainer');
+  if (!container) return;
+
+  const searchQ = (document.getElementById('taskFilterSearch')?.value || '').trim().toLowerCase();
+  const filterStatus = document.getElementById('taskFilterStatus')?.value || 'pending';
+  const filterCategory = document.getElementById('taskFilterCategory')?.value || 'all';
+  const filterPriority = document.getElementById('taskFilterPriority')?.value || 'all';
+
+  let list = [...(pharmacyTasks || [])];
+
+  // Filter Status
+  if (filterStatus === 'pending') {
+    list = list.filter(t => t.status === 'pending');
+  } else if (filterStatus === 'in_progress') {
+    list = list.filter(t => t.status === 'in_progress');
+  } else if (filterStatus === 'active') {
+    list = list.filter(t => t.status === 'pending' || t.status === 'in_progress');
+  } else if (filterStatus === 'done') {
+    list = list.filter(t => t.status === 'done');
+  }
+
+  // Filter Category
+  if (filterCategory !== 'all') {
+    list = list.filter(t => t.category === filterCategory);
+  }
+
+  // Filter Priority
+  if (filterPriority !== 'all') {
+    list = list.filter(t => t.priority === filterPriority);
+  }
+
+  // Filter Search
+  if (searchQ) {
+    list = list.filter(t => {
+      return (t.title && t.title.toLowerCase().includes(searchQ)) ||
+             (t.notes && t.notes.toLowerCase().includes(searchQ)) ||
+             (t.author && t.author.toLowerCase().includes(searchQ)) ||
+             (t.assignedTo && t.assignedTo.toLowerCase().includes(searchQ)) ||
+             (t.completedBy && t.completedBy.toLowerCase().includes(searchQ));
+    });
+  }
+
+  // Sort: Urgent first, then pending/in_progress, then newest
+  list.sort((a, b) => {
+    if (a.status === 'done' && b.status !== 'done') return 1;
+    if (a.status !== 'done' && b.status === 'done') return -1;
+
+    const priOrder = { urgent: 3, important: 2, normal: 1 };
+    const pA = priOrder[a.priority] || 1;
+    const pB = priOrder[b.priority] || 1;
+    if (pA !== pB) return pB - pA;
+
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  });
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="card" style="text-align:center;padding:36px 16px;color:var(--text3);">
+        <div style="font-size:2.5rem;margin-bottom:8px;">🎉</div>
+        <div style="font-weight:800;font-size:1.05rem;color:var(--text2);margin-bottom:4px;">لا توجد مهام تطابق هذا الفلتر</div>
+        <div style="font-size:0.8rem;">يمكنك إضافة مهمة جديدة أو تغيير خيارات البحث والتصفية بالأعلى.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const categoryMeta = {
+    orders:    { label: '📦 أوردر وطلبيات', color: '#0284c7', bg: 'rgba(2,132,199,0.1)' },
+    returns:   { label: '🔄 مرتجع شركة',   color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
+    shortages: { label: '💊 نواقص علاجية', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+    customer:  { label: '👥 متابعة عميل',  color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+    shift:     { label: '⏰ تسليم وردية',  color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    cleaning:  { label: '🧹 نظافة وترتيب', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)' },
+    general:   { label: '📝 مهمة عامة',    color: '#64748b', bg: 'rgba(100,116,139,0.1)' }
+  };
+
+  const priorityMeta = {
+    urgent:    { label: '🔴 عاجل جداً', border: '#ef4444', badgeBg: 'rgba(239,68,68,0.15)', badgeColor: '#ef4444' },
+    important: { label: '🟡 هام',       border: '#f59e0b', badgeBg: 'rgba(245,158,11,0.15)', badgeColor: '#d97706' },
+    normal:    { label: '🔵 عادي',      border: 'var(--border)', badgeBg: 'var(--bg2)', badgeColor: 'var(--text2)' }
+  };
+
+  const shiftLabels = {
+    any: 'خلال اليوم',
+    morning: 'الوردية الصباحية',
+    night: 'الوردية المسائية',
+    specific: 'وقت محدد'
+  };
+
+  const myName = (me && (me.name || me.username)) || '';
+  const isAdmin = me && me.role === 'admin';
+
+  let html = '';
+
+  list.forEach(task => {
+    const cat = categoryMeta[task.category] || categoryMeta.general;
+    const pri = priorityMeta[task.priority] || priorityMeta.normal;
+    const isDone = task.status === 'done';
+    const isInProg = task.status === 'in_progress';
+
+    // Due date display
+    let dueStr = task.dueDate || '';
+    if (dueStr === todayStr()) dueStr = 'اليوم';
+    else if (dueStr === new Date(Date.now() + 86400000).toISOString().split('T')[0]) dueStr = 'غداً';
+
+    const shiftStr = shiftLabels[task.dueShift] || '';
+
+    // Can delete or edit? Admin or task author
+    const canManage = isAdmin || (myName && task.author === myName);
+
+    html += `
+      <div class="card" style="padding:14px;border:1.5px solid ${isDone ? '#10b981' : pri.border};opacity:${isDone ? '0.85' : '1'};position:relative;background:var(--card);transition:all 0.2s ease;">
+        <!-- Top row: Category, Priority, Date, Status -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="background:${cat.bg};color:${cat.color};font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;border:1px solid ${cat.color}40;">
+              ${cat.label}
+            </span>
+            <span style="background:${pri.badgeBg};color:${pri.badgeColor};font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;">
+              ${pri.label}
+            </span>
+            <span style="font-size:0.74rem;color:var(--text2);font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+              📅 ${dueStr} (${shiftStr})
+            </span>
+          </div>
+
+          <div>
+            ${isDone ? `
+              <span style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;border:1px solid #10b981;">
+                ✅ مُنجزة ومكتملة
+              </span>
+            ` : isInProg ? `
+              <span style="background:rgba(59,130,246,0.15);color:#3b82f6;font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;border:1px solid #3b82f6;">
+                🔄 جاري العمل عليها
+              </span>
+            ` : `
+              <span style="background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;border:1px solid #f59e0b;">
+                ⏳ قيد الانتظار
+              </span>
+            `}
+          </div>
+        </div>
+
+        <!-- Task Title -->
+        <div style="font-size:1.02rem;font-weight:900;color:var(--text1);margin-bottom:6px;line-height:1.4;${isDone ? 'text-decoration:line-through;color:var(--text2);' : ''}">
+          ${escapeHtml(task.title)}
+        </div>
+
+        <!-- Notes (if any) -->
+        ${task.notes ? `
+          <div style="font-size:0.83rem;color:var(--text2);background:var(--bg2);padding:8px 10px;border-radius:8px;margin-bottom:10px;border-right:3px solid ${cat.color};white-space:pre-wrap;line-height:1.45;">
+            ${escapeHtml(task.notes)}
+          </div>
+        ` : ''}
+
+        <!-- Completion banner (if done) -->
+        ${isDone ? `
+          <div style="margin-bottom:10px;padding:8px 10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:0.8rem;color:#047857;">
+            <div style="font-weight:800;">✅ أنجزت بواسطة: <b>${escapeHtml(task.completedBy || 'موظف')}</b> في ${task.completedAt ? new Date(task.completedAt).toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' }) : ''}</div>
+            ${task.completionNote ? `<div style="margin-top:3px;color:var(--text1);">📝 ملاحظة الإنجاز: ${escapeHtml(task.completionNote)}</div>` : ''}
+          </div>
+        ` : ''}
+
+        <!-- Metadata footer: Author & Assigned -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:0.74rem;color:var(--text3);">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <span>✍️ كتبها: <b style="color:var(--text2);">${escapeHtml(task.author || '—')}</b></span>
+            <span>🎯 المكلف: <b style="color:var(--text2);">${task.assignedTo === 'all' ? 'الجميع' : (task.assignedTo === 'admin' ? '👑 المدير' : escapeHtml(task.assignedTo))}</b></span>
+            <span>🕒 ${task.createdAt ? new Date(task.createdAt).toLocaleDateString('ar-EG') : ''}</span>
+          </div>
+
+          <!-- Actions buttons -->
+          <div style="display:flex;gap:6px;align-items:center;margin-right:auto;">
+            ${!isDone ? `
+              ${!isInProg ? `
+                <button type="button" class="btn btn-sm" onclick="setTaskStatus('${task.id}', 'in_progress')" style="background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);font-size:0.75rem;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:800;">
+                  🔄 استلام وبدء
+                </button>
+              ` : `
+                <button type="button" class="btn btn-sm" onclick="setTaskStatus('${task.id}', 'pending')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);font-size:0.75rem;padding:3px 8px;border-radius:6px;cursor:pointer;">
+                  ⏳ إرجاع لمعلقة
+                </button>
+              `}
+              <button type="button" class="btn btn-sm" onclick="openTaskCompleteModal('${task.id}')" style="background:#10b981;color:#fff;border:none;font-size:0.75rem;padding:3px 10px;border-radius:6px;cursor:pointer;font-weight:900;box-shadow:0 2px 6px rgba(16,185,129,0.3);">
+                ✅ تم الإنجاز
+              </button>
+            ` : `
+              <button type="button" class="btn btn-sm btn-ghost" onclick="reopenTask('${task.id}')" style="font-size:0.75rem;padding:3px 8px;border-radius:6px;cursor:pointer;">
+                ↩️ إعادة فتح المهمة
+              </button>
+            `}
+
+            ${canManage ? `
+              <button type="button" class="btn btn-sm btn-ghost" onclick="editTask('${task.id}')" title="تعديل المهمة" style="padding:3px 6px;font-size:0.8rem;border-radius:6px;cursor:pointer;">
+                ✏️
+              </button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="deleteTask('${task.id}')" title="حذف المهمة" style="color:#ef4444;padding:3px 6px;font-size:0.8rem;border-radius:6px;cursor:pointer;">
+                🗑
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+async function setTaskStatus(taskId, newStatus) {
+  const list = [...(pharmacyTasks || [])];
+  const idx = list.findIndex(t => t.id === taskId);
+  if (idx === -1) return;
+
+  const myName = (me && (me.name || me.username)) || 'موظف';
+  list[idx] = {
+    ...list[idx],
+    status: newStatus,
+    updatedAt: new Date().toISOString()
+  };
+
+  const msg = newStatus === 'in_progress' ? `🔄 بدأ "${myName}" العمل على المهمة` : '⏳ تم إرجاع المهمة لقيد الانتظار';
+  await saveTasksToStorage(list, msg);
+}
+
+function openTaskCompleteModal(taskId) {
+  const task = (pharmacyTasks || []).find(t => t.id === taskId);
+  if (!task) return;
+
+  currentTaskCompletingId = taskId;
+  const titleEl = document.getElementById('taskCompleteModalTitle');
+  if (titleEl) titleEl.textContent = task.title;
+
+  const noteInp = document.getElementById('taskCompleteNoteInp');
+  if (noteInp) noteInp.value = '';
+
+  const modal = document.getElementById('taskCompleteModal');
+  if (modal) modal.style.display = 'flex';
+  if (noteInp) setTimeout(() => noteInp.focus(), 100);
+}
+
+function closeTaskCompleteModal() {
+  const modal = document.getElementById('taskCompleteModal');
+  if (modal) modal.style.display = 'none';
+  currentTaskCompletingId = null;
+}
+
+async function confirmTaskComplete() {
+  if (!currentTaskCompletingId) return;
+
+  const noteInp = document.getElementById('taskCompleteNoteInp');
+  const completionNote = noteInp ? noteInp.value.trim() : '';
+
+  const list = [...(pharmacyTasks || [])];
+  const idx = list.findIndex(t => t.id === currentTaskCompletingId);
+  if (idx === -1) { closeTaskCompleteModal(); return; }
+
+  const myName = (me && (me.name || me.username)) || 'موظف';
+
+  list[idx] = {
+    ...list[idx],
+    status: 'done',
+    completedAt: new Date().toISOString(),
+    completedBy: myName,
+    completionNote: completionNote || null,
+    updatedAt: new Date().toISOString()
+  };
+
+  closeTaskCompleteModal();
+  await saveTasksToStorage(list, `🎉 تم إنجاز المهمة بنجاح بواسطة ${myName}!`);
+}
+
+async function reopenTask(taskId) {
+  const list = [...(pharmacyTasks || [])];
+  const idx = list.findIndex(t => t.id === taskId);
+  if (idx === -1) return;
+
+  list[idx] = {
+    ...list[idx],
+    status: 'pending',
+    completedAt: null,
+    completedBy: null,
+    completionNote: null,
+    updatedAt: new Date().toISOString()
+  };
+
+  await saveTasksToStorage(list, '↩️ تم إعادة فتح المهمة لقيد الانتظار');
+}
+
+function editTask(taskId) {
+  const task = (pharmacyTasks || []).find(t => t.id === taskId);
+  if (!task) return;
+
+  populateTaskFormOptions();
+
+  const editIdInp = document.getElementById('taskEditId');
+  if (editIdInp) editIdInp.value = task.id;
+
+  const headerTitle = document.getElementById('taskFormHeaderTitle');
+  if (headerTitle) headerTitle.textContent = '✏️ تعديل بيانات المهمة';
+
+  const submitBtn = document.getElementById('taskFormSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '💾 حفظ التعديلات';
+
+  const catSel = document.getElementById('taskInpCategory');
+  if (catSel) catSel.value = task.category || 'general';
+
+  const priSel = document.getElementById('taskInpPriority');
+  if (priSel) priSel.value = task.priority || 'normal';
+
+  const dateInp = document.getElementById('taskInpDueDate');
+  if (dateInp) dateInp.value = task.dueDate || todayStr();
+
+  const shiftSel = document.getElementById('taskInpDueShift');
+  if (shiftSel) shiftSel.value = task.dueShift || 'any';
+
+  const assignedSel = document.getElementById('taskInpAssignedTo');
+  if (assignedSel) assignedSel.value = task.assignedTo || 'all';
+
+  const titleInp = document.getElementById('taskInpTitle');
+  if (titleInp) titleInp.value = task.title || '';
+
+  const notesInp = document.getElementById('taskInpNotes');
+  if (notesInp) notesInp.value = task.notes || '';
+
+  const drawer = document.getElementById('tasksCreateDrawer');
+  if (drawer) {
+    drawer.style.display = 'block';
+    drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+async function deleteTask(taskId) {
+  if (!confirm('هل أنت متأكد من حذف هذه المهمة نهائياً من الدفتر؟')) return;
+
+  const list = (pharmacyTasks || []).filter(t => t.id !== taskId);
+  await saveTasksToStorage(list, '🗑 تم حذف المهمة من الدفتر');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -18037,6 +18974,42 @@ async function confirmSaveLuckyBonus() {
   </div>
 </div>
 
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     📌 نافذة تأكيد إتمام المهمة وإضافة الملاحظات
+     ═══════════════════════════════════════════════════════════ -->
+<div id="taskCompleteModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeTaskCompleteModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:400px;width:95%;padding:20px;text-align:right;background:var(--bg1);border-radius:16px;border:2px solid #10b981;box-shadow:0 20px 45px rgba(0,0,0,0.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:1.1rem;font-weight:900;color:#10b981;display:flex;align-items:center;gap:6px;">
+        <span>✅</span>
+        <span>تأكيد إنجاز المهمة</span>
+      </div>
+      <button onclick="closeTaskCompleteModal()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <div style="font-size:0.88rem;font-weight:800;color:var(--text1);margin-bottom:8px;background:var(--bg2);padding:8px 12px;border-radius:8px;" id="taskCompleteModalTitle">
+      —
+    </div>
+
+    <div class="fg" style="margin-bottom:14px;">
+      <label style="font-size:0.76rem;font-weight:800;color:var(--text2);margin-bottom:4px;display:block;">📝 ملاحظة إنجاز اختيارية (رقم الإشعار، ما تم عمله، اسم المستلم):</label>
+      <textarea id="taskCompleteNoteInp" rows="2" placeholder="مثال: تم تسليم الكرتونة واستلام الإشعار، أو تم استلام الطلبية ومراجعتها..."
+                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit;font-size:0.82rem;resize:vertical;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeTaskCompleteModal()" class="btn btn-ghost" style="padding:8px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;">
+        إلغاء
+      </button>
+      <button onclick="confirmTaskComplete()" class="btn btn-p" style="background:#10b981;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;box-shadow:0 3px 10px rgba(16,185,129,0.35);">
+        ✅ تأكيد الإنجاز الآن
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
