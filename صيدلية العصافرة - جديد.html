@@ -1528,6 +1528,14 @@
     border-color: #10b981;
   }
 
+  /* إخفاء الأشرطة والصناديق المالية والبحث لشاشات موظفي الخدمات والدليفري */
+  body.is-worker-view .saliim-kpi-grid,
+  body.is-worker-view .saliim-today-card,
+  body.is-worker-view #topSalesTrendCard,
+  body.is-worker-view #topbarSearchBtn {
+    display: none !important;
+  }
+
   .saliim-today-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -2598,7 +2606,7 @@ function ensureXLSX() {
           </button>
           <button class="saliim-tb-btn" onclick="openLuckyWheelModal()" title="لعبة حظ المكافآت والحوافز 🎡" style="color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);font-weight:800;">🎡 <span class="hide-mobile">لعبة الحظ</span></button>
           <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
-          <button class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
+          <button id="topbarSearchBtn" class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
           <button class="saliim-tb-btn saliim-tb-logout" onclick="doLogout()" title="تسجيل الخروج">خروج ↩</button>
         </div>
       </header>
@@ -4745,6 +4753,10 @@ async function doLogout() {
       workerShiftReminderInt = null;
     }
   } catch(e){}
+  document.body.classList.remove('is-worker-view');
+  document.querySelectorAll('.saliim-kpi-grid, .saliim-today-card, #topSalesTrendCard, #topbarSearchBtn').forEach(el => {
+    el.style.display = '';
+  });
   me = null;
   show('scLogin');
   await auth.signOut();
@@ -4758,6 +4770,7 @@ async function onAuth(user) {
       if (wSess) {
         me = JSON.parse(wSess);
         if (me && me.role === 'delivery_cleaning') {
+          document.body.classList.add('is-worker-view');
           buildApp();
           return;
         }
@@ -5199,13 +5212,14 @@ function buildApp() {
   if (sideAvatar) sideAvatar.textContent = (me.name || 'م').trim().charAt(0);
 
   if (me.role === 'delivery_cleaning') {
+    document.body.classList.add('is-worker-view');
     const rc = document.getElementById('hURole');
     if (rc) { rc.textContent = '🛵 خدمات ونظافة'; rc.className = 'r-chip rc-emp'; }
     const sideR = document.getElementById('sideURole');
     if (sideR) sideR.textContent = '🛵 موظف خدمات ونظافة الصيدلية';
 
-    // إخفاء الصناديق المالية من واجهة عامل النظافة
-    document.querySelectorAll('.saliim-kpi-grid, .t-bar, #topSalesMonthCard').forEach(el => {
+    // إخفاء الصناديق والشرائط المالية وزر البحث من واجهة موظف الخدمات
+    document.querySelectorAll('.saliim-kpi-grid, .saliim-today-card, #topSalesTrendCard, #topbarSearchBtn').forEach(el => {
       el.style.display = 'none';
     });
 
@@ -5222,8 +5236,9 @@ function buildApp() {
     });
     return;
   } else {
+    document.body.classList.remove('is-worker-view');
     // إظهار الصناديق المالية للمدير والصيادلة
-    document.querySelectorAll('.saliim-kpi-grid, .t-bar, #topSalesMonthCard').forEach(el => {
+    document.querySelectorAll('.saliim-kpi-grid, .saliim-today-card, #topSalesTrendCard, #topbarSearchBtn').forEach(el => {
       el.style.display = '';
     });
   }
