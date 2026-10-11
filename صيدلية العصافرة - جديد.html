@@ -3372,6 +3372,121 @@ function ensureXLSX() {
         </div>
       </div>
     </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         🛡️ 5. Admin Oversight Pane: متابعة المشرفين ومسؤولي النظافة
+         ════════════════════════════════════════════════════════════════ -->
+    <div class="pane" id="pane-cleanoversight">
+      <!-- Top Oversight Header Card -->
+      <div class="card" style="margin-bottom:14px;border:2px solid rgba(14,165,233,0.4);background:linear-gradient(135deg,var(--bg1),rgba(14,165,233,0.05));box-shadow:var(--shadow-md);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:1.25rem;font-weight:900;color:var(--text1);display:flex;align-items:center;gap:8px;">
+              <span>🛡️</span>
+              <span>لوحة الرقابة العليا — متابعة المشرفين ومسؤولي النظافة</span>
+              <span class="badge" style="background:#0ea5e9;color:#fff;font-weight:900;font-size:0.75rem;">خاص بالإدارة</span>
+            </div>
+            <div style="font-size:0.8rem;color:var(--text2);margin-top:3px;">
+              رصد دقيق لكافة حركات التفتيش والمعاينات التي أجراها المشرفون، تقييم إنجاز عمال النظافة، واعتماد طلبات الخصم، وتعديلات الجدول.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button type="button" class="btn btn-sm btn-p" onclick="openCleanEditScheduleModal()" style="background:#7c3aed;border:none;border-radius:8px;font-weight:800;font-size:0.82rem;padding:7px 14px;cursor:pointer;">
+              📅 مراجعة الجدول الأسبوعي
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="initCleanOversightPane()" style="border-radius:8px;cursor:pointer;">
+              🔄 تحديث
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Top Executive KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding-top:10px;border-top:1px dashed var(--border);">
+          <div style="background:var(--bg1);border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text3);font-weight:700;">👨‍💼 عمليات ومعاينات المشرفين</div>
+            <div id="oversightKpiSuperActions" style="font-size:1.35rem;font-weight:900;color:#7c3aed;margin-top:2px;">0</div>
+            <div style="font-size:0.68rem;color:var(--text3);">إجمالي الفحوصات المسجلة</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text3);font-weight:700;">🧹 إنجاز عمال النظافة</div>
+            <div id="oversightKpiWorkerDonePct" style="font-size:1.35rem;font-weight:900;color:#10b981;margin-top:2px;">0%</div>
+            <div id="oversightKpiWorkerDoneCounts" style="font-size:0.68rem;color:var(--text3);">0 من 0 مهام</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text3);font-weight:700;">⚠️ طلبات خصم المشرفين</div>
+            <div id="oversightKpiPendingDeductions" style="font-size:1.35rem;font-weight:900;color:#ef4444;margin-top:2px;">0</div>
+            <div id="oversightKpiTotalDeductionsSub" style="font-size:0.68rem;color:var(--text3);">تنتظر القرار</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(14,165,233,0.3);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:0.72rem;color:var(--text3);font-weight:700;">🔄 تعديلات الجدول والمهام</div>
+            <div id="oversightKpiSwapsAndEdits" style="font-size:1.35rem;font-weight:900;color:#0ea5e9;margin-top:2px;">0</div>
+            <div style="font-size:0.68rem;color:var(--text3);">نقل وتبديل بين العمال</div>
+          </div>
+        </div>
+
+        <!-- Subtabs within Oversight -->
+        <div style="display:flex;gap:6px;margin-top:14px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;">
+          <button type="button" id="oversightTabBtn-audit" onclick="switchOversightTab('audit')" class="btn btn-sm" style="background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-weight:800;padding:7px 14px;cursor:pointer;">
+            📜 سجل تدقيق حركات المشرفين
+          </button>
+          <button type="button" id="oversightTabBtn-scorecard" onclick="switchOversightTab('scorecard')" class="btn btn-sm btn-ghost" style="border-radius:8px;font-weight:800;padding:7px 14px;cursor:pointer;">
+            📊 بطاقة تقييم أداء مسؤولي النظافة
+          </button>
+          <button type="button" id="oversightTabBtn-deductions" onclick="switchOversightTab('deductions')" class="btn btn-sm btn-ghost" style="border-radius:8px;font-weight:800;padding:7px 14px;cursor:pointer;position:relative;">
+            ⚖️ إدارة واعتماد الخصومات
+            <span id="oversightDeductionBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.65rem;margin-right:4px;">0</span>
+          </button>
+          <button type="button" id="oversightTabBtn-schedule" onclick="switchOversightTab('schedule')" class="btn btn-sm btn-ghost" style="border-radius:8px;font-weight:800;padding:7px 14px;cursor:pointer;">
+            📅 الجدول الدوري المعتمد
+          </button>
+        </div>
+      </div>
+
+      <!-- Oversight Tab Content Areas -->
+      <div id="oversightContent-audit" style="display:block;">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-t" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <span>📜 سجل تدقيق ورقابة المشرفين (كل ما فعله المشرفون)</span>
+            <span style="font-size:0.75rem;color:var(--text3);">مرتب من الأحدث للأقدم</span>
+          </div>
+          <div id="oversightAuditListContainer" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <div id="oversightContent-scorecard" style="display:none;">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-t">📊 بطاقة أداء وتقييم عمال النظافة والخدمات</div>
+          <div id="oversightScorecardContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:10px;">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <div id="oversightContent-deductions" style="display:none;">
+        <div class="card" style="margin-bottom:14px;border:1.5px solid rgba(239,68,68,0.3);">
+          <div class="card-t" style="color:#ef4444;">⚖️ طلبات الخصم الصادرة من المشرفين وقرارات الإدارة</div>
+          <div id="oversightDeductionsContainer" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <div id="oversightContent-schedule" style="display:none;">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-t" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <span>📅 الجدول الأسبوعي الدائم المعتمد للصيدلية</span>
+            <button type="button" class="btn btn-sm btn-p" onclick="openCleanEditScheduleModal()" style="background:#0ea5e9;border:none;border-radius:6px;font-size:0.78rem;padding:5px 12px;cursor:pointer;">
+              ✏️ تعديل الجدول الآن
+            </button>
+          </div>
+          <div id="oversightSchedulePreviewContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px;">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
 <!-- ── SUMMARY (admin) ── -->
     <div class="pane" id="pane-sum">
 
@@ -5157,7 +5272,10 @@ function renderSaliimNav() {
 
   // 2. التقارير والمؤشرات (للمدير)
   if (isAdmin) {
-    html += '<div class="saliim-group-title">📈 التقارير والمؤشرات</div>';
+    html += '<div class="saliim-group-title">📈 التقارير والمؤشرات والرقابة</div>';
+    html += '<div class="saliim-nav-item" data-tab="cleanoversight" id="navItemCleanOversight" onclick="swTab(\'cleanoversight\', this)">'
+          + '<span class="saliim-item-icon">🛡️</span><span>متابعة المشرفين والنظافة</span>'
+          + '<span class="badge" id="adminCleanAlertBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
     html += '<div class="saliim-nav-item" data-tab="salesdb" onclick="swTab(\'salesdb\', this)">'
           + '<span class="saliim-item-icon">📊</span><span>داشبورد المبيعات</span></div>';
     html += '<div class="saliim-nav-item" data-tab="monthcmp" onclick="swTab(\'monthcmp\', this)">'
@@ -5380,6 +5498,7 @@ function swTab(name, el) {
     'cleanweek': { title: '📅 جدول النظافة الأسبوعي', bc: 'الخدمات / الجدول الدوري' },
     'cleanhistory': { title: '📜 سجل أعمالي واعتمادات المشرف', bc: 'الخدمات / تقرير الإنجاز' },
     'cleansuper': { title: '🧹 رقابة النظافة والرفوف الميدانية', bc: 'الرقابة / متابعة الدليفري والخدمات' },
+    'cleanoversight': { title: '🛡️ متابعة المشرفين ومسؤولي النظافة', bc: 'الرقابة العامة / تدقيق المشرفين والنظافة' },
     'sum': { title: '📊 الملخص المالي والأرباح', bc: 'الرئيسية / التقارير' },
     'budget': { title: '📑 الموازنة المالية الشاملة', bc: 'الرئيسية / التقارير' },
     'salesdb': { title: '📊 داشبورد تحليل المبيعات', bc: 'التقارير / مؤشرات الأداء' },
@@ -5427,6 +5546,14 @@ function swTab(name, el) {
       return;
     }
     initCleanSuperPane();
+  }
+  if (name==='cleanoversight') {
+    if (!me || me.role !== 'admin') {
+      toast('⚠️ هذه اللوحة مخصصة للمدير العام فقط', false);
+      swTab('add');
+      return;
+    }
+    initCleanOversightPane();
   }
   if (name==='sum')   renderSum();
   if (name==='att')   { if (!unsubAtt) listenAttendance(); renderAttPane(); }
@@ -18968,10 +19095,14 @@ let cleaningShiftSettings = {
   ]
 };
 
+let cleaningWeeklySchedule = JSON.parse(JSON.stringify(DEFAULT_WEEKLY_SCHEDULE));
+let cleaningSupervisorAudit = []; // Audit log of supervisor actions
 let cleaningLogs = {}; // { 'YYYY-MM-DD': { 'mohamed': [...tasks], 'youssef': [...tasks] } }
 let cleaningDeductions = []; // Array of deduction requests
 let workerShiftReminderInt = null;
 let currentSuperWorkerTab = 'mohamed';
+let currentEditSchedWorkerTab = 'mohamed';
+let currentOversightTab = 'audit';
 
 // ── Authentication Helpers ──
 function checkWorkerCredentialsLogin(emailOrUser, pin) {
@@ -19109,20 +19240,63 @@ function renderWorkerCleaningNav() {
 // ── Data Loading & Sync with Supabase ──
 async function initCleaningData() {
   try {
-    const [logsMeta, shiftsMeta, dedMeta] = await Promise.all([
+    const [logsMeta, shiftsMeta, dedMeta, schedMeta, auditMeta] = await Promise.all([
       sbGetMeta('cleaning_logs'),
       sbGetMeta('cleaning_shifts'),
-      sbGetMeta('cleaning_deductions')
+      sbGetMeta('cleaning_deductions'),
+      sbGetMeta('cleaning_weekly_schedule'),
+      sbGetMeta('cleaning_supervisor_audit')
     ]);
 
     if (logsMeta && typeof logsMeta === 'object' && logsMeta.logs) cleaningLogs = logsMeta.logs;
     if (shiftsMeta && typeof shiftsMeta === 'object' && shiftsMeta.shifts) cleaningShiftSettings = shiftsMeta.shifts;
     if (dedMeta && Array.isArray(dedMeta.list)) cleaningDeductions = dedMeta.list;
+    if (schedMeta && typeof schedMeta === 'object' && schedMeta.schedule) cleaningWeeklySchedule = schedMeta.schedule;
+    if (auditMeta && Array.isArray(auditMeta.list)) cleaningSupervisorAudit = auditMeta.list;
 
     updateSuperDeductionBadge();
   } catch(e) {
     console.warn('initCleaningData load error:', e);
   }
+}
+
+async function saveCleaningWeeklySchedule() {
+  try {
+    localStorage.setItem('asafra_cleaning_weekly_schedule', JSON.stringify(cleaningWeeklySchedule));
+  } catch(e){}
+  try {
+    await sbSetMeta('cleaning_weekly_schedule', { schedule: cleaningWeeklySchedule });
+  } catch(e) {
+    console.error('saveCleaningWeeklySchedule error:', e);
+  }
+}
+
+async function saveCleaningSupervisorAudit() {
+  try {
+    localStorage.setItem('asafra_cleaning_supervisor_audit', JSON.stringify(cleaningSupervisorAudit));
+  } catch(e){}
+  try {
+    await sbSetMeta('cleaning_supervisor_audit', { list: cleaningSupervisorAudit });
+  } catch(e) {
+    console.error('saveCleaningSupervisorAudit error:', e);
+  }
+}
+
+function logSupervisorAuditAction(actionType, title, details) {
+  const inspector = (me && (me.name || me.username)) || 'المشرف';
+  const entry = {
+    id: 'aud_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    timestamp: new Date().toISOString(),
+    timeStr: new Date().toLocaleTimeString('ar-EG', { hour:'2-digit', minute:'2-digit' }),
+    dateStr: todayStr(),
+    supervisor: inspector,
+    actionType: actionType, // 'inspect_approve', 'inspect_reject', 'transfer_task', 'add_task', 'edit_task', 'delete_task', 'edit_schedule'
+    title: title,
+    details: details
+  };
+  cleaningSupervisorAudit.unshift(entry);
+  if (cleaningSupervisorAudit.length > 250) cleaningSupervisorAudit.pop();
+  saveCleaningSupervisorAudit();
 }
 
 async function saveCleaningLogs() {
@@ -19202,8 +19376,9 @@ function initCleanTodayPane() {
   const todayDate = todayStr();
   if (!cleaningLogs[todayDate]) cleaningLogs[todayDate] = {};
   if (!cleaningLogs[todayDate][wKey]) {
-    // Generate default tasks for today
-    const sections = (DEFAULT_WEEKLY_SCHEDULE[wKey] && DEFAULT_WEEKLY_SCHEDULE[wKey][dayIdx]) || [];
+    // Generate default tasks for today from active weekly schedule
+    const activeSched = cleaningWeeklySchedule || DEFAULT_WEEKLY_SCHEDULE;
+    const sections = (activeSched[wKey] && activeSched[wKey][dayIdx]) || [];
     const generated = sections.map((sec, idx) => ({
       id: `task_${todayDate}_${wKey}_${idx}`,
       type: 'section',
@@ -19644,23 +19819,48 @@ function renderSuperWorkerDuties(workerKey, dateStr) {
   if (!container) return;
 
   const workerDef = CLEANING_WORKERS[workerKey] || CLEANING_WORKERS.mohamed;
+  const otherKey = (workerKey === 'mohamed') ? 'youssef' : 'mohamed';
+  const otherWorkerDef = CLEANING_WORKERS[otherKey];
   const list = (cleaningLogs[dateStr] && cleaningLogs[dateStr][workerKey]) || [];
 
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--bg1);padding:10px 14px;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+      <div style="font-weight:900;font-size:0.92rem;color:var(--text1);display:flex;align-items:center;gap:6px;">
+        <span>📋</span>
+        <span>مهام ${workerDef.name} لتاريخ (${dateStr}) — إجمالي: ${list.length}</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-p" onclick="openCleanAddEditTaskModal('${dateStr}', '${workerKey}')"
+                style="background:#0284c7;color:#fff;border:none;border-radius:8px;font-weight:800;font-size:0.78rem;padding:6px 12px;cursor:pointer;">
+          ➕ إضافة مهمة جديدة اليوم
+        </button>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="openCleanEditScheduleModal()"
+                style="border-radius:8px;font-weight:800;font-size:0.78rem;padding:6px 12px;cursor:pointer;">
+          📅 تعديل الجدول الأسبوعي
+        </button>
+      </div>
+    </div>
+  `;
+
   if (list.length === 0) {
-    container.innerHTML = `
+    html += `
       <div class="card" style="text-align:center;padding:28px 16px;color:var(--text3);">
         <div style="font-size:2rem;margin-bottom:6px;">📋</div>
-        <div style="font-weight:800;color:var(--text2);margin-bottom:4px;">لم يتم تسجيل مهام لـ ${workerDef.name} في هذا اليوم</div>
-        <div style="font-size:0.8rem;">قد يكون هذا اليوم عطلته الأسبوعية أو لم يفتح التطبيق بعد.</div>
+        <div style="font-weight:800;color:var(--text2);margin-bottom:4px;">لا توجد مهام مسجلة لـ ${workerDef.name} في هذا اليوم</div>
+        <div style="font-size:0.8rem;margin-bottom:12px;">يمكنك إضافة مهمة جديدة له مباشرة باستخدام الزر أعلاه.</div>
+        <button type="button" class="btn btn-sm btn-p" onclick="openCleanAddEditTaskModal('${dateStr}', '${workerKey}')" style="background:#0284c7;border-radius:8px;font-size:0.8rem;">
+          ➕ إضافة أول مهمة لـ ${workerDef.name} اليوم
+        </button>
       </div>
     `;
+    container.innerHTML = html;
     return;
   }
 
-  let html = '';
   list.forEach(t => {
     const isDone = t.status === 'done';
     const isSkipped = t.status === 'skipped';
+    const isFloor = t.type === 'floor';
 
     html += `
       <div class="card" style="padding:14px;border:1.5px solid ${isDone ? '#10b981' : (isSkipped ? '#ef4444' : 'var(--border)')};background:var(--card);">
@@ -19681,7 +19881,7 @@ function renderSuperWorkerDuties(workerKey, dateStr) {
               </span>
             ` : `
               <span style="background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;">
-                ⏳ لم يسجل بعد
+                ⏳ قيد التنفيذ
               </span>
             `}
           </div>
@@ -19698,20 +19898,44 @@ function renderSuperWorkerDuties(workerKey, dateStr) {
           <div style="padding:8px 12px;border-radius:8px;font-size:0.8rem;margin-bottom:10px;${t.inspectionVerdict==='approved'?'background:rgba(16,185,129,0.1);color:#047857;border:1px solid #10b981;':'background:rgba(239,68,68,0.1);color:#b91c1c;border:1px solid #ef4444;'}">
             <div style="font-weight:900;">${t.inspectionVerdict==='approved'?'✅ تم فحص وتأكيد المعاينة (ممتاز ومتقن)':'❌ نتيجة المعاينة: العمل غير مقبول أو لم يتم'}</div>
             ${t.inspectionNotes ? `<div style="margin-top:3px;">ملاحظات المشرف: ${escapeHtml(t.inspectionNotes)}</div>` : ''}
+            ${t.inspectedBy ? `<div style="font-size:0.72rem;color:var(--text3);margin-top:2px;">بواسطة المشرف: ${escapeHtml(t.inspectedBy)}</div>` : ''}
           </div>
         ` : ''}
 
-        <!-- Supervisor Action Buttons -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed var(--border);">
+        <!-- Action Buttons: Inspection + Task Management -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed var(--border);">
           <button type="button" class="btn btn-sm" onclick="inspectCleanTaskDone('${dateStr}', '${workerKey}', '${t.id}')"
-                  style="flex:1;background:rgba(16,185,129,0.12);color:#047857;border:1px solid #10b981;border-radius:8px;font-weight:900;padding:7px;cursor:pointer;">
-            ✅ تأكيد المعاينة (ممتاز)
+                  style="flex:1;min-width:120px;background:rgba(16,185,129,0.12);color:#047857;border:1px solid #10b981;border-radius:8px;font-weight:900;padding:7px;cursor:pointer;">
+            ✅ تأكيد المعاينة
           </button>
 
           <button type="button" class="btn btn-sm" onclick="openCleanInspectRejectModal('${dateStr}', '${workerKey}', '${t.id}')"
-                  style="flex:1;background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid #ef4444;border-radius:8px;font-weight:800;padding:7px;cursor:pointer;">
-            ❌ لم يتم / طلب خصم
+                  style="flex:1;min-width:120px;background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid #ef4444;border-radius:8px;font-weight:800;padding:7px;cursor:pointer;">
+            ❌ طلب خصم
           </button>
+
+          <!-- Transfer Task between workers button -->
+          <button type="button" class="btn btn-sm btn-ghost" onclick="quickTransferCleanTask('${dateStr}', '${workerKey}', '${t.id}')"
+                  title="نقل هذه المهمة فوراً إلى ${otherWorkerDef.name}"
+                  style="background:rgba(14,165,233,0.08);color:#0284c7;border:1px solid rgba(2,132,199,0.4);border-radius:8px;font-weight:800;font-size:0.75rem;padding:7px 10px;cursor:pointer;">
+            🔄 نقل لـ ${otherWorkerDef.name}
+          </button>
+
+          <!-- Edit title button -->
+          <button type="button" class="btn btn-sm btn-ghost" onclick="quickEditCleanTaskTitle('${dateStr}', '${workerKey}', '${t.id}')"
+                  title="تعديل مسمى المهمة"
+                  style="border-radius:8px;font-size:0.75rem;padding:7px 10px;cursor:pointer;">
+            ✏️ تعديل
+          </button>
+
+          <!-- Delete button (non floor) -->
+          ${!isFloor ? `
+            <button type="button" class="btn btn-sm btn-ghost" onclick="quickDeleteCleanTask('${dateStr}', '${workerKey}', '${t.id}')"
+                    title="حذف المهمة من جدول اليوم"
+                    style="color:#ef4444;border-color:rgba(239,68,68,0.3);border-radius:8px;font-size:0.75rem;padding:7px 9px;cursor:pointer;">
+              🗑️
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -19725,11 +19949,14 @@ function inspectCleanTaskDone(dateStr, workerKey, taskId) {
   const t = cleaningLogs[dateStr][workerKey].find(x => x.id === taskId);
   if (!t) return;
 
+  const inspector = (me && (me.name || me.username)) || 'المشرف';
   t.inspected = true;
   t.inspectionVerdict = 'approved';
   t.inspectionNotes = 'تمت المعاينة والتأكد من النظافة بنجاح';
-  t.inspectedBy = (me && (me.name || me.username)) || 'المشرف';
+  t.inspectedBy = inspector;
   t.inspectedAt = new Date().toISOString();
+
+  logSupervisorAuditAction('inspect_approve', `اعتماد معاينة: ${t.title}`, `قام المشرف [${inspector}] بمعاينة واعتماد مهمة [${t.title}] للموظف [${CLEANING_WORKERS[workerKey]?.name}] بنجاح.`);
 
   saveCleaningLogs();
   toast('✅ تم اعتماد المهمة وتأكيد المعاينة بنجاح.');
@@ -19796,8 +20023,10 @@ function confirmCleanInspectReject() {
     };
     cleaningDeductions.unshift(dReq);
     saveCleaningDeductions();
+    logSupervisorAuditAction('request_deduction', `طلب خصم: ${t.title}`, `طلب المشرف [${inspectorName}] خصماً على الموظف [${workerDef.name}] بسبب: "${dReq.reason}".`);
     toast('⚠️ تم إرسال طلب الخصم للمدير بنجاح.');
   } else {
+    logSupervisorAuditAction('inspect_reject', `عدم قبول إنجاز: ${t.title}`, `سجل المشرف [${inspectorName}] عدم اكتمال مهمة [${t.title}] للموظف [${workerDef.name}].`);
     toast('💾 تم حفظ نتيجة المعاينة.');
   }
 
@@ -19934,6 +20163,631 @@ function quickRejectAdminDeduction(reqId) {
   saveCleaningDeductions();
   toast('تم رفض طلب الخصم.');
   initCleanSuperPane();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TASK MANAGEMENT & REASSIGNMENT BETWEEN WORKERS 🔄✏️
+// ═══════════════════════════════════════════════════════════════════
+function quickTransferCleanTask(dateStr, fromWorkerKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][fromWorkerKey]) return;
+  const list = cleaningLogs[dateStr][fromWorkerKey];
+  const idx = list.findIndex(x => x.id === taskId);
+  if (idx === -1) return;
+
+  const task = list[idx];
+  const toWorkerKey = (fromWorkerKey === 'mohamed') ? 'youssef' : 'mohamed';
+  const fromName = CLEANING_WORKERS[fromWorkerKey]?.name || fromWorkerKey;
+  const toName = CLEANING_WORKERS[toWorkerKey]?.name || toWorkerKey;
+
+  if (!confirm(`هل أنت متأكد من نقل مهمة "${task.title}" من ${fromName} إلى ${toName}؟`)) return;
+
+  // Remove from source worker
+  list.splice(idx, 1);
+
+  // Add to target worker
+  if (!cleaningLogs[dateStr][toWorkerKey]) cleaningLogs[dateStr][toWorkerKey] = [];
+  task.transferredFrom = fromName;
+  task.status = 'pending';
+  task.inspected = false;
+  task.inspectionVerdict = null;
+  cleaningLogs[dateStr][toWorkerKey].push(task);
+
+  saveCleaningLogs();
+  logSupervisorAuditAction('transfer_task', `نقل مهمة: ${task.title}`, `تم نقل المهمة من ${fromName} إلى ${toName} لتاريخ ${dateStr}.`);
+  toast(`🔄 تم نقل المهمة بنجاح إلى ${toName}!`);
+  initCleanSuperPane();
+}
+
+function quickEditCleanTaskTitle(dateStr, workerKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][workerKey]) return;
+  const task = cleaningLogs[dateStr][workerKey].find(x => x.id === taskId);
+  if (!task) return;
+
+  const newTitle = prompt('تعديل مسمى المهمة:', task.title);
+  if (!newTitle || !newTitle.trim() || newTitle.trim() === task.title) return;
+
+  const oldTitle = task.title;
+  task.title = newTitle.trim();
+  saveCleaningLogs();
+  logSupervisorAuditAction('edit_task', `تعديل مهمة: ${oldTitle}`, `تم تعديل مسمى المهمة إلى "${task.title}" للموظف [${CLEANING_WORKERS[workerKey]?.name}].`);
+  toast('✏️ تم تعديل مسمى المهمة بنجاح.');
+  initCleanSuperPane();
+}
+
+function quickDeleteCleanTask(dateStr, workerKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][workerKey]) return;
+  const list = cleaningLogs[dateStr][workerKey];
+  const idx = list.findIndex(x => x.id === taskId);
+  if (idx === -1) return;
+
+  const taskTitle = list[idx].title;
+  if (!confirm(`هل أنت متأكد من حذف مهمة "${taskTitle}" من جدول اليوم؟`)) return;
+
+  list.splice(idx, 1);
+  saveCleaningLogs();
+  logSupervisorAuditAction('delete_task', `حذف مهمة: ${taskTitle}`, `تم حذف المهمة من جدول [${CLEANING_WORKERS[workerKey]?.name}] لتاريخ ${dateStr}.`);
+  toast('🗑️ تم حذف المهمة.');
+  initCleanSuperPane();
+}
+
+function openCleanAddEditTaskModal(dateStr, workerKey) {
+  document.getElementById('cleanAddTaskDateInp').value = dateStr || todayStr();
+  const wSel = document.getElementById('cleanAddTaskWorkerSelect');
+  if (wSel && workerKey) wSel.value = workerKey;
+
+  syncAddTaskSectionOptions();
+  document.getElementById('cleanAddTaskCustomTitleInp').value = '';
+
+  const modal = document.getElementById('cleanAddEditTaskModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCleanAddEditTaskModal() {
+  const modal = document.getElementById('cleanAddEditTaskModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function syncAddTaskSectionOptions() {
+  const wKey = document.getElementById('cleanAddTaskWorkerSelect')?.value || 'mohamed';
+  const secSel = document.getElementById('cleanAddTaskSectionSelect');
+  if (!secSel) return;
+
+  const dept = (CLEANING_WORKERS[wKey] && CLEANING_WORKERS[wKey].dept) || 'medicines';
+  const allSecs = CLEANING_ALL_SECTIONS[dept] || [];
+
+  secSel.innerHTML = '<option value="">-- اختر من رفوف القسم المتاحة --</option>';
+  allSecs.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = s;
+    secSel.appendChild(opt);
+  });
+}
+
+function confirmCleanAddEditTask() {
+  const dateStr = document.getElementById('cleanAddTaskDateInp').value || todayStr();
+  const workerKey = document.getElementById('cleanAddTaskWorkerSelect').value || 'mohamed';
+  const customTitle = (document.getElementById('cleanAddTaskCustomTitleInp').value || '').trim();
+  const selectedSec = document.getElementById('cleanAddTaskSectionSelect').value;
+
+  const finalTitle = customTitle || selectedSec;
+  if (!finalTitle) {
+    toast('⚠️ يرجى اختيار منطقة أو كتابة مسمى المهمة', false);
+    return;
+  }
+
+  if (!cleaningLogs[dateStr]) cleaningLogs[dateStr] = {};
+  if (!cleaningLogs[dateStr][workerKey]) cleaningLogs[dateStr][workerKey] = [];
+
+  const newTask = {
+    id: `task_${dateStr}_${workerKey}_${Date.now()}`,
+    type: 'section',
+    title: finalTitle,
+    status: 'pending',
+    skipReason: null,
+    swappedFrom: null,
+    completedAt: null,
+    inspected: false,
+    inspectionVerdict: null,
+    inspectionNotes: null
+  };
+
+  cleaningLogs[dateStr][workerKey].push(newTask);
+  saveCleaningLogs();
+
+  const workerName = CLEANING_WORKERS[workerKey]?.name || workerKey;
+  logSupervisorAuditAction('add_task', `إضافة مهمة: ${finalTitle}`, `تمت إضافة مهمة جديدة لـ [${workerName}] لتاريخ ${dateStr}.`);
+
+  closeCleanAddEditTaskModal();
+  toast(`✅ تمت إضافة المهمة بنجاح لـ ${workerName}!`);
+  initCleanSuperPane();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SCHEDULE EDITOR MODAL ENGINE 📅🛠️
+// ═══════════════════════════════════════════════════════════════════
+function openCleanEditScheduleModal() {
+  currentEditSchedWorkerTab = currentSuperWorkerTab || 'mohamed';
+  switchEditScheduleWorkerTab(currentEditSchedWorkerTab);
+
+  const modal = document.getElementById('cleanEditScheduleModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCleanEditScheduleModal() {
+  const modal = document.getElementById('cleanEditScheduleModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function switchEditScheduleWorkerTab(wKey) {
+  currentEditSchedWorkerTab = wKey;
+  const btnM = document.getElementById('editSchedTabBtn-mohamed');
+  const btnY = document.getElementById('editSchedTabBtn-youssef');
+
+  if (wKey === 'mohamed') {
+    if (btnM) { btnM.style.background = '#0284c7'; btnM.style.color = '#fff'; btnM.className = 'btn btn-sm btn-p'; }
+    if (btnY) { btnY.style.background = ''; btnY.style.color = ''; btnY.className = 'btn btn-sm btn-ghost'; }
+  } else {
+    if (btnY) { btnY.style.background = '#8b5cf6'; btnY.style.color = '#fff'; btnY.className = 'btn btn-sm btn-p'; }
+    if (btnM) { btnM.style.background = ''; btnM.style.color = ''; btnM.className = 'btn btn-sm btn-ghost'; }
+  }
+
+  renderEditScheduleUI();
+}
+
+function renderEditScheduleUI() {
+  const container = document.getElementById('editScheduleDaysContainer');
+  if (!container) return;
+
+  const wKey = currentEditSchedWorkerTab;
+  const workerDef = CLEANING_WORKERS[wKey] || CLEANING_WORKERS.mohamed;
+  const sched = cleaningWeeklySchedule[wKey] || {};
+
+  const dept = workerDef.dept || 'medicines';
+  const allSecs = CLEANING_ALL_SECTIONS[dept] || [];
+
+  const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const dayIndices = [6, 0, 1, 2, 3, 4, 5]; // Saturday to Friday
+
+  let html = '';
+  dayIndices.forEach(dayIdx => {
+    const isDayOff = (dayIdx === workerDef.dayOff);
+    const sections = sched[dayIdx] || [];
+
+    html += `
+      <div style="background:var(--bg2);border:1.5px solid ${isDayOff ? '#10b981' : 'var(--border)'};border-radius:12px;padding:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:900;font-size:0.95rem;color:var(--text1);">${dayNames[dayIdx]}</span>
+            ${isDayOff ? `
+              <span style="background:rgba(16,185,129,0.15);color:#047857;font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;">
+                🌴 إجازة رسمية
+              </span>
+            ` : `
+              <span style="background:var(--bg1);color:var(--text2);font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:6px;">
+                يوم عمل
+              </span>
+            `}
+          </div>
+
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="toggleDayOffInSchedule('${wKey}', ${dayIdx})"
+                    style="font-size:0.74rem;padding:4px 8px;border-radius:6px;cursor:pointer;${isDayOff?'color:#ef4444;':'color:#047857;'}">
+              ${isDayOff ? 'إلغاء الإجازة وجعله يوم عمل' : 'تعيين كيوم إجازة'}
+            </button>
+          </div>
+        </div>
+
+        ${isDayOff ? `
+          <div style="font-size:0.8rem;color:var(--text3);text-align:center;padding:8px 0;">
+            عطلة أسبوعية — لا توجد مهام روتينية
+          </div>
+        ` : `
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;">
+            ${sections.map((sec, secIdx) => `
+              <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:0.82rem;">
+                <span style="font-weight:700;color:var(--text1);">${escapeHtml(sec)}</span>
+                <button type="button" onclick="removeSectionFromSchedule('${wKey}', ${dayIdx}, ${secIdx})"
+                        title="حذف هذا الرف من هذا اليوم"
+                        style="background:none;border:none;color:#ef4444;font-size:0.9rem;cursor:pointer;padding:2px 6px;font-weight:900;">
+                  ✕
+                </button>
+              </div>
+            `).join('')}
+            ${sections.length === 0 ? '<div style="font-size:0.78rem;color:var(--text3);padding:4px;">لم يتم تعيين رفوف لهذا اليوم بعد.</div>' : ''}
+          </div>
+
+          <!-- Add section to day row -->
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <select id="addSecSelect_${wKey}_${dayIdx}" style="flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.78rem;">
+              <option value="">+ اختر رف/قطعة لإضافتها لهذا اليوم...</option>
+              ${allSecs.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+            </select>
+            <button type="button" class="btn btn-sm" onclick="addSectionToSchedule('${wKey}', ${dayIdx})"
+                    style="background:#0284c7;color:#fff;border:none;border-radius:6px;font-size:0.75rem;padding:5px 12px;font-weight:800;cursor:pointer;">
+              إضافة
+            </button>
+          </div>
+        `}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function addSectionToSchedule(wKey, dayIdx) {
+  const sel = document.getElementById(`addSecSelect_${wKey}_${dayIdx}`);
+  const val = sel?.value;
+  if (!val) {
+    toast('⚠️ اختر رفاً من القائمة أولاً', false);
+    return;
+  }
+
+  if (!cleaningWeeklySchedule[wKey]) cleaningWeeklySchedule[wKey] = {};
+  if (!cleaningWeeklySchedule[wKey][dayIdx]) cleaningWeeklySchedule[wKey][dayIdx] = [];
+
+  cleaningWeeklySchedule[wKey][dayIdx].push(val);
+  renderEditScheduleUI();
+}
+
+function removeSectionFromSchedule(wKey, dayIdx, secIdx) {
+  if (!cleaningWeeklySchedule[wKey] || !cleaningWeeklySchedule[wKey][dayIdx]) return;
+  cleaningWeeklySchedule[wKey][dayIdx].splice(secIdx, 1);
+  renderEditScheduleUI();
+}
+
+function toggleDayOffInSchedule(wKey, dayIdx) {
+  const workerDef = CLEANING_WORKERS[wKey];
+  if (!workerDef) return;
+
+  if (workerDef.dayOff === dayIdx) {
+    workerDef.dayOff = -1; // No day off
+  } else {
+    workerDef.dayOff = dayIdx;
+  }
+  renderEditScheduleUI();
+}
+
+async function saveCustomWeeklySchedule() {
+  await saveCleaningWeeklySchedule();
+  const workerName = CLEANING_WORKERS[currentEditSchedWorkerTab]?.name || 'الموظف';
+  logSupervisorAuditAction('edit_schedule', 'تعديل الجدول الأسبوعي الدوري', `قام المشرف بتحديث وحفظ الجدول الأسبوعي الدائم لـ [${workerName}] بالسحابة.`);
+  toast('✅ تم حفظ وتحديث الجدول الأسبوعي بالسحابة بنجاح!');
+  closeCleanEditScheduleModal();
+  if (typeof initCleanWeekPane === 'function') initCleanWeekPane();
+  if (typeof initCleanSuperPane === 'function') initCleanSuperPane();
+  if (typeof initCleanOversightPane === 'function') initCleanOversightPane();
+}
+
+function resetDefaultWeeklySchedule() {
+  if (!confirm('هل تريد فعلاً استعادة الجدول الدوري الافتراضي للنظام؟')) return;
+  cleaningWeeklySchedule = JSON.parse(JSON.stringify(DEFAULT_WEEKLY_SCHEDULE));
+  CLEANING_WORKERS.mohamed.dayOff = 5;
+  CLEANING_WORKERS.youssef.dayOff = 6;
+  renderEditScheduleUI();
+  saveCleaningWeeklySchedule();
+  toast('↺ تمت استعادة الجدول الافتراضي.');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  🛡️ ADMIN OVERSIGHT DASHBOARD ENGINE 
+// ═══════════════════════════════════════════════════════════════════
+function initCleanOversightPane() {
+  // 1. Calculate Executive KPIs
+  const totalAudit = (cleaningSupervisorAudit || []).length;
+  const pendingDeductions = (cleaningDeductions || []).filter(d => d.status === 'pending').length;
+
+  let totalTasksAll = 0, totalDoneAll = 0, totalSwaps = 0;
+  Object.keys(cleaningLogs).forEach(dStr => {
+    ['mohamed', 'youssef'].forEach(wk => {
+      const arr = cleaningLogs[dStr][wk] || [];
+      arr.forEach(t => {
+        totalTasksAll++;
+        if (t.status === 'done') totalDoneAll++;
+        if (t.swappedFrom || t.transferredFrom) totalSwaps++;
+      });
+    });
+  });
+
+  const donePct = totalTasksAll > 0 ? Math.round((totalDoneAll / totalTasksAll) * 100) : 0;
+
+  const elActions = document.getElementById('oversightKpiSuperActions');
+  if (elActions) elActions.textContent = totalAudit;
+
+  const elPct = document.getElementById('oversightKpiWorkerDonePct');
+  if (elPct) elPct.textContent = donePct + '%';
+
+  const elCounts = document.getElementById('oversightKpiWorkerDoneCounts');
+  if (elCounts) elCounts.textContent = `${totalDoneAll} من ${totalTasksAll} مهمة مسجلة`;
+
+  const elDed = document.getElementById('oversightKpiPendingDeductions');
+  if (elDed) elDed.textContent = pendingDeductions;
+
+  const elDedSub = document.getElementById('oversightKpiTotalDeductionsSub');
+  if (elDedSub) elDedSub.textContent = `من إجمالي ${(cleaningDeductions||[]).length} طلب`;
+
+  const elSwaps = document.getElementById('oversightKpiSwapsAndEdits');
+  if (elSwaps) elSwaps.textContent = totalSwaps;
+
+  // Update admin alert badge
+  const alertBadge = document.getElementById('adminCleanAlertBadge');
+  if (alertBadge) {
+    if (pendingDeductions > 0) {
+      alertBadge.style.display = 'inline-block';
+      alertBadge.textContent = pendingDeductions;
+    } else {
+      alertBadge.style.display = 'none';
+    }
+  }
+
+  const dedBadge = document.getElementById('oversightDeductionBadge');
+  if (dedBadge) {
+    if (pendingDeductions > 0) {
+      dedBadge.style.display = 'inline-block';
+      dedBadge.textContent = pendingDeductions;
+    } else {
+      dedBadge.style.display = 'none';
+    }
+  }
+
+  // Render subtabs content
+  switchOversightTab(currentOversightTab);
+}
+
+function switchOversightTab(tabKey) {
+  currentOversightTab = tabKey;
+  const tabs = ['audit', 'scorecard', 'deductions', 'schedule'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`oversightTabBtn-${t}`);
+    const content = document.getElementById(`oversightContent-${t}`);
+    if (t === tabKey) {
+      if (btn) { btn.className = 'btn btn-sm'; btn.style.background = '#0ea5e9'; btn.style.color = '#fff'; }
+      if (content) content.style.display = 'block';
+    } else {
+      if (btn) { btn.className = 'btn btn-sm btn-ghost'; btn.style.background = ''; btn.style.color = ''; }
+      if (content) content.style.display = 'none';
+    }
+  });
+
+  if (tabKey === 'audit') renderOversightAuditList();
+  if (tabKey === 'scorecard') renderOversightScorecard();
+  if (tabKey === 'deductions') renderOversightDeductions();
+  if (tabKey === 'schedule') renderOversightSchedulePreview();
+}
+
+function renderOversightAuditList() {
+  const container = document.getElementById('oversightAuditListContainer');
+  if (!container) return;
+
+  const list = cleaningSupervisorAudit || [];
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);">لا توجد حركات تدقيق مسجلة للمشرفين بعد.</div>';
+    return;
+  }
+
+  let html = '';
+  list.slice(0, 50).forEach(aud => {
+    let badgeColor = '#0ea5e9';
+    let badgeText = 'إجراء مشرف';
+    if (aud.actionType === 'inspect_approve') { badgeColor = '#10b981'; badgeText = '✅ اعتماد معاينة'; }
+    if (aud.actionType === 'inspect_reject') { badgeColor = '#ef4444'; badgeText = '❌ رفض إنجاز'; }
+    if (aud.actionType === 'request_deduction') { badgeColor = '#dc2626'; badgeText = '⚠️ طلب خصم'; }
+    if (aud.actionType === 'transfer_task') { badgeColor = '#8b5cf6'; badgeText = '🔄 نقل مهمة'; }
+    if (aud.actionType === 'add_task') { badgeColor = '#0284c7'; badgeText = '➕ إضافة مهمة'; }
+    if (aud.actionType === 'edit_task') { badgeColor = '#f59e0b'; badgeText = '✏️ تعديل مهمة'; }
+    if (aud.actionType === 'delete_task') { badgeColor = '#64748b'; badgeText = '🗑️ حذف مهمة'; }
+    if (aud.actionType === 'edit_schedule') { badgeColor = '#7c3aed'; badgeText = '📅 تعديل جدول'; }
+
+    html += `
+      <div style="background:var(--bg1);border:1px solid var(--border);border-right:4px solid ${badgeColor};border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+            <span style="background:${badgeColor}15;color:${badgeColor};border:1px solid ${badgeColor}40;font-weight:900;font-size:0.74rem;padding:2px 8px;border-radius:6px;">
+              ${badgeText}
+            </span>
+            <span style="font-weight:900;font-size:0.88rem;color:var(--text1);">${escapeHtml(aud.title)}</span>
+          </div>
+          <div style="font-size:0.8rem;color:var(--text2);">
+            ${escapeHtml(aud.details)}
+          </div>
+        </div>
+
+        <div style="text-align:left;font-size:0.75rem;color:var(--text3);">
+          <div>👤 المشرف: <b style="color:var(--text1);">${escapeHtml(aud.supervisor)}</b></div>
+          <div style="margin-top:2px;">🕒 ${aud.dateStr || ''} (${aud.timeStr || ''})</div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderOversightScorecard() {
+  const container = document.getElementById('oversightScorecardContainer');
+  if (!container) return;
+
+  let html = '';
+  ['mohamed', 'youssef'].forEach(wk => {
+    const workerDef = CLEANING_WORKERS[wk];
+    let total = 0, done = 0, skipped = 0, inspectedApproved = 0, inspectedRejected = 0;
+    const excuses = [];
+
+    Object.keys(cleaningLogs).forEach(dStr => {
+      const arr = (cleaningLogs[dStr] && cleaningLogs[dStr][wk]) || [];
+      arr.forEach(t => {
+        total++;
+        if (t.status === 'done') done++;
+        if (t.status === 'skipped') {
+          skipped++;
+          if (t.skipReason) excuses.push({ date: dStr, title: t.title, reason: t.skipReason });
+        }
+        if (t.inspected) {
+          if (t.inspectionVerdict === 'approved') inspectedApproved++;
+          if (t.inspectionVerdict === 'rejected') inspectedRejected++;
+        }
+      });
+    });
+
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    html += `
+      <div style="background:var(--bg1);border:1.5px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:${wk==='mohamed'?'#0284c7':'#8b5cf6'};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.1rem;">
+              ${workerDef.name.charAt(0)}
+            </div>
+            <div>
+              <div style="font-weight:900;font-size:1rem;color:var(--text1);">${workerDef.name}</div>
+              <div style="font-size:0.75rem;color:var(--text3);">${workerDef.deptTitle}</div>
+            </div>
+          </div>
+          <div style="text-align:left;">
+            <div style="font-size:1.3rem;font-weight:900;color:${pct>=80?'#10b981':'#f59e0b'};">${pct}%</div>
+            <div style="font-size:0.68rem;color:var(--text3);">نسبة الالتزام</div>
+          </div>
+        </div>
+
+        <!-- Progress Mini Bar -->
+        <div style="width:100%;height:8px;background:var(--bg3);border-radius:10px;overflow:hidden;margin-bottom:12px;">
+          <div style="width:${pct}%;height:100%;background:${pct>=80?'#10b981':'#f59e0b'};"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:0.8rem;margin-bottom:12px;">
+          <div style="background:var(--bg2);padding:8px;border-radius:8px;">
+            <div style="color:var(--text3);font-size:0.72rem;">✅ مهام مكتملة</div>
+            <div style="font-weight:900;font-size:1.05rem;color:#10b981;">${done} / ${total}</div>
+          </div>
+          <div style="background:var(--bg2);padding:8px;border-radius:8px;">
+            <div style="color:var(--text3);font-size:0.72rem;">❌ مهام متعذرة</div>
+            <div style="font-weight:900;font-size:1.05rem;color:#ef4444;">${skipped}</div>
+          </div>
+          <div style="background:var(--bg2);padding:8px;border-radius:8px;">
+            <div style="color:var(--text3);font-size:0.72rem;">🔍 معتمد من المشرف</div>
+            <div style="font-weight:900;font-size:1.05rem;color:#047857;">${inspectedApproved}</div>
+          </div>
+          <div style="background:var(--bg2);padding:8px;border-radius:8px;">
+            <div style="color:var(--text3);font-size:0.72rem;">⚠️ مرفوض من المشرف</div>
+            <div style="font-weight:900;font-size:1.05rem;color:#b91c1c;">${inspectedRejected}</div>
+          </div>
+        </div>
+
+        <!-- Recent Excuses -->
+        <div style="border-top:1px dashed var(--border);padding-top:10px;">
+          <div style="font-weight:800;font-size:0.76rem;color:var(--text2);margin-bottom:6px;">📝 آخر أسباب عدم التمكن المسجلة:</div>
+          ${excuses.length > 0 ? excuses.slice(-2).reverse().map(ex => `
+            <div style="font-size:0.75rem;background:rgba(239,68,68,0.05);border-radius:6px;padding:5px 8px;margin-bottom:4px;color:var(--text1);">
+              <b>${ex.date}:</b> ${escapeHtml(ex.title)} — <i>"${escapeHtml(ex.reason)}"</i>
+            </div>
+          `).join('') : '<div style="font-size:0.75rem;color:var(--text3);">لا توجد أعذار مسجلة.</div>'}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderOversightDeductions() {
+  const container = document.getElementById('oversightDeductionsContainer');
+  if (!container) return;
+
+  const list = cleaningDeductions || [];
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);">لا توجد أي طلبات خصم مرفوعة للنظام.</div>';
+    return;
+  }
+
+  let html = '';
+  list.forEach(d => {
+    const isPending = d.status === 'pending';
+    const isApproved = d.status === 'approved';
+
+    html += `
+      <div style="background:var(--bg1);border:1.5px solid ${isPending ? '#ef4444' : 'var(--border)'};border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-weight:900;font-size:0.95rem;color:var(--text1);">الموظف: <b style="color:#ef4444;">${escapeHtml(d.workerName)}</b></span>
+            ${isPending ? `
+              <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-weight:800;font-size:0.72rem;padding:2px 8px;border-radius:6px;">
+                ⏳ بانتظار قرار المدير
+              </span>
+            ` : isApproved ? `
+              <span style="background:rgba(16,185,129,0.15);color:#047857;font-weight:800;font-size:0.72rem;padding:2px 8px;border-radius:6px;">
+                ✅ تم اعتماد الخصم (${d.amount} ج)
+              </span>
+            ` : `
+              <span style="background:var(--bg2);color:var(--text3);font-weight:700;font-size:0.72rem;padding:2px 8px;border-radius:6px;">
+                ✕ تم رفض الخصم
+              </span>
+            `}
+          </div>
+
+          <div style="font-size:0.82rem;color:var(--text1);margin-bottom:3px;">
+            📌 المهمة: <b>${escapeHtml(d.taskTitle)}</b> | التاريخ: ${d.date}
+          </div>
+          <div style="font-size:0.78rem;color:var(--text2);">
+            ✍️ المشرف الطالب: <b>${escapeHtml(d.inspector)}</b> | السبب: "${escapeHtml(d.reason)}"
+          </div>
+        </div>
+
+        ${isPending ? `
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-sm btn-p" onclick="openAdminDeductionModal('${d.id}')"
+                    style="background:#ef4444;border:none;border-radius:8px;font-weight:900;font-size:0.8rem;padding:7px 16px;cursor:pointer;">
+              اعتماد الخصم
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="quickRejectAdminDeduction('${d.id}')"
+                    style="border-radius:8px;font-size:0.78rem;padding:7px 10px;cursor:pointer;">
+              رفض
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderOversightSchedulePreview() {
+  const container = document.getElementById('oversightSchedulePreviewContainer');
+  if (!container) return;
+
+  const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const dayIndices = [6, 0, 1, 2, 3, 4, 5]; // Saturday to Friday
+  const sched = cleaningWeeklySchedule || DEFAULT_WEEKLY_SCHEDULE;
+
+  let html = '';
+  ['mohamed', 'youssef'].forEach(wk => {
+    const workerDef = CLEANING_WORKERS[wk];
+    const wSched = sched[wk] || {};
+
+    html += `
+      <div style="background:var(--bg1);border:1.5px solid var(--border);border-radius:14px;padding:14px;">
+        <div style="font-weight:900;font-size:1rem;color:${wk==='mohamed'?'#0284c7':'#8b5cf6'};margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+          <span>${wk==='mohamed'?'💊':'💄'}</span>
+          <span>جدول ${workerDef.name} (${workerDef.deptTitle})</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${dayIndices.map(dIdx => {
+            const isOff = (dIdx === workerDef.dayOff);
+            const secs = wSched[dIdx] || [];
+            return `
+              <div style="background:var(--bg2);padding:6px 10px;border-radius:8px;font-size:0.78rem;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-weight:800;color:var(--text1);">${dayNames[dIdx]}:</span>
+                ${isOff ? '<span style="color:#10b981;font-weight:800;">🌴 إجازة رسمية</span>' : `<span>${secs.join(' + ') || 'مهام عامة'}</span>`}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
 }
 
 // ── Shift Settings Toggle & Save ──
@@ -20716,6 +21570,106 @@ function triggerWorkerReminder(title, body) {
       </button>
       <button onclick="confirmAdminDeduction()" class="btn btn-p" style="background:#ef4444;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
         ✅ اعتماد الخصم فوراً
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     📅 نافذة تعديل وتخصيص الجدول الأسبوعي الدوري (للمشرف والمدير)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="cleanEditScheduleModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeCleanEditScheduleModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:680px;width:95%;max-height:90vh;overflow-y:auto;padding:22px;text-align:right;background:var(--bg1);border-radius:18px;border:2px solid #0ea5e9;box-shadow:0 20px 50px rgba(0,0,0,0.45);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+      <div>
+        <div style="font-size:1.15rem;font-weight:900;color:#0ea5e9;display:flex;align-items:center;gap:6px;">
+          <span>📅</span>
+          <span>تعديل وتخصيص الجدول الأسبوعي الدوري</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text2);margin-top:2px;">
+          تحديد الرفوف والقطع لكل يوم عمل، أو تغيير يوم الإجازة الأسبوعية للموظف.
+        </div>
+      </div>
+      <button onclick="closeCleanEditScheduleModal()" style="background:none;border:none;font-size:1.3rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <!-- Worker Selector Tabs in Modal -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button type="button" id="editSchedTabBtn-mohamed" onclick="switchEditScheduleWorkerTab('mohamed')"
+              class="btn btn-sm" style="flex:1;background:#0284c7;color:#fff;border:none;border-radius:8px;font-weight:800;padding:8px;cursor:pointer;">
+        💊 جدول محمد (قسم الأدوية)
+      </button>
+      <button type="button" id="editSchedTabBtn-youssef" onclick="switchEditScheduleWorkerTab('youssef')"
+              class="btn btn-sm btn-ghost" style="flex:1;border-radius:8px;font-weight:800;padding:8px;cursor:pointer;">
+        💄 جدول يوسف (التجميل والمرفقات)
+      </button>
+    </div>
+
+    <!-- Container for Days Schedule List -->
+    <div id="editScheduleDaysContainer" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <!-- Filled dynamically -->
+    </div>
+
+    <!-- Footer Action Buttons -->
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;">
+      <button type="button" onclick="resetDefaultWeeklySchedule()" class="btn btn-ghost" style="font-size:0.78rem;color:var(--text3);cursor:pointer;">
+        ↺ استعادة الجدول الافتراضي
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeCleanEditScheduleModal()" class="btn btn-ghost" style="padding:8px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;">إلغاء</button>
+        <button onclick="saveCustomWeeklySchedule()" class="btn btn-p" style="background:#0ea5e9;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
+          💾 حفظ واعتماد الجدول بالسحابة
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ➕ نافذة إضافة أو تعديل مهمة لموظف اليوم (للمشرف)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="cleanAddEditTaskModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeCleanAddEditTaskModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:420px;width:95%;padding:20px;text-align:right;background:var(--bg1);border-radius:16px;border:2px solid #0284c7;box-shadow:0 20px 45px rgba(0,0,0,0.45);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:1.05rem;font-weight:900;color:#0284c7;display:flex;align-items:center;gap:6px;">
+        <span>➕</span>
+        <span>إضافة / تعديل مهمة نظافة اليوم</span>
+      </div>
+      <button onclick="closeCleanAddEditTaskModal()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <input type="hidden" id="cleanAddTaskDateInp" value="" />
+    <input type="hidden" id="cleanAddTaskEditId" value="" />
+
+    <div class="fg" style="margin-bottom:10px;">
+      <label style="font-size:0.78rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">👤 تعيين المهمة للموظف:</label>
+      <select id="cleanAddTaskWorkerSelect" onchange="syncAddTaskSectionOptions()"
+              style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-weight:800;font-size:0.85rem;">
+        <option value="mohamed">💊 محمد (قسم الأدوية)</option>
+        <option value="youssef">💄 يوسف (قسم التجميل والمرفقات)</option>
+      </select>
+    </div>
+
+    <div class="fg" style="margin-bottom:10px;">
+      <label style="font-size:0.78rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">🏷️ اختيار المنطقة / الرف:</label>
+      <select id="cleanAddTaskSectionSelect" onchange="if(this.value)document.getElementById('cleanAddTaskCustomTitleInp').value=this.value"
+              style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;">
+        <!-- Filled dynamically -->
+      </select>
+    </div>
+
+    <div class="fg" style="margin-bottom:14px;">
+      <label style="font-size:0.78rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">✏️ أو كتابة مسمى مهمة مخصصة:</label>
+      <input type="text" id="cleanAddTaskCustomTitleInp" placeholder="مثال: نظافة الثلاجة، ترتيب فاترينة العرض..."
+             style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.85rem;" />
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeCleanAddEditTaskModal()" class="btn btn-ghost" style="padding:8px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;">إلغاء</button>
+      <button onclick="confirmCleanAddEditTask()" class="btn btn-p" style="background:#0284c7;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
+        💾 إضافة المهمة فوراً
       </button>
     </div>
   </div>
