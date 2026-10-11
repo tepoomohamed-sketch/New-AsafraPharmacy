@@ -2438,23 +2438,10 @@ function ensureXLSX() {
 
       <!-- LOGIN FORM -->
       <div class="a-form on" id="fLogin">
-        <div class="fg"><label for="lEmail">📧 البريد الإلكتروني</label><input type="email" id="lEmail" placeholder="example@gmail.com" dir="ltr"/></div>
-        <div class="fg"><label for="lPass">🔒 كلمة المرور أو رمز PIN</label><input type="password" id="lPass" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <div class="fg"><label for="lEmail">📧 البريد الإلكتروني</label><input type="text" id="lEmail" placeholder="example@gmail.com" dir="ltr"/></div>
+        <div class="fg"><label for="lPass">🔒 كلمة المرور</label><input type="password" id="lPass" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter')doLogin()"/></div>
         <div class="err" id="lErr"></div>
         <button class="btn btn-primary" id="lBtn" onclick="doLogin()">🔐 دخول</button>
-        
-        <!-- الدخول السريع لموظفي الدليفري والنظافة -->
-        <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);text-align:center;">
-          <div style="font-size:0.76rem;font-weight:800;color:var(--text3);margin-bottom:8px;">🛵 دخول سريع لموظفي النظافة والدليفري (PIN):</div>
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-            <button type="button" class="btn btn-sm" onclick="quickWorkerPinLogin('mohamed', '1515')" style="background:rgba(2,132,199,0.08);color:#0284c7;border:1.5px solid rgba(2,132,199,0.4);border-radius:8px;font-size:0.78rem;font-weight:900;padding:6px 14px;cursor:pointer;">
-              👤 محمد (1515)
-            </button>
-            <button type="button" class="btn btn-sm" onclick="quickWorkerPinLogin('youssef', '1616')" style="background:rgba(139,92,246,0.08);color:#8b5cf6;border:1.5px solid rgba(139,92,246,0.4);border-radius:8px;font-size:0.78rem;font-weight:900;padding:6px 14px;cursor:pointer;">
-              👤 يوسف (1616)
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- REGISTER FORM -->
