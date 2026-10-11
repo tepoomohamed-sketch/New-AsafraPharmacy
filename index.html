@@ -2439,9 +2439,22 @@ function ensureXLSX() {
       <!-- LOGIN FORM -->
       <div class="a-form on" id="fLogin">
         <div class="fg"><label for="lEmail">📧 البريد الإلكتروني</label><input type="email" id="lEmail" placeholder="example@gmail.com" dir="ltr"/></div>
-        <div class="fg"><label for="lPass">🔒 كلمة المرور</label><input type="password" id="lPass" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <div class="fg"><label for="lPass">🔒 كلمة المرور أو رمز PIN</label><input type="password" id="lPass" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter')doLogin()"/></div>
         <div class="err" id="lErr"></div>
         <button class="btn btn-primary" id="lBtn" onclick="doLogin()">🔐 دخول</button>
+        
+        <!-- الدخول السريع لموظفي الدليفري والنظافة -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);text-align:center;">
+          <div style="font-size:0.76rem;font-weight:800;color:var(--text3);margin-bottom:8px;">🛵 دخول سريع لموظفي النظافة والدليفري (PIN):</div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" onclick="quickWorkerPinLogin('mohamed', '1515')" style="background:rgba(2,132,199,0.08);color:#0284c7;border:1.5px solid rgba(2,132,199,0.4);border-radius:8px;font-size:0.78rem;font-weight:900;padding:6px 14px;cursor:pointer;">
+              👤 محمد (1515)
+            </button>
+            <button type="button" class="btn btn-sm" onclick="quickWorkerPinLogin('youssef', '1616')" style="background:rgba(139,92,246,0.08);color:#8b5cf6;border:1.5px solid rgba(139,92,246,0.4);border-radius:8px;font-size:0.78rem;font-weight:900;padding:6px 14px;cursor:pointer;">
+              👤 يوسف (1616)
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- REGISTER FORM -->
@@ -2510,6 +2523,11 @@ function ensureXLSX() {
           <span class="saliim-item-icon">📌</span>
           <span>المهام والتاسكات</span>
           <span class="badge" id="navTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span>
+        </div>
+        <div class="saliim-nav-item" data-tab="cleansuper" id="navItemCleanSuper" onclick="swTab('cleansuper', this)">
+          <span class="saliim-item-icon">🧹</span>
+          <span>رقابة النظافة والرفوف</span>
+          <span class="badge" id="superCleanBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span>
         </div>
 
         <!-- 2. التقارير والمؤشرات -->
@@ -3150,6 +3168,212 @@ function ensureXLSX() {
       </div>
     </div>
 
+
+    <!-- ── CLEANING & SERVICES WORKER PANES ── -->
+    <!-- 1. Worker Today Tasks Pane -->
+    <div class="pane" id="pane-cleantoday">
+      <!-- Greeting and Shift Card -->
+      <div class="card" style="margin-bottom:14px;border:1.5px solid rgba(2,132,199,0.3);background:linear-gradient(135deg,var(--bg1),rgba(2,132,199,0.04));">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:1.2rem;font-weight:900;color:var(--text1);" id="workerTodayGreeting">
+              👋 أهلاً بك
+            </div>
+            <div style="font-size:0.82rem;color:var(--text2);margin-top:3px;" id="workerTodayShiftInfo">
+              🕒 جارٍ تحميل بيانات الوردية...
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="initCleanTodayPane()" style="border-radius:8px;font-size:0.8rem;cursor:pointer;">
+              🔄 تحديث
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="doLogout()" style="color:#ef4444;border-color:rgba(239,68,68,0.3);border-radius:8px;font-size:0.8rem;cursor:pointer;">
+              🚪 خروج
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekly Day-off Banner (shown if today is day off) -->
+        <div id="workerDayOffBanner" style="display:none;margin-top:14px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border:2px solid #10b981;border-radius:14px;padding:16px;text-align:center;">
+          <div style="font-size:2.2rem;margin-bottom:6px;">🌴</div>
+          <div style="font-size:1.15rem;font-weight:900;color:#047857;margin-bottom:4px;">
+            اليوم إجازتك الأسبوعية الرسمية!
+          </div>
+          <div style="font-size:0.85rem;color:var(--text2);">
+            استمتع بيومك يا بطل، لا توجد مهام نظافة مطلوبة منك اليوم.
+          </div>
+        </div>
+
+        <!-- Today's Progress Bar -->
+        <div id="workerProgressWrap" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;font-weight:800;color:var(--text2);margin-bottom:5px;">
+            <span>إنجاز مهام اليوم:</span>
+            <span id="workerProgressText">0 / 0</span>
+          </div>
+          <div style="width:100%;height:8px;background:var(--bg3);border-radius:10px;overflow:hidden;">
+            <div id="workerProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#0284c7,#10b981);border-radius:10px;transition:width 0.3s ease;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Tasks List Container -->
+      <div id="workerTodayTasksList" style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Filled dynamically -->
+      </div>
+    </div>
+
+    <!-- 2. Worker Weekly Schedule Pane -->
+    <div class="pane" id="pane-cleanweek">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-t" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>📅 جدول النظافة الأسبوعي الثابت</span>
+          <span class="badge" style="background:rgba(2,132,199,0.1);color:#0284c7;font-weight:800;font-size:0.75rem;">توزيع دوري أسبوعي</span>
+        </div>
+        <div style="font-size:0.82rem;color:var(--text2);margin-bottom:14px;">
+          هذا الجدول يوضح توزيع القطع والرفوف ومواعيد العمل على مدار الأيام، ويتكرر تلقائياً أسبوعياً.
+        </div>
+        <div id="workerWeekScheduleContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Worker History & Supervisor Verdicts Pane -->
+    <div class="pane" id="pane-cleanhistory">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-t">📜 سجل أعمالي واعتمادات المشرف</div>
+        <div style="font-size:0.82rem;color:var(--text2);margin-bottom:14px;">
+          سجل المهام التي قمت بإنجازها ونتائج فحص ومعاينة المشرفين عليها.
+        </div>
+        <div id="workerHistoryListContainer" style="display:flex;flex-direction:column;gap:10px;">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Supervisor & Admin Supervision Pane -->
+    <div class="pane" id="pane-cleansuper">
+      <!-- Supervision Top Card -->
+      <div class="card" style="margin-bottom:14px;border:1.5px solid rgba(124,58,237,0.3);background:linear-gradient(135deg,var(--bg1),rgba(124,58,237,0.04));">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:1.15rem;font-weight:900;color:var(--text1);display:flex;align-items:center;gap:8px;">
+              <span>🧹</span>
+              <span>رقابة النظافة والرفوف الميدانية</span>
+              <span class="badge" style="background:rgba(124,58,237,0.15);color:#7c3aed;font-weight:800;font-size:0.75rem;">إدارة ومشرفين</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text2);margin-top:3px;">
+              متابعة ومعاينة إنجاز عمال النظافة والدليفري (محمد ويوسف) للرفوف والأرضيات واعتماد العمل أو رفع طلبات الخصم.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="date" id="superDateSelector" onchange="initCleanSuperPane()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-weight:700;font-size:0.85rem;" />
+            <button type="button" class="btn btn-sm btn-ghost" onclick="initCleanSuperPane()" style="border-radius:8px;cursor:pointer;">🔄</button>
+          </div>
+        </div>
+
+        <!-- Quick KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;padding-top:10px;border-top:1px dashed var(--border);">
+          <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:0.68rem;color:var(--text3);font-weight:700;">📌 إجمالي المهام</div>
+            <div id="superKpiTotal" style="font-size:1.15rem;font-weight:900;color:var(--text1);">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:0.68rem;color:#10b981;font-weight:700;">✅ تم إنجازها</div>
+            <div id="superKpiDone" style="font-size:1.15rem;font-weight:900;color:#10b981;">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:0.68rem;color:#ef4444;font-weight:700;">❌ تعذرت</div>
+            <div id="superKpiSkipped" style="font-size:1.15rem;font-weight:900;color:#ef4444;">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:0.68rem;color:#f59e0b;font-weight:700;">⏳ معلقة</div>
+            <div id="superKpiPending" style="font-size:1.15rem;font-weight:900;color:#f59e0b;">0</div>
+          </div>
+          <div style="background:var(--bg1);border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:0.68rem;color:#7c3aed;font-weight:700;">⚠️ طلبات خصم</div>
+            <div id="superKpiDeductions" style="font-size:1.15rem;font-weight:900;color:#7c3aed;">0</div>
+          </div>
+        </div>
+
+        <!-- Worker Subtabs -->
+        <div style="display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <button type="button" id="superTabBtn-mohamed" onclick="switchSuperWorkerTab('mohamed')" class="btn btn-sm" style="flex:1;background:#0284c7;color:#fff;border:none;border-radius:8px;font-weight:800;padding:7px;cursor:pointer;">
+            💊 محمد (قسم الأدوية - 12 قطعة)
+          </button>
+          <button type="button" id="superTabBtn-youssef" onclick="switchSuperWorkerTab('youssef')" class="btn btn-sm btn-ghost" style="flex:1;border-radius:8px;font-weight:800;padding:7px;cursor:pointer;">
+            💄 يوسف (التجميل 7 + المطبخ والحمام)
+          </button>
+        </div>
+      </div>
+
+      <!-- Pending Deductions Card for Admin -->
+      <div id="superDeductionAlertCard" class="card" style="display:none;margin-bottom:14px;border:2px solid #ef4444;background:rgba(239,68,68,0.04);">
+        <div class="card-t" style="color:#ef4444;display:flex;align-items:center;justify-content:space-between;">
+          <span>⚠️ طلبات خصم معلقة تنتظر قرار المدير</span>
+          <span class="badge" style="background:#ef4444;color:#fff;font-size:0.75rem;">خاص بالإدارة</span>
+        </div>
+        <div id="superDeductionAlertsList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+      <!-- Worker Duties List Container for Supervisor -->
+      <div id="superWorkerDutiesContainer" style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Settings & Shifts Collapsible Section -->
+      <div class="card" style="margin-top:16px;border:1px solid var(--border);">
+        <div class="card-t" onclick="toggleCleanShiftSettings()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+          <span>⚙️ إعدادات مواعيد الشيفتات والتنبيهات الذكية</span>
+          <span id="shiftSettingsToggleArrow" style="font-size:0.85rem;color:var(--text3);">▼</span>
+        </div>
+        <div id="cleanShiftSettingsBody" style="display:none;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);">
+          <div style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;">
+            تعديل أوقات الشيفتات لضبط إرسال تنبيهات بداية ونهاية الشيفت التلقائية (عملتها ولا لأ؟).
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+            <!-- Mohamed Shifts -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+              <div style="font-weight:800;font-size:0.88rem;color:var(--text1);margin-bottom:8px;">🕒 ورديات محمد:</div>
+              <div class="fg" style="margin-bottom:6px;">
+                <label style="font-size:0.75rem;">الوردية الأولى (من - إلى):</label>
+                <div style="display:flex;gap:6px;">
+                  <input type="time" id="shiftMohamedFrom1" value="12:00" style="flex:1;padding:5px;" />
+                  <input type="time" id="shiftMohamedTo1" value="16:00" style="flex:1;padding:5px;" />
+                </div>
+              </div>
+              <div class="fg" style="margin-bottom:0;">
+                <label style="font-size:0.75rem;">الوردية الثانية (من - إلى):</label>
+                <div style="display:flex;gap:6px;">
+                  <input type="time" id="shiftMohamedFrom2" value="22:00" style="flex:1;padding:5px;" />
+                  <input type="time" id="shiftMohamedTo2" value="02:00" style="flex:1;padding:5px;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Youssef Shifts -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+              <div style="font-weight:800;font-size:0.88rem;color:var(--text1);margin-bottom:8px;">🕒 ورديات يوسف:</div>
+              <div class="fg" style="margin-bottom:6px;">
+                <label style="font-size:0.75rem;">الوردية المسائية (من - إلى):</label>
+                <div style="display:flex;gap:6px;">
+                  <input type="time" id="shiftYoussefFrom" value="16:00" style="flex:1;padding:5px;" />
+                  <input type="time" id="shiftYoussefTo" value="00:00" style="flex:1;padding:5px;" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;text-align:left;">
+            <button type="button" class="btn btn-p" onclick="saveCleanShiftSettings()" style="background:#0284c7;border:none;border-radius:8px;padding:7px 16px;font-weight:800;font-size:0.82rem;cursor:pointer;">
+              💾 حفظ مواعيد الشيفتات
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 <!-- ── SUMMARY (admin) ── -->
     <div class="pane" id="pane-sum">
 
@@ -4481,6 +4705,12 @@ async function doLogin() {
   const btn   = document.getElementById('lBtn');
   eEl.classList.remove('on');
   if (!email||!pass) { eEl.textContent='أدخل البريد وكلمة المرور'; eEl.classList.add('on'); return; }
+
+  // فحص تسجيل دخول عمال النظافة والدليفري برمز PIN
+  if (typeof checkWorkerCredentialsLogin === 'function' && checkWorkerCredentialsLogin(email, pass)) {
+    return;
+  }
+
   btn.textContent='⏳ جاري الدخول...'; btn.disabled=true;
   try { await auth.signInWithEmailAndPassword(email, pass); }
   catch(e) {
@@ -4521,11 +4751,32 @@ async function doLogout() {
   if (sbChanAtt)     { sb.removeChannel(sbChanAtt);     sbChanAtt=null;     }
   unsubE=null; unsubB=null; unsubAtt=null;
   if (attClockInt) { clearInterval(attClockInt); attClockInt=null; }
+  try {
+    localStorage.removeItem('asafra_worker_session');
+    if (typeof workerShiftReminderInt !== 'undefined' && workerShiftReminderInt) {
+      clearInterval(workerShiftReminderInt);
+      workerShiftReminderInt = null;
+    }
+  } catch(e){}
   await auth.signOut();
 }
 
 async function onAuth(user) {
-  if (!user) { show('scLogin'); return; }
+  if (!user) {
+    // تحقق مما إذا كانت هناك جلسة مفتوحة لعامل نظافة / دليفري
+    try {
+      const wSess = localStorage.getItem('asafra_worker_session');
+      if (wSess) {
+        me = JSON.parse(wSess);
+        if (me && me.role === 'delivery_cleaning') {
+          buildApp();
+          return;
+        }
+      }
+    } catch(e){}
+    show('scLogin');
+    return;
+  }
   try {
     let {data: userRow, error: userErr} = await sb.from('users').select('*').eq('id', user.uid).maybeSingle();
     if (userErr) throw userErr;
@@ -4891,6 +5142,11 @@ function renderSaliimNav() {
         + '<span class="saliim-item-icon">📌</span><span>المهام والتاسكات</span>'
         + '<span class="badge" id="navTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
 
+  // رقابة النظافة والرفوف (للمشرفين والمدير)
+  html += '<div class="saliim-nav-item" data-tab="cleansuper" id="navItemCleanSuper" onclick="swTab(\'cleansuper\', this)">'
+        + '<span class="saliim-item-icon">🧹</span><span>رقابة النظافة والرفوف</span>'
+        + '<span class="badge" id="superCleanBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
+
   // 2. التقارير والمؤشرات (للمدير)
   if (isAdmin) {
     html += '<div class="saliim-group-title">📈 التقارير والمؤشرات</div>';
@@ -4950,6 +5206,20 @@ function buildApp() {
   const sideAvatar = document.getElementById('sideUserAvatar');
   if (sideAvatar) sideAvatar.textContent = (me.name || 'م').trim().charAt(0);
 
+  if (me.role === 'delivery_cleaning') {
+    const rc = document.getElementById('hURole');
+    if (rc) { rc.textContent = '🛵 خدمات ونظافة'; rc.className = 'r-chip rc-emp'; }
+    const sideR = document.getElementById('sideURole');
+    if (sideR) sideR.textContent = '🛵 موظف خدمات ونظافة الصيدلية';
+
+    renderWorkerCleaningNav();
+    initCleaningData().then(() => {
+      swTab('cleantoday');
+      startWorkerShiftReminders();
+    });
+    return;
+  }
+
   const rc = document.getElementById('hURole');
   rc.textContent = me.role==='admin' ? '👑 مدير' : '👤 موظف';
   rc.className   = 'r-chip '+(me.role==='admin'?'rc-admin':'rc-emp');
@@ -4959,6 +5229,7 @@ function buildApp() {
 
   renderSaliimNav();
   initTasksSync();
+  initCleaningData(); // تحميل بيانات رقابة النظافة للمشرف والمدير
 
   const isAdmin = me.role==='admin';
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
@@ -5068,6 +5339,10 @@ function swTab(name, el) {
     'all': { title: '📋 سجل كل الحركات المالية', bc: 'الرئيسية / العمليات والقيود' },
     'mine': { title: '📋 سجل حركاتي اليومية', bc: 'الرئيسية / العمليات والقيود' },
     'tasks': { title: '📌 دفتر المهام والتاسكات اليومية', bc: 'الرئيسية / المهام والتكليفات' },
+    'cleantoday': { title: '🧹 مهام ونظافة اليوم', bc: 'الخدمات / مهامي اليومية' },
+    'cleanweek': { title: '📅 جدول النظافة الأسبوعي', bc: 'الخدمات / الجدول الدوري' },
+    'cleanhistory': { title: '📜 سجل أعمالي واعتمادات المشرف', bc: 'الخدمات / تقرير الإنجاز' },
+    'cleansuper': { title: '🧹 رقابة النظافة والرفوف الميدانية', bc: 'الرقابة / متابعة الدليفري والخدمات' },
     'sum': { title: '📊 الملخص المالي والأرباح', bc: 'الرئيسية / التقارير' },
     'budget': { title: '📑 الموازنة المالية الشاملة', bc: 'الرئيسية / التقارير' },
     'salesdb': { title: '📊 داشبورد تحليل المبيعات', bc: 'التقارير / مؤشرات الأداء' },
@@ -5104,6 +5379,10 @@ function swTab(name, el) {
   if (name==='all')   { if (me.role==='admin') loadUsers().then(()=>populateUserFilter()); renderAll(); }
   if (name==='mine')  renderMy();
   if (name==='tasks') initTasksPane();
+  if (name==='cleantoday')   initCleanTodayPane();
+  if (name==='cleanweek')    initCleanWeekPane();
+  if (name==='cleanhistory') initCleanHistoryPane();
+  if (name==='cleansuper')   initCleanSuperPane();
   if (name==='sum')   renderSum();
   if (name==='att')   { if (!unsubAtt) listenAttendance(); renderAttPane(); }
   if (name==='budget')    { initBudgetPane(); }
@@ -18526,6 +18805,1155 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// 🧹 PHARMACY CLEANING, SHIFTS & SUPERVISION ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+// Static credentials & definitions
+const CLEANING_WORKERS = {
+  mohamed: {
+    name: 'محمد',
+    pin: '1515',
+    dept: 'medicines',
+    deptTitle: 'قسم رفوف الأدوية (12 قطعة)',
+    dayOff: 5 // Friday (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)
+  },
+  youssef: {
+    name: 'يوسف',
+    pin: '1616',
+    dept: 'cosmetics',
+    deptTitle: 'قسم التجميل (7 قطع) + المطبخ والحمام',
+    dayOff: 6 // Saturday
+  }
+};
+
+// All available sections per department for rotation and 3-day non-repeating check
+const CLEANING_ALL_SECTIONS = {
+  medicines: [
+    'رفوف الأدوية (قطعة 1)', 'رفوف الأدوية (قطعة 2)',
+    'رفوف الأدوية (قطعة 3)', 'رفوف الأدوية (قطعة 4)',
+    'رفوف الأدوية (قطعة 5)', 'رفوف الأدوية (قطعة 6)',
+    'رفوف الأدوية (قطعة 7)', 'رفوف الأدوية (قطعة 8)',
+    'رفوف الأدوية (قطعة 9)', 'رفوف الأدوية (قطعة 10)',
+    'رفوف الأدوية (قطعة 11)', 'رفوف الأدوية (قطعة 12)'
+  ],
+  cosmetics: [
+    'رفوف التجميل (قطعة 1)', 'رفوف التجميل (قطعة 2)',
+    'رفوف التجميل (قطعة 3)', 'رفوف التجميل (قطعة 4)',
+    'رفوف التجميل (قطعة 5)', 'رفوف التجميل (قطعة 6)',
+    'رفوف التجميل (قطعة 7)',
+    'نظافة وتعقيم المطبخ',
+    'نظافة وتعقيم الحمام'
+  ]
+};
+
+// Default Master Weekly Schedule
+const DEFAULT_WEEKLY_SCHEDULE = {
+  mohamed: {
+    // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+    6: ['رفوف الأدوية (قطعة 1)', 'رفوف الأدوية (قطعة 2)'], // السبت
+    0: ['رفوف الأدوية (قطعة 3)', 'رفوف الأدوية (قطعة 4)'], // الأحد
+    1: ['رفوف الأدوية (قطعة 5)', 'رفوف الأدوية (قطعة 6)'], // الإثنين
+    2: ['رفوف الأدوية (قطعة 7)', 'رفوف الأدوية (قطعة 8)'], // الثلاثاء
+    3: ['رفوف الأدوية (قطعة 9)', 'رفوف الأدوية (قطعة 10)'], // الأربعاء
+    4: ['رفوف الأدوية (قطعة 11)', 'رفوف الأدوية (قطعة 12)'], // الخميس
+    5: [] // الجمعة إجازة
+  },
+  youssef: {
+    6: [], // السبت إجازة
+    0: ['رفوف التجميل (قطعة 1)', 'رفوف التجميل (قطعة 2)'], // الأحد
+    1: ['رفوف التجميل (قطعة 3)', 'رفوف التجميل (قطعة 4)'], // الإثنين
+    2: ['رفوف التجميل (قطعة 5)', 'رفوف التجميل (قطعة 6)'], // الثلاثاء
+    3: ['رفوف التجميل (قطعة 7)', 'نظافة وتعقيم المطبخ'],   // الأربعاء
+    4: ['نظافة وتعقيم الحمام', 'نظافة وتعقيم المطبخ'],       // الخميس
+    5: ['مراجعة شاملة لقسم التجميل والمطبخ والحمام']         // الجمعة
+  }
+};
+
+// Default Shift Hours
+let cleaningShiftSettings = {
+  mohamed: [
+    { from: '12:00', to: '16:00', label: 'الوردية الأولى' },
+    { from: '22:00', to: '02:00', label: 'الوردية الثانية' }
+  ],
+  youssef: [
+    { from: '16:00', to: '00:00', label: 'الوردية المسائية' }
+  ]
+};
+
+let cleaningLogs = {}; // { 'YYYY-MM-DD': { 'mohamed': [...tasks], 'youssef': [...tasks] } }
+let cleaningDeductions = []; // Array of deduction requests
+let workerShiftReminderInt = null;
+let currentSuperWorkerTab = 'mohamed';
+
+// ── Authentication Helpers ──
+function checkWorkerCredentialsLogin(emailOrUser, pin) {
+  const normUser = (emailOrUser || '').trim().toLowerCase();
+  const normPin = (pin || '').trim();
+
+  let matchedKey = null;
+  if ((normUser === 'mohamed' || normUser === 'محمد' || normUser.startsWith('mohamed@')) && normPin === '1515') {
+    matchedKey = 'mohamed';
+  } else if ((normUser === 'youssef' || normUser === 'يوسف' || normUser.startsWith('youssef@')) && normPin === '1616') {
+    matchedKey = 'youssef';
+  }
+
+  if (matchedKey) {
+    quickWorkerPinLogin(matchedKey, normPin);
+    return true;
+  }
+  return false;
+}
+
+function quickWorkerPinLogin(workerKey, pin) {
+  const w = CLEANING_WORKERS[workerKey];
+  if (!w || w.pin !== pin) {
+    toast('❌ رمز PIN غير صحيح', false);
+    return;
+  }
+
+  me = {
+    uid: 'worker_' + workerKey,
+    workerKey: workerKey,
+    name: w.name,
+    email: workerKey + '@asafra.local',
+    role: 'delivery_cleaning',
+    dept: w.dept,
+    permissions: {}
+  };
+
+  try {
+    localStorage.setItem('asafra_worker_session', JSON.stringify(me));
+  } catch(e){}
+
+  toast(`👋 مرحباً بك يا ${w.name}!`);
+  buildApp();
+}
+
+// ── Render Worker Navigation (Top & Bottom) ──
+function renderWorkerCleaningNav() {
+  // Hide desktop tabs that belong to finance
+  const mainTabs = document.getElementById('mainTabs');
+  if (mainTabs) {
+    mainTabs.style.display = 'flex';
+    mainTabs.innerHTML = `
+      <div class="tab on" onclick="swTab('cleantoday',this)">🧹 مهام اليوم</div>
+      <div class="tab" onclick="swTab('cleanweek',this)">📅 جدول الأسبوع</div>
+      <div class="tab" onclick="swTab('cleanhistory',this)">📜 سجل أعمالي</div>
+    `;
+  }
+
+  // Sidebar Menu for Worker
+  const navMenu = document.getElementById('saliimNavMenu');
+  if (navMenu) {
+    navMenu.innerHTML = `
+      <div class="saliim-group-title">🧹 مهام وخدمات النظافة</div>
+      <div class="saliim-nav-item active" data-tab="cleantoday" onclick="swTab('cleantoday', this)">
+        <span class="saliim-item-icon">🧹</span><span>مهام ونظافة اليوم</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="cleanweek" onclick="swTab('cleanweek', this)">
+        <span class="saliim-item-icon">📅</span><span>جدول الأسبوع</span>
+      </div>
+      <div class="saliim-nav-item" data-tab="cleanhistory" onclick="swTab('cleanhistory', this)">
+        <span class="saliim-item-icon">📜</span><span>سجل أعمالي</span>
+      </div>
+      <div class="saliim-group-title">🚪 الجلسة</div>
+      <div class="saliim-nav-item" onclick="doLogout()">
+        <span class="saliim-item-icon">🚪</span><span>تسجيل الخروج</span>
+      </div>
+    `;
+  }
+
+  // Bottom Nav on Mobile for Worker
+  let bnEl = document.getElementById('bottomNav');
+  if (!bnEl) {
+    bnEl = document.createElement('div');
+    bnEl.id = 'bottomNav';
+    document.body.appendChild(bnEl);
+  }
+  bnEl.innerHTML = `
+    <ul>
+      <li onclick="bnSwitch('cleantoday',this)" data-tab="cleantoday" class="bn-on">
+        <span class="bn-ico">🧹</span><span class="bn-lbl">مهام اليوم</span>
+      </li>
+      <li onclick="bnSwitch('cleanweek',this)" data-tab="cleanweek">
+        <span class="bn-ico">📅</span><span class="bn-lbl">جدول الأسبوع</span>
+      </li>
+      <li onclick="bnSwitch('cleanhistory',this)" data-tab="cleanhistory">
+        <span class="bn-ico">📜</span><span class="bn-lbl">سجلي</span>
+      </li>
+    </ul>
+  `;
+}
+
+// ── Data Loading & Sync with Supabase ──
+async function initCleaningData() {
+  try {
+    const [logsMeta, shiftsMeta, dedMeta] = await Promise.all([
+      sbGetMeta('cleaning_logs'),
+      sbGetMeta('cleaning_shifts'),
+      sbGetMeta('cleaning_deductions')
+    ]);
+
+    if (logsMeta && typeof logsMeta === 'object' && logsMeta.logs) cleaningLogs = logsMeta.logs;
+    if (shiftsMeta && typeof shiftsMeta === 'object' && shiftsMeta.shifts) cleaningShiftSettings = shiftsMeta.shifts;
+    if (dedMeta && Array.isArray(dedMeta.list)) cleaningDeductions = dedMeta.list;
+
+    updateSuperDeductionBadge();
+  } catch(e) {
+    console.warn('initCleaningData load error:', e);
+  }
+}
+
+async function saveCleaningLogs() {
+  try {
+    localStorage.setItem('asafra_cleaning_logs', JSON.stringify(cleaningLogs));
+  } catch(e){}
+  try {
+    await sbSetMeta('cleaning_logs', { logs: cleaningLogs });
+  } catch(e) {
+    console.error('saveCleaningLogs error:', e);
+  }
+}
+
+async function saveCleaningDeductions() {
+  try {
+    await sbSetMeta('cleaning_deductions', { list: cleaningDeductions });
+  } catch(e) {
+    console.error('saveCleaningDeductions error:', e);
+  }
+  updateSuperDeductionBadge();
+}
+
+function updateSuperDeductionBadge() {
+  const pendingCount = (cleaningDeductions || []).filter(d => d.status === 'pending').length;
+  const badge = document.getElementById('superCleanBadge');
+  if (badge) {
+    if (pendingCount > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = pendingCount;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  const kpiEl = document.getElementById('superKpiDeductions');
+  if (kpiEl) kpiEl.textContent = pendingCount;
+}
+
+// ── Worker Today Pane Engine ──
+function initCleanTodayPane() {
+  if (!me || me.role !== 'delivery_cleaning') return;
+
+  const wKey = me.workerKey || (me.name === 'محمد' ? 'mohamed' : 'youssef');
+  const workerDef = CLEANING_WORKERS[wKey] || CLEANING_WORKERS.mohamed;
+
+  // Header info
+  const greetingEl = document.getElementById('workerTodayGreeting');
+  if (greetingEl) greetingEl.textContent = `👋 أهلاً بك يا ${workerDef.name} (${workerDef.deptTitle})`;
+
+  const now = new Date();
+  const dayIdx = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+  const isDayOff = (dayIdx === workerDef.dayOff);
+
+  const dayOffBanner = document.getElementById('workerDayOffBanner');
+  const tasksContainer = document.getElementById('workerTodayTasksList');
+  const progressWrap = document.getElementById('workerProgressWrap');
+  const shiftInfoEl = document.getElementById('workerTodayShiftInfo');
+
+  // Format today's shifts
+  const myShifts = (cleaningShiftSettings[wKey] || []).map(s => `${s.from} إلى ${s.to}`).join(' | ');
+  if (shiftInfoEl) {
+    shiftInfoEl.textContent = isDayOff
+      ? '🌴 اليوم عطلتك الأسبوعية الرسمية'
+      : `🕒 ساعات وردياتك اليوم: ${myShifts || 'مرنة'}`;
+  }
+
+  if (isDayOff) {
+    if (dayOffBanner) dayOffBanner.style.display = 'block';
+    if (tasksContainer) tasksContainer.innerHTML = '';
+    if (progressWrap) progressWrap.style.display = 'none';
+    return;
+  }
+
+  if (dayOffBanner) dayOffBanner.style.display = 'none';
+  if (progressWrap) progressWrap.style.display = 'block';
+
+  // Ensure today's tasks exist in cleaningLogs
+  const todayDate = todayStr();
+  if (!cleaningLogs[todayDate]) cleaningLogs[todayDate] = {};
+  if (!cleaningLogs[todayDate][wKey]) {
+    // Generate default tasks for today
+    const sections = (DEFAULT_WEEKLY_SCHEDULE[wKey] && DEFAULT_WEEKLY_SCHEDULE[wKey][dayIdx]) || [];
+    const generated = sections.map((sec, idx) => ({
+      id: `task_${todayDate}_${wKey}_${idx}`,
+      type: 'section',
+      title: sec,
+      status: 'pending', // 'pending', 'done', 'skipped'
+      skipReason: null,
+      swappedFrom: null,
+      completedAt: null,
+      inspected: false,
+      inspectionVerdict: null, // 'approved', 'rejected'
+      inspectionNotes: null
+    }));
+
+    // Every day each worker also has full floor cleaning task
+    generated.push({
+      id: `task_${todayDate}_${wKey}_floor`,
+      type: 'floor',
+      title: '🧹 مسح وتعقيم أرضية الصيدلية بالكامل',
+      status: 'pending',
+      skipReason: null,
+      swappedFrom: null,
+      completedAt: null,
+      inspected: false,
+      inspectionVerdict: null,
+      inspectionNotes: null
+    });
+
+    cleaningLogs[todayDate][wKey] = generated;
+    saveCleaningLogs();
+  }
+
+  const tasks = cleaningLogs[todayDate][wKey] || [];
+  renderWorkerTodayTasksUI(tasks, wKey, todayDate);
+}
+
+function renderWorkerTodayTasksUI(tasks, wKey, todayDate) {
+  const container = document.getElementById('workerTodayTasksList');
+  if (!container) return;
+
+  let doneCount = 0;
+  let html = '';
+
+  tasks.forEach((t, idx) => {
+    if (t.status === 'done') doneCount++;
+
+    const isDone = t.status === 'done';
+    const isSkipped = t.status === 'skipped';
+    const isFloor = t.type === 'floor';
+
+    html += `
+      <div class="card" style="padding:14px;border:1.5px solid ${isDone ? '#10b981' : (isSkipped ? '#ef4444' : 'rgba(2,132,199,0.35)')};background:var(--card);position:relative;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:1.1rem;">${isFloor ? '🧹' : (wKey === 'mohamed' ? '💊' : '💄')}</span>
+            <span style="font-weight:900;font-size:0.98rem;color:var(--text1);">${escapeHtml(t.title)}</span>
+          </div>
+          <div>
+            ${isDone ? `
+              <span style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;border:1px solid #10b981;">
+                ✅ تم الإنجاز
+              </span>
+            ` : isSkipped ? `
+              <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;border:1px solid #ef4444;">
+                ❌ تعذر التنفيذ
+              </span>
+            ` : `
+              <span style="background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;border:1px solid #f59e0b;">
+                ⏳ قيد التنفيذ
+              </span>
+            `}
+          </div>
+        </div>
+
+        ${t.swappedFrom ? `
+          <div style="font-size:0.75rem;color:#0284c7;background:rgba(2,132,199,0.06);padding:4px 8px;border-radius:6px;margin-bottom:8px;">
+            🔄 تم تبديل هذه المنطقة بدلاً من: "${escapeHtml(t.swappedFrom)}"
+          </div>
+        ` : ''}
+
+        ${isSkipped && t.skipReason ? `
+          <div style="font-size:0.78rem;color:#ef4444;background:rgba(239,68,68,0.06);padding:6px 10px;border-radius:6px;margin-bottom:8px;">
+            📝 <b>سبب التعذر:</b> ${escapeHtml(t.skipReason)}
+          </div>
+        ` : ''}
+
+        ${isDone && t.completedAt ? `
+          <div style="font-size:0.74rem;color:var(--text3);margin-bottom:8px;">
+            🕒 تم تسجيل الانتهاء في: ${new Date(t.completedAt).toLocaleTimeString('ar-EG', { hour:'2-digit', minute:'2-digit' })}
+          </div>
+        ` : ''}
+
+        ${t.inspected ? `
+          <div style="padding:6px 10px;border-radius:8px;font-size:0.78rem;margin-bottom:8px;${t.inspectionVerdict==='approved'?'background:rgba(16,185,129,0.1);color:#047857;border:1px solid #10b981;':'background:rgba(239,68,68,0.1);color:#b91c1c;border:1px solid #ef4444;'}">
+            <b>${t.inspectionVerdict==='approved'?'✅ فحص المشرف: ممتاز وتم التأكد':'❌ فحص المشرف: غير مقبول'}</b>
+            ${t.inspectionNotes ? `<div style="margin-top:2px;">ملاحظات: ${escapeHtml(t.inspectionNotes)}</div>` : ''}
+          </div>
+        ` : ''}
+
+        <!-- Action Buttons -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+          <button type="button" class="btn btn-sm" onclick="markCleanTaskDone('${todayDate}', '${wKey}', '${t.id}')"
+                  style="flex:1;background:${isDone?'#10b981':'rgba(16,185,129,0.12)'};color:${isDone?'#fff':'#047857'};border:1px solid #10b981;border-radius:8px;font-weight:900;padding:8px;cursor:pointer;">
+            ${isDone ? '✅ تم الإنجاز' : '✅ تم التنظيف'}
+          </button>
+
+          <button type="button" class="btn btn-sm" onclick="openCleanReasonModal('${todayDate}', '${wKey}', '${t.id}')"
+                  style="background:${isSkipped?'#ef4444':'rgba(239,68,68,0.1)'};color:${isSkipped?'#fff':'#dc2626'};border:1px solid #ef4444;border-radius:8px;font-weight:800;padding:8px 10px;cursor:pointer;">
+            ❌ لم أتمكن
+          </button>
+
+          ${!isFloor && !isDone ? `
+            <button type="button" class="btn btn-sm" onclick="openCleanSwapModal('${todayDate}', '${wKey}', '${t.id}')"
+                    style="background:rgba(2,132,199,0.1);color:#0284c7;border:1px solid #0284c7;border-radius:8px;font-weight:800;padding:8px 10px;cursor:pointer;">
+              🔄 تبديل
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Update progress
+  const total = tasks.length;
+  const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+  const pText = document.getElementById('workerProgressText');
+  const pBar = document.getElementById('workerProgressBar');
+  if (pText) pText.textContent = `${doneCount} من ${total} (${pct}%)`;
+  if (pBar) pBar.style.width = pct + '%';
+}
+
+function markCleanTaskDone(dateStr, wKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][wKey]) return;
+  const t = cleaningLogs[dateStr][wKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  t.status = 'done';
+  t.completedAt = new Date().toISOString();
+  t.skipReason = null;
+
+  saveCleaningLogs();
+  toast('🎉 أحسنت! تم تسجيل إنجاز المهمة بنجاح.');
+  initCleanTodayPane();
+}
+
+function openCleanReasonModal(dateStr, wKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][wKey]) return;
+  const t = cleaningLogs[dateStr][wKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  document.getElementById('cleanReasonTaskId').value = `${dateStr}|${wKey}|${taskId}`;
+  document.getElementById('cleanReasonTaskTitle').textContent = t.title;
+  document.getElementById('cleanReasonTextInp').value = t.skipReason || '';
+
+  const modal = document.getElementById('cleanReasonModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCleanReasonModal() {
+  const modal = document.getElementById('cleanReasonModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmCleanReason() {
+  const metaVal = document.getElementById('cleanReasonTaskId').value;
+  const reason = (document.getElementById('cleanReasonTextInp').value || '').trim();
+
+  if (!reason) {
+    toast('⚠️ يرجى كتابة سبب عدم التمكن من إنجاز المهمة', false);
+    return;
+  }
+
+  const [dateStr, wKey, taskId] = metaVal.split('|');
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][wKey]) return;
+  const t = cleaningLogs[dateStr][wKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  t.status = 'skipped';
+  t.skipReason = reason;
+  t.completedAt = null;
+
+  closeCleanReasonModal();
+  saveCleaningLogs();
+  toast('📝 تم تسجيل السبب وإرساله لتقرير المشرف.');
+  initCleanTodayPane();
+}
+
+// ── 3-Day Non-Repeating Section Swap Algorithm ──
+function openCleanSwapModal(dateStr, wKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][wKey]) return;
+  const t = cleaningLogs[dateStr][wKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  document.getElementById('cleanSwapOriginalTaskId').value = `${dateStr}|${wKey}|${taskId}`;
+  document.getElementById('cleanSwapOriginalTitle').textContent = t.title;
+  document.getElementById('cleanSwapReasonInp').value = '';
+
+  const select = document.getElementById('cleanSwapTargetSelect');
+  if (!select) return;
+  select.innerHTML = '';
+
+  // Get department sections
+  const dept = (CLEANING_WORKERS[wKey] && CLEANING_WORKERS[wKey].dept) || 'medicines';
+  const allSections = CLEANING_ALL_SECTIONS[dept] || [];
+
+  // Inspect last 3 days
+  const today = new Date(dateStr);
+  const last3Dates = [];
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    last3Dates.push(localDateStr(d));
+  }
+
+  // Find when each section was cleaned
+  const lastCleanedDate = {};
+  allSections.forEach(sec => {
+    last3Dates.forEach(dStr => {
+      const dayTasks = (cleaningLogs[dStr] && cleaningLogs[dStr][wKey]) || [];
+      const match = dayTasks.find(x => x.title === sec && x.status === 'done');
+      if (match && !lastCleanedDate[sec]) {
+        lastCleanedDate[sec] = dStr;
+      }
+    });
+  });
+
+  // Current tasks assigned today
+  const todaySecs = (cleaningLogs[dateStr][wKey] || []).map(x => x.title);
+
+  let hasAvailable = false;
+  allSections.forEach(sec => {
+    if (sec === t.title || todaySecs.includes(sec)) return; // Already on today
+
+    const opt = document.createElement('option');
+    opt.value = sec;
+
+    if (lastCleanedDate[sec]) {
+      // Locked: cleaned within last 3 days
+      opt.disabled = true;
+      opt.textContent = `🚫 ${sec} (تم تنظيفها بتاريخ ${lastCleanedDate[sec]} - غير متاح)`;
+    } else {
+      // Available
+      opt.textContent = `✨ ${sec} (متاحة للتبديل - مر عليها 3+ أيام)`;
+      hasAvailable = true;
+    }
+    select.appendChild(opt);
+  });
+
+  if (!hasAvailable) {
+    const opt = document.createElement('option');
+    opt.textContent = '⚠️ لا توجد مناطق مستوفية لشرط الـ 3 أيام حالياً';
+    opt.disabled = true;
+    select.appendChild(opt);
+  }
+
+  const modal = document.getElementById('cleanSwapModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCleanSwapModal() {
+  const modal = document.getElementById('cleanSwapModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmCleanSwap() {
+  const metaVal = document.getElementById('cleanSwapOriginalTaskId').value;
+  const newSection = document.getElementById('cleanSwapTargetSelect').value;
+  const reason = (document.getElementById('cleanSwapReasonInp').value || '').trim();
+
+  if (!newSection) {
+    toast('⚠️ يرجى اختيار منطقة بديلة صالحة', false);
+    return;
+  }
+
+  const [dateStr, wKey, taskId] = metaVal.split('|');
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][wKey]) return;
+  const t = cleaningLogs[dateStr][wKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  const oldTitle = t.title;
+  t.title = newSection;
+  t.swappedFrom = oldTitle + (reason ? ` (السبب: ${reason})` : '');
+  t.status = 'pending';
+  t.completedAt = null;
+
+  closeCleanSwapModal();
+  saveCleaningLogs();
+  toast(`🔄 تم استبدال "${oldTitle}" بـ "${newSection}" بنجاح!`);
+  initCleanTodayPane();
+}
+
+// ── Worker Weekly Schedule UI ──
+function initCleanWeekPane() {
+  const container = document.getElementById('workerWeekScheduleContainer');
+  if (!container || !me) return;
+
+  const wKey = me.workerKey || (me.name === 'محمد' ? 'mohamed' : 'youssef');
+  const workerDef = CLEANING_WORKERS[wKey] || CLEANING_WORKERS.mohamed;
+  const sched = DEFAULT_WEEKLY_SCHEDULE[wKey] || {};
+
+  const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const dayIndices = [6, 0, 1, 2, 3, 4, 5]; // Start Saturday
+
+  let html = '';
+  dayIndices.forEach(idx => {
+    const isDayOff = (idx === workerDef.dayOff);
+    const sections = sched[idx] || [];
+
+    html += `
+      <div style="background:var(--bg1);border:1.5px solid ${isDayOff ? '#10b981' : 'var(--border)'};border-radius:12px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-weight:900;font-size:0.95rem;color:var(--text1);">${dayNames[idx]}</span>
+          ${isDayOff ? `
+            <span style="background:rgba(16,185,129,0.15);color:#047857;font-weight:800;font-size:0.75rem;padding:2px 8px;border-radius:6px;">
+              🌴 إجازة رسمية
+            </span>
+          ` : `
+            <span style="background:var(--bg2);color:var(--text2);font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:6px;">
+              يوم عمل
+            </span>
+          `}
+        </div>
+
+        ${isDayOff ? `
+          <div style="font-size:0.8rem;color:var(--text3);padding:10px 0;text-align:center;">
+            عطلة أسبوعية مستحقة
+          </div>
+        ` : `
+          <div style="display:flex;flex-direction:column;gap:5px;font-size:0.82rem;color:var(--text1);">
+            ${sections.map(s => `
+              <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);padding:5px 8px;border-radius:6px;">
+                <span>${wKey==='mohamed'?'💊':'💄'}</span>
+                <span>${escapeHtml(s)}</span>
+              </div>
+            `).join('')}
+            <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);padding:5px 8px;border-radius:6px;color:#0284c7;">
+              <span>🧹</span>
+              <span>مسح أرضيات الصيدلية كاملة</span>
+            </div>
+          </div>
+        `}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// ── Worker History UI ──
+function initCleanHistoryPane() {
+  const container = document.getElementById('workerHistoryListContainer');
+  if (!container || !me) return;
+
+  const wKey = me.workerKey || (me.name === 'محمد' ? 'mohamed' : 'youssef');
+  const dates = Object.keys(cleaningLogs).sort().reverse();
+
+  if (dates.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);">لا توجد سجلات سابقة بعد</div>';
+    return;
+  }
+
+  let html = '';
+  dates.slice(0, 14).forEach(dStr => {
+    const list = (cleaningLogs[dStr] && cleaningLogs[dStr][wKey]) || [];
+    if (list.length === 0) return;
+
+    html += `
+      <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div style="font-weight:900;font-size:0.88rem;color:var(--text1);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+          <span>📅 تاريخ: ${dStr}</span>
+          <span style="font-size:0.75rem;color:var(--text3);">${list.filter(x=>x.status==='done').length} من ${list.length} منجز</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          ${list.map(t => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg2);border-radius:6px;font-size:0.8rem;">
+              <span>${escapeHtml(t.title)}</span>
+              <span>${t.status==='done'?'<span style="color:#10b981;font-weight:800;">✅ تم</span>':'<span style="color:#ef4444;">❌ تعذر</span>'}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html || '<div style="text-align:center;padding:20px;color:var(--text3);">لا توجد سجلات لهذا الموظف بعد</div>';
+}
+
+// ── Supervisor & Manager Supervision Pane Engine ──
+function initCleanSuperPane() {
+  const dateInp = document.getElementById('superDateSelector');
+  if (dateInp && !dateInp.value) dateInp.value = todayStr();
+  const selectedDate = dateInp ? dateInp.value : todayStr();
+
+  // Load KPI totals
+  let totalAll = 0, doneAll = 0, skippedAll = 0, pendingAll = 0;
+  ['mohamed', 'youssef'].forEach(wk => {
+    const arr = (cleaningLogs[selectedDate] && cleaningLogs[selectedDate][wk]) || [];
+    arr.forEach(t => {
+      totalAll++;
+      if (t.status === 'done') doneAll++;
+      else if (t.status === 'skipped') skippedAll++;
+      else pendingAll++;
+    });
+  });
+
+  document.getElementById('superKpiTotal').textContent = totalAll;
+  document.getElementById('superKpiDone').textContent = doneAll;
+  document.getElementById('superKpiSkipped').textContent = skippedAll;
+  document.getElementById('superKpiPending').textContent = pendingAll;
+
+  // Render pending deductions alerts for Admin
+  renderSuperDeductionsList();
+
+  // Render current worker tab
+  renderSuperWorkerDuties(currentSuperWorkerTab, selectedDate);
+}
+
+function switchSuperWorkerTab(workerKey) {
+  currentSuperWorkerTab = workerKey;
+
+  const btnM = document.getElementById('superTabBtn-mohamed');
+  const btnY = document.getElementById('superTabBtn-youssef');
+  if (workerKey === 'mohamed') {
+    if (btnM) { btnM.className = 'btn btn-sm btn-p'; btnM.style.background = '#0284c7'; btnM.style.color = '#fff'; }
+    if (btnY) { btnY.className = 'btn btn-sm btn-ghost'; btnY.style.background = ''; btnY.style.color = ''; }
+  } else {
+    if (btnY) { btnY.className = 'btn btn-sm btn-p'; btnY.style.background = '#8b5cf6'; btnY.style.color = '#fff'; }
+    if (btnM) { btnM.className = 'btn btn-sm btn-ghost'; btnM.style.background = ''; btnM.style.color = ''; }
+  }
+
+  const selectedDate = document.getElementById('superDateSelector')?.value || todayStr();
+  renderSuperWorkerDuties(workerKey, selectedDate);
+}
+
+function renderSuperWorkerDuties(workerKey, dateStr) {
+  const container = document.getElementById('superWorkerDutiesContainer');
+  if (!container) return;
+
+  const workerDef = CLEANING_WORKERS[workerKey] || CLEANING_WORKERS.mohamed;
+  const list = (cleaningLogs[dateStr] && cleaningLogs[dateStr][workerKey]) || [];
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="card" style="text-align:center;padding:28px 16px;color:var(--text3);">
+        <div style="font-size:2rem;margin-bottom:6px;">📋</div>
+        <div style="font-weight:800;color:var(--text2);margin-bottom:4px;">لم يتم تسجيل مهام لـ ${workerDef.name} في هذا اليوم</div>
+        <div style="font-size:0.8rem;">قد يكون هذا اليوم عطلته الأسبوعية أو لم يفتح التطبيق بعد.</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  list.forEach(t => {
+    const isDone = t.status === 'done';
+    const isSkipped = t.status === 'skipped';
+
+    html += `
+      <div class="card" style="padding:14px;border:1.5px solid ${isDone ? '#10b981' : (isSkipped ? '#ef4444' : 'var(--border)')};background:var(--card);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <div>
+            <span style="font-weight:900;font-size:0.98rem;color:var(--text1);">${escapeHtml(t.title)}</span>
+            ${t.swappedFrom ? `<div style="font-size:0.75rem;color:#0284c7;margin-top:2px;">🔄 بديلة عن: ${escapeHtml(t.swappedFrom)}</div>` : ''}
+          </div>
+
+          <div>
+            ${isDone ? `
+              <span style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;">
+                ✅ سُجلت كـ تم (${t.completedAt ? new Date(t.completedAt).toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'}) : ''})
+              </span>
+            ` : isSkipped ? `
+              <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;">
+                ❌ تعذر التنفيذ
+              </span>
+            ` : `
+              <span style="background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:800;font-size:0.75rem;padding:3px 8px;border-radius:6px;">
+                ⏳ لم يسجل بعد
+              </span>
+            `}
+          </div>
+        </div>
+
+        ${isSkipped && t.skipReason ? `
+          <div style="font-size:0.8rem;color:#ef4444;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);padding:6px 10px;border-radius:6px;margin-bottom:8px;">
+            📝 <b>سبب العامل:</b> ${escapeHtml(t.skipReason)}
+          </div>
+        ` : ''}
+
+        <!-- Supervisor Verification Status -->
+        ${t.inspected ? `
+          <div style="padding:8px 12px;border-radius:8px;font-size:0.8rem;margin-bottom:10px;${t.inspectionVerdict==='approved'?'background:rgba(16,185,129,0.1);color:#047857;border:1px solid #10b981;':'background:rgba(239,68,68,0.1);color:#b91c1c;border:1px solid #ef4444;'}">
+            <div style="font-weight:900;">${t.inspectionVerdict==='approved'?'✅ تم فحص وتأكيد المعاينة (ممتاز ومتقن)':'❌ نتيجة المعاينة: العمل غير مقبول أو لم يتم'}</div>
+            ${t.inspectionNotes ? `<div style="margin-top:3px;">ملاحظات المشرف: ${escapeHtml(t.inspectionNotes)}</div>` : ''}
+          </div>
+        ` : ''}
+
+        <!-- Supervisor Action Buttons -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed var(--border);">
+          <button type="button" class="btn btn-sm" onclick="inspectCleanTaskDone('${dateStr}', '${workerKey}', '${t.id}')"
+                  style="flex:1;background:rgba(16,185,129,0.12);color:#047857;border:1px solid #10b981;border-radius:8px;font-weight:900;padding:7px;cursor:pointer;">
+            ✅ تأكيد المعاينة (ممتاز)
+          </button>
+
+          <button type="button" class="btn btn-sm" onclick="openCleanInspectRejectModal('${dateStr}', '${workerKey}', '${t.id}')"
+                  style="flex:1;background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid #ef4444;border-radius:8px;font-weight:800;padding:7px;cursor:pointer;">
+            ❌ لم يتم / طلب خصم
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function inspectCleanTaskDone(dateStr, workerKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][workerKey]) return;
+  const t = cleaningLogs[dateStr][workerKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  t.inspected = true;
+  t.inspectionVerdict = 'approved';
+  t.inspectionNotes = 'تمت المعاينة والتأكد من النظافة بنجاح';
+  t.inspectedBy = (me && (me.name || me.username)) || 'المشرف';
+  t.inspectedAt = new Date().toISOString();
+
+  saveCleaningLogs();
+  toast('✅ تم اعتماد المهمة وتأكيد المعاينة بنجاح.');
+  initCleanSuperPane();
+}
+
+function openCleanInspectRejectModal(dateStr, workerKey, taskId) {
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][workerKey]) return;
+  const t = cleaningLogs[dateStr][workerKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  const workerDef = CLEANING_WORKERS[workerKey] || { name: workerKey };
+
+  document.getElementById('cleanInspectTaskId').value = `${dateStr}|${workerKey}|${taskId}`;
+  document.getElementById('cleanInspectWorkerName').value = workerDef.name;
+  document.getElementById('cleanInspectTaskTitle').textContent = `الموظف: ${workerDef.name} — المهمة: ${t.title}`;
+  document.getElementById('cleanInspectNotesInp').value = t.inspectionNotes || '';
+  document.getElementById('cleanInspectReqDeductionCheck').checked = true;
+  document.getElementById('cleanInspectDeductionReasonInp').value = '';
+
+  const modal = document.getElementById('cleanInspectModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCleanInspectModal() {
+  const modal = document.getElementById('cleanInspectModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmCleanInspectReject() {
+  const metaVal = document.getElementById('cleanInspectTaskId').value;
+  const notes = (document.getElementById('cleanInspectNotesInp').value || '').trim();
+  const reqDeduction = document.getElementById('cleanInspectReqDeductionCheck').checked;
+  const deductionReason = (document.getElementById('cleanInspectDeductionReasonInp').value || '').trim();
+
+  const [dateStr, workerKey, taskId] = metaVal.split('|');
+  if (!cleaningLogs[dateStr] || !cleaningLogs[dateStr][workerKey]) return;
+  const t = cleaningLogs[dateStr][workerKey].find(x => x.id === taskId);
+  if (!t) return;
+
+  const inspectorName = (me && (me.name || me.username)) || 'المشرف';
+  const workerDef = CLEANING_WORKERS[workerKey] || { name: workerKey };
+
+  t.inspected = true;
+  t.inspectionVerdict = 'rejected';
+  t.inspectionNotes = notes || 'العمل لم يتم بالشكل المطلوب';
+  t.inspectedBy = inspectorName;
+  t.inspectedAt = new Date().toISOString();
+
+  // If supervisor requested deduction
+  if (reqDeduction) {
+    const dReq = {
+      id: 'ded_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      date: dateStr,
+      workerKey: workerKey,
+      workerName: workerDef.name,
+      taskTitle: t.title,
+      inspector: inspectorName,
+      supervisorNotes: notes,
+      reason: deductionReason || notes || 'تقصير في نظافة الرفوف والمهام المطلوبة',
+      status: 'pending', // 'pending', 'approved', 'rejected'
+      amount: null,
+      createdAt: new Date().toISOString()
+    };
+    cleaningDeductions.unshift(dReq);
+    saveCleaningDeductions();
+    toast('⚠️ تم إرسال طلب الخصم للمدير بنجاح.');
+  } else {
+    toast('💾 تم حفظ نتيجة المعاينة.');
+  }
+
+  closeCleanInspectModal();
+  saveCleaningLogs();
+  initCleanSuperPane();
+}
+
+function renderSuperDeductionsList() {
+  const alertCard = document.getElementById('superDeductionAlertCard');
+  const container = document.getElementById('superDeductionAlertsList');
+  if (!alertCard || !container) return;
+
+  const pendingList = (cleaningDeductions || []).filter(d => d.status === 'pending');
+  const isAdmin = me && me.role === 'admin';
+
+  if (pendingList.length === 0) {
+    alertCard.style.display = 'none';
+    return;
+  }
+
+  alertCard.style.display = 'block';
+  let html = '';
+
+  pendingList.forEach(d => {
+    html += `
+      <div style="background:var(--bg1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-weight:900;color:var(--text1);font-size:0.88rem;">
+            👤 الموظف: <b style="color:#ef4444;">${escapeHtml(d.workerName)}</b> — ${escapeHtml(d.taskTitle)} (${d.date})
+          </div>
+          <div style="font-size:0.78rem;color:var(--text2);margin-top:2px;">
+            ✍️ المشرف: <b>${escapeHtml(d.inspector)}</b> | السبب: "${escapeHtml(d.reason)}"
+          </div>
+        </div>
+
+        ${isAdmin ? `
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-sm btn-p" onclick="openAdminDeductionModal('${d.id}')"
+                    style="background:#ef4444;border:none;border-radius:6px;font-weight:900;font-size:0.78rem;padding:5px 12px;cursor:pointer;">
+              اعتماد الخصم
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="quickRejectAdminDeduction('${d.id}')"
+                    style="border-radius:6px;font-size:0.75rem;padding:5px 8px;cursor:pointer;">
+              رفض
+            </button>
+          </div>
+        ` : `
+          <span style="font-size:0.75rem;color:#f59e0b;font-weight:800;">بانتظار قرار المدير</span>
+        `}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function openAdminDeductionModal(reqId) {
+  const d = (cleaningDeductions || []).find(x => x.id === reqId);
+  if (!d) return;
+
+  document.getElementById('adminDeductionReqId').value = reqId;
+  document.getElementById('adminDeductionEmpName').value = d.workerName;
+  document.getElementById('adminDeductionInfoBox').innerHTML = `
+    <div><b>الموظف:</b> ${escapeHtml(d.workerName)}</div>
+    <div><b>المهمة:</b> ${escapeHtml(d.taskTitle)} بتاريخ ${d.date}</div>
+    <div><b>المشرف:</b> ${escapeHtml(d.inspector)}</div>
+    <div><b>سبب الخصم:</b> ${escapeHtml(d.reason)}</div>
+  `;
+
+  const modal = document.getElementById('cleanAdminDeductionModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeAdminDeductionModal() {
+  const modal = document.getElementById('cleanAdminDeductionModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function confirmAdminDeduction() {
+  const reqId = document.getElementById('adminDeductionReqId').value;
+  const empName = document.getElementById('adminDeductionEmpName').value;
+  const amt = parseFloat(document.getElementById('adminDeductionAmtInp').value) || 25;
+
+  const d = (cleaningDeductions || []).find(x => x.id === reqId);
+  if (!d) return;
+
+  d.status = 'approved';
+  d.amount = amt;
+  d.approvedAt = new Date().toISOString();
+  d.approvedBy = (me && (me.name || me.username)) || 'المدير';
+
+  // Automatically register a deduction entry in entries table
+  try {
+    const entryObj = {
+      type: 'خصومات',
+      company: 'رواتب',
+      inv: empName,
+      amt: amt,
+      notes: `خصم تقصير في النظافة (${d.taskTitle}) — بناءً على طلب المشرف [${d.inspector}]`,
+      date: todayStr(),
+      time: new Date().toTimeString().split(' ')[0],
+      user: (me && (me.name || me.username)) || 'المدير',
+      created_at: new Date().toISOString()
+    };
+
+    if (sb) {
+      await sb.from('entries').insert(entryObj);
+    }
+  } catch(e) {
+    console.warn('Failed to insert direct deduction entry:', e);
+  }
+
+  closeAdminDeductionModal();
+  saveCleaningDeductions();
+  toast(`✅ تم اعتماد خصم (${amt} ج) على الموظف "${empName}" بنجاح وتسجيله في مسير الرواتب!`);
+  initCleanSuperPane();
+}
+
+function rejectAdminDeduction() {
+  const reqId = document.getElementById('adminDeductionReqId').value;
+  quickRejectAdminDeduction(reqId);
+  closeAdminDeductionModal();
+}
+
+function quickRejectAdminDeduction(reqId) {
+  const d = (cleaningDeductions || []).find(x => x.id === reqId);
+  if (!d) return;
+
+  d.status = 'rejected';
+  d.rejectedAt = new Date().toISOString();
+  d.rejectedBy = (me && (me.name || me.username)) || 'المدير';
+
+  saveCleaningDeductions();
+  toast('تم رفض طلب الخصم.');
+  initCleanSuperPane();
+}
+
+// ── Shift Settings Toggle & Save ──
+function toggleCleanShiftSettings() {
+  const body = document.getElementById('cleanShiftSettingsBody');
+  const arrow = document.getElementById('shiftSettingsToggleArrow');
+  if (!body) return;
+
+  if (body.style.display === 'none' || !body.style.display) {
+    body.style.display = 'block';
+    if (arrow) arrow.textContent = '▲';
+  } else {
+    body.style.display = 'none';
+    if (arrow) arrow.textContent = '▼';
+  }
+}
+
+async function saveCleanShiftSettings() {
+  cleaningShiftSettings.mohamed = [
+    { from: document.getElementById('shiftMohamedFrom1').value || '12:00', to: document.getElementById('shiftMohamedTo1').value || '16:00', label: 'الوردية الأولى' },
+    { from: document.getElementById('shiftMohamedFrom2').value || '22:00', to: document.getElementById('shiftMohamedTo2').value || '02:00', label: 'الوردية الثانية' }
+  ];
+  cleaningShiftSettings.youssef = [
+    { from: document.getElementById('shiftYoussefFrom').value || '16:00', to: document.getElementById('shiftYoussefTo').value || '00:00', label: 'الوردية المسائية' }
+  ];
+
+  try {
+    await sbSetMeta('cleaning_shifts', { shifts: cleaningShiftSettings });
+    toast('✅ تم حفظ وتحديث مواعيد الشيفتات بنجاح!');
+  } catch(e) {
+    toast('⚠️ تم الحفظ محلياً: ' + (e.message || e));
+  }
+}
+
+// ── Automated Shift Reminders Loop ("عملتها ولا لأ يا محمد؟") ──
+let lastWelcomeAlertDate = null;
+let lastPreEndAlertDate = null;
+
+function startWorkerShiftReminders() {
+  if (workerShiftReminderInt) clearInterval(workerShiftReminderInt);
+  checkWorkerShiftReminders();
+  workerShiftReminderInt = setInterval(checkWorkerShiftReminders, 60 * 1000); // Check every minute
+}
+
+function checkWorkerShiftReminders() {
+  if (!me || me.role !== 'delivery_cleaning') return;
+
+  const wKey = me.workerKey || (me.name === 'محمد' ? 'mohamed' : 'youssef');
+  const workerDef = CLEANING_WORKERS[wKey];
+  if (!workerDef) return;
+
+  const now = new Date();
+  if (now.getDay() === workerDef.dayOff) return; // Day off
+
+  const shifts = cleaningShiftSettings[wKey] || [];
+  const curMinutes = now.getHours() * 60 + now.getMinutes();
+  const todayDate = todayStr();
+
+  // Find if currently in a shift or approaching end of shift
+  shifts.forEach(s => {
+    const [fH, fM] = s.from.split(':').map(Number);
+    const [tH, tM] = s.to.split(':').map(Number);
+
+    let startMin = fH * 60 + fM;
+    let endMin = tH * 60 + tM;
+    if (endMin <= startMin) endMin += 24 * 60; // Overnight shift
+
+    let compCur = curMinutes;
+    if (compCur < startMin && endMin > 24 * 60) compCur += 24 * 60;
+
+    // 1. Start of Shift Greeting Reminder (within first 30 mins)
+    if (compCur >= startMin && compCur <= startMin + 30) {
+      const alertKey = `welcome_${todayDate}_${s.from}`;
+      if (lastWelcomeAlertDate !== alertKey) {
+        lastWelcomeAlertDate = alertKey;
+        triggerWorkerReminder(
+          `🔔 أهلاً بك يا ${workerDef.name}! بدأ شيفتك الآن (${s.from} - ${s.to})`,
+          `مهامك المطلوبة اليوم في قسمك: ابدأ فيها متى تيسر وسجل إنجازك! 🧹`
+        );
+      }
+    }
+
+    // 2. Pre-End Reminder ("عملتها ولا لا يا محمد؟") - 45 mins before end of shift
+    const preEndMin = endMin - 45;
+    if (compCur >= preEndMin && compCur <= endMin) {
+      // Check if tasks are completed today
+      const tasks = (cleaningLogs[todayDate] && cleaningLogs[todayDate][wKey]) || [];
+      const pendingTasks = tasks.filter(x => x.status === 'pending');
+
+      if (pendingTasks.length > 0) {
+        const alertKey = `preEnd_${todayDate}_${s.to}`;
+        if (lastPreEndAlertDate !== alertKey) {
+          lastPreEndAlertDate = alertKey;
+          triggerWorkerReminder(
+            `⏰ تنبيه قرب انتهاء الشيفت — عملتها ولا لا يا ${workerDef.name}؟`,
+            `باقي وقت قليل على نهاية ورديتك (${s.to}) وليدك ${pendingTasks.length} مهام معلقة. هل أنجزتها؟`
+          );
+        }
+      }
+    }
+  });
+}
+
+function triggerWorkerReminder(title, body) {
+  // 1. Audio Ping
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.65);
+  } catch(e){}
+
+  // 2. Web Browser Notification
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          body: body,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="28" font-size="28">🧹</text></svg>',
+          tag: 'cleaning-shift-alert'
+        });
+      } catch(e){}
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  }
+
+  // 3. In-App Banner Toast
+  toast(`${title} — ${body}`, 8000);
+}
+
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -19006,6 +20434,169 @@ function escapeHtml(str) {
       </button>
       <button onclick="confirmTaskComplete()" class="btn btn-p" style="background:#10b981;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;box-shadow:0 3px 10px rgba(16,185,129,0.35);">
         ✅ تأكيد الإنجاز الآن
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     🔄 نافذة تبديل المنطقة (شرط عدم التكرار لآخر 3 أيام)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="cleanSwapModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeCleanSwapModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:440px;width:95%;padding:20px;text-align:right;background:var(--bg1);border-radius:16px;border:2px solid #0284c7;box-shadow:0 20px 45px rgba(0,0,0,0.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:1.1rem;font-weight:900;color:#0284c7;display:flex;align-items:center;gap:6px;">
+        <span>🔄</span>
+        <span>طلب تبديل منطقة اليوم</span>
+      </div>
+      <button onclick="closeCleanSwapModal()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <div style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.25);border-radius:8px;padding:8px 10px;">
+      📌 <b>قاعدة التبديل:</b> يمكنك اختيار أي قطعة من قسمك بشرط <b>ألا تكون قد نُظفت خلال آخر 3 أيام</b> لضمان عدم إهمال أي رف.
+    </div>
+
+    <input type="hidden" id="cleanSwapOriginalTaskId" value="" />
+
+    <div class="fg" style="margin-bottom:10px;">
+      <label style="font-size:0.76rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">المنطقة المطلوب استبدالها اليوم:</label>
+      <div id="cleanSwapOriginalTitle" style="font-weight:800;font-size:0.88rem;color:var(--text1);background:var(--bg2);padding:8px 10px;border-radius:8px;">—</div>
+    </div>
+
+    <div class="fg" style="margin-bottom:10px;">
+      <label style="font-size:0.76rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">اختر المنطقة البديلة (المتاحة فقط):</label>
+      <select id="cleanSwapTargetSelect" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid #0284c7;background:var(--bg1);color:var(--text1);font-weight:800;font-size:0.85rem;">
+        <!-- Filled dynamically based on 3-day rule -->
+      </select>
+    </div>
+
+    <div class="fg" style="margin-bottom:14px;">
+      <label style="font-size:0.76rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">سبب طلب التبديل اليوم:</label>
+      <input type="text" id="cleanSwapReasonInp" placeholder="مثال: وجود جرد على الرف الحالي / تسهيل تنظيم الشيفت..."
+             style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.82rem;" />
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeCleanSwapModal()" class="btn btn-ghost" style="padding:8px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;">إلغاء</button>
+      <button onclick="confirmCleanSwap()" class="btn btn-p" style="background:#0284c7;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
+        🔄 تأكيد التبديل
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ❌ نافذة تسجيل سبب تعذر المهمة للعامل
+     ═══════════════════════════════════════════════════════════ -->
+<div id="cleanReasonModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeCleanReasonModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:390px;width:95%;padding:20px;text-align:right;background:var(--bg1);border-radius:16px;border:2px solid #ef4444;box-shadow:0 20px 45px rgba(0,0,0,0.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:1.05rem;font-weight:900;color:#ef4444;display:flex;align-items:center;gap:6px;">
+        <span>❌</span>
+        <span>تسجيل سبب تعذر التنفيذ</span>
+      </div>
+      <button onclick="closeCleanReasonModal()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <input type="hidden" id="cleanReasonTaskId" value="" />
+    <div id="cleanReasonTaskTitle" style="font-weight:800;font-size:0.86rem;color:var(--text1);background:var(--bg2);padding:7px 10px;border-radius:8px;margin-bottom:10px;">—</div>
+
+    <div class="fg" style="margin-bottom:14px;">
+      <label style="font-size:0.76rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">لماذا لم تتمكن من عملها اليوم؟ (مطلوب):</label>
+      <textarea id="cleanReasonTextInp" rows="3" placeholder="مثال: ضغط أوردرات دليفري كثيرة خارج الصيدلية، نقص أدوات نظافة، إلخ..."
+                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit;font-size:0.82rem;resize:vertical;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeCleanReasonModal()" class="btn btn-ghost" style="padding:8px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;">إلغاء</button>
+      <button onclick="confirmCleanReason()" class="btn btn-p" style="background:#ef4444;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
+        حفظ وإرسال للمشرف
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     🔍 نافذة فحص المشرف وطلب الخصم من المدير
+     ═══════════════════════════════════════════════════════════ -->
+<div id="cleanInspectModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeCleanInspectModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:420px;width:95%;padding:20px;text-align:right;background:var(--bg1);border-radius:16px;border:2px solid #7c3aed;box-shadow:0 20px 45px rgba(0,0,0,0.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:1.05rem;font-weight:900;color:#7c3aed;display:flex;align-items:center;gap:6px;">
+        <span>🔍</span>
+        <span>ملاحظات فحص المشرف وطلب الخصم</span>
+      </div>
+      <button onclick="closeCleanInspectModal()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <input type="hidden" id="cleanInspectTaskId" value="" />
+    <input type="hidden" id="cleanInspectWorkerName" value="" />
+    <div id="cleanInspectTaskTitle" style="font-weight:800;font-size:0.86rem;color:var(--text1);background:var(--bg2);padding:7px 10px;border-radius:8px;margin-bottom:10px;">—</div>
+
+    <div class="fg" style="margin-bottom:10px;">
+      <label style="font-size:0.76rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">ملاحظات المعاينة الميدانية (ماذا وجدت في الرفوف؟):</label>
+      <textarea id="cleanInspectNotesInp" rows="2" placeholder="مثال: الرفوف بها أتربة كثيرة ولم يتم مسحها، أو نظافة غير مكتملة..."
+                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit;font-size:0.82rem;resize:vertical;"></textarea>
+    </div>
+
+    <!-- زر طلب خصم من المدير -->
+    <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;font-weight:800;color:#ef4444;cursor:pointer;">
+        <input type="checkbox" id="cleanInspectReqDeductionCheck" checked style="accent-color:#ef4444;" />
+        <span>⚠️ إرسال طلب خصم للمدير بسبب التقصير</span>
+      </label>
+      <div style="margin-top:6px;">
+        <input type="text" id="cleanInspectDeductionReasonInp" placeholder="اكتب سبب طلب الخصم بدقة للمدير..."
+               style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-size:0.78rem;" />
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeCleanInspectModal()" class="btn btn-ghost" style="padding:8px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;">إلغاء</button>
+      <button onclick="confirmCleanInspectReject()" class="btn btn-p" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
+        💾 حفظ تقرير الفحص
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     👑 نافذة اعتماد الخصم للمدير
+     ═══════════════════════════════════════════════════════════ -->
+<div id="cleanAdminDeductionModal" class="modal-overlay" role="dialog" aria-modal="true"
+     onclick="if(event.target===this)closeAdminDeductionModal()" style="display:none;z-index:99999;">
+  <div class="modal-box" style="max-width:390px;width:95%;padding:20px;text-align:right;background:var(--bg1);border-radius:16px;border:2px solid #ef4444;box-shadow:0 20px 45px rgba(0,0,0,0.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:1.1rem;font-weight:900;color:#ef4444;display:flex;align-items:center;gap:6px;">
+        <span>👑</span>
+        <span>اعتماد خصم التقصير في النظافة</span>
+      </div>
+      <button onclick="closeAdminDeductionModal()" style="background:none;border:none;font-size:1.2rem;color:var(--text3);cursor:pointer;padding:2px 6px;">✕</button>
+    </div>
+
+    <input type="hidden" id="adminDeductionReqId" value="" />
+    <input type="hidden" id="adminDeductionEmpName" value="" />
+
+    <div id="adminDeductionInfoBox" style="font-size:0.82rem;background:var(--bg2);padding:10px;border-radius:8px;margin-bottom:12px;line-height:1.45;">
+      —
+    </div>
+
+    <div class="fg" style="margin-bottom:14px;">
+      <label style="font-size:0.78rem;font-weight:800;color:var(--text1);margin-bottom:4px;display:block;">💵 مبلغ الخصم المراد اعتماده (جنيه):</label>
+      <input type="number" id="adminDeductionAmtInp" placeholder="مثال: 30 أو 50" min="5" step="5" value="25"
+             style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid #ef4444;background:var(--bg1);color:var(--text1);font-weight:900;font-size:1.1rem;text-align:center;" />
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="rejectAdminDeduction()" class="btn btn-ghost" style="padding:8px 12px;border-radius:8px;font-size:0.8rem;color:var(--text3);cursor:pointer;">
+        رفض وتجاهل
+      </button>
+      <button onclick="confirmAdminDeduction()" class="btn btn-p" style="background:#ef4444;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:900;font-size:0.85rem;cursor:pointer;">
+        ✅ اعتماد الخصم فوراً
       </button>
     </div>
   </div>
