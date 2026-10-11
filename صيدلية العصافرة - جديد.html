@@ -4745,6 +4745,8 @@ async function doLogout() {
       workerShiftReminderInt = null;
     }
   } catch(e){}
+  me = null;
+  show('scLogin');
   await auth.signOut();
 }
 
@@ -5202,12 +5204,28 @@ function buildApp() {
     const sideR = document.getElementById('sideURole');
     if (sideR) sideR.textContent = '🛵 موظف خدمات ونظافة الصيدلية';
 
+    // إخفاء الصناديق المالية من واجهة عامل النظافة
+    document.querySelectorAll('.saliim-kpi-grid, .t-bar, #topSalesMonthCard').forEach(el => {
+      el.style.display = 'none';
+    });
+
     renderWorkerCleaningNav();
+    show('scApp'); // الانتقال من شاشة الدخول إلى التطبيق
+
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
+    const pane = document.getElementById('pane-cleantoday');
+    if (pane) pane.classList.add('on');
+
     initCleaningData().then(() => {
       swTab('cleantoday');
       startWorkerShiftReminders();
     });
     return;
+  } else {
+    // إظهار الصناديق المالية للمدير والصيادلة
+    document.querySelectorAll('.saliim-kpi-grid, .t-bar, #topSalesMonthCard').forEach(el => {
+      el.style.display = '';
+    });
   }
 
   const rc = document.getElementById('hURole');
@@ -18931,24 +18949,52 @@ function checkWorkerCredentialsLogin(emailOrUser, pin) {
   const normUser = (emailOrUser || '').trim().toLowerCase();
   const normPin = (pin || '').trim();
 
-  let matchedKey = null;
-  if ((normUser === 'mohamed' || normUser === 'محمد' || normUser.startsWith('mohamed@')) && normPin === '1515') {
-    matchedKey = 'mohamed';
-  } else if ((normUser === 'youssef' || normUser === 'يوسف' || normUser.startsWith('youssef@')) && normPin === '1616') {
-    matchedKey = 'youssef';
+  // فحص محمد
+  if (normUser === 'mohamed' || normUser === 'محمد' || normUser.includes('mohamed') || normUser.includes('محمد') || normUser === '1515') {
+    if (normPin === '1515' || normPin === '151515') {
+      quickWorkerPinLogin('mohamed', '1515');
+      return true;
+    } else {
+      const eEl = document.getElementById('lErr');
+      if (eEl) { eEl.textContent = '❌ كلمة المرور غير صحيحة لمحمد (كلمة المرور: 1515)'; eEl.classList.add('on'); }
+      const btn = document.getElementById('lBtn');
+      if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
+      return true;
+    }
   }
 
-  if (matchedKey) {
-    quickWorkerPinLogin(matchedKey, normPin);
-    return true;
+  // فحص يوسف
+  if (normUser === 'youssef' || normUser === 'يوسف' || normUser.includes('youssef') || normUser.includes('يوسف') || normUser === '1616') {
+    if (normPin === '1616' || normPin === '161616') {
+      quickWorkerPinLogin('youssef', '1616');
+      return true;
+    } else {
+      const eEl = document.getElementById('lErr');
+      if (eEl) { eEl.textContent = '❌ كلمة المرور غير صحيحة ليوسف (كلمة المرور: 1616)'; eEl.classList.add('on'); }
+      const btn = document.getElementById('lBtn');
+      if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
+      return true;
+    }
   }
+
   return false;
 }
 
 function quickWorkerPinLogin(workerKey, pin) {
   const w = CLEANING_WORKERS[workerKey];
-  if (!w || w.pin !== pin) {
-    toast('❌ رمز PIN غير صحيح', false);
+  if (!w) {
+    const eEl = document.getElementById('lErr');
+    if (eEl) { eEl.textContent = '❌ اسم المستخدم غير مسجل'; eEl.classList.add('on'); }
+    const btn = document.getElementById('lBtn');
+    if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
+    return;
+  }
+
+  if (w.pin !== pin) {
+    const eEl = document.getElementById('lErr');
+    if (eEl) { eEl.textContent = '❌ كلمة المرور غير صحيحة'; eEl.classList.add('on'); }
+    const btn = document.getElementById('lBtn');
+    if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
     return;
   }
 
@@ -18965,6 +19011,11 @@ function quickWorkerPinLogin(workerKey, pin) {
   try {
     localStorage.setItem('asafra_worker_session', JSON.stringify(me));
   } catch(e){}
+
+  const eEl = document.getElementById('lErr');
+  if (eEl) eEl.classList.remove('on');
+  const btn = document.getElementById('lBtn');
+  if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
 
   toast(`👋 مرحباً بك يا ${w.name}!`);
   buildApp();
