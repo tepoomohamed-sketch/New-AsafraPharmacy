@@ -5093,6 +5093,7 @@ function refreshActivePane() {
 function renderSaliimNav() {
   const isAdmin = me && me.role === 'admin';
   const canCust = isAdmin || (me && me.permissions && me.permissions.customers === true);
+  const canClean = isAdmin || (me && me.permissions && me.permissions.cleaning === true);
 
   const navEl = document.getElementById('saliimNavMenu');
   if (!navEl) return;
@@ -5129,10 +5130,12 @@ function renderSaliimNav() {
         + '<span class="saliim-item-icon">📌</span><span>المهام والتاسكات</span>'
         + '<span class="badge" id="navTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
 
-  // رقابة النظافة والرفوف (للمشرفين والمدير)
-  html += '<div class="saliim-nav-item" data-tab="cleansuper" id="navItemCleanSuper" onclick="swTab(\'cleansuper\', this)">'
-        + '<span class="saliim-item-icon">🧹</span><span>رقابة النظافة والرفوف</span>'
-        + '<span class="badge" id="superCleanBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
+  // رقابة النظافة والرفوف (للمشرفين والمدير الممنوحين الصلاحية)
+  if (canClean) {
+    html += '<div class="saliim-nav-item" data-tab="cleansuper" id="navItemCleanSuper" onclick="swTab(\'cleansuper\', this)">'
+          + '<span class="saliim-item-icon">🧹</span><span>رقابة النظافة والرفوف</span>'
+          + '<span class="badge" id="superCleanBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
+  }
 
   // 2. التقارير والمؤشرات (للمدير)
   if (isAdmin) {
@@ -5220,6 +5223,7 @@ function buildApp() {
 
   const isAdmin = me.role==='admin';
   const canCust = isAdmin || (me.permissions && me.permissions.customers === true);
+  const canClean = isAdmin || (me.permissions && me.permissions.cleaning === true);
   document.getElementById('mainTabs').innerHTML = `
     <div class="tab on" onclick="swTab('add',this)">➕ قيد جديد</div>
     ${isAdmin
@@ -5231,6 +5235,7 @@ function buildApp() {
     ${isAdmin ? '<div class="tab" onclick="swTab(\'monthcmp\',this)">📅 مقارنة الأشهر</div>' : ''}
     ${canCust ? '<div class="tab" onclick="swTab(\'custfollow\',this)">👥 العملاء</div>' : ''}
     <div class="tab" onclick="swTab('tasks',this)">📌 المهام</div>
+    ${canClean ? '<div class="tab" onclick="swTab(\'cleansuper\',this)">🧹 رقابة النظافة</div>' : ''}
 <div class="tab" onclick="swTab('att',this)">⏱ الحضور</div>
     ${isAdmin ? '<div class="tab" onclick="swTab(\'users\',this)">👥 الموظفين</div>' : ''}
     ${isAdmin ? '<div class="tab" onclick="swTab(\'trash\',this)">🗑 المحذوفات</div>' : ''}
@@ -5369,7 +5374,15 @@ function swTab(name, el) {
   if (name==='cleantoday')   initCleanTodayPane();
   if (name==='cleanweek')    initCleanWeekPane();
   if (name==='cleanhistory') initCleanHistoryPane();
-  if (name==='cleansuper')   initCleanSuperPane();
+  if (name==='cleansuper')   {
+    const canClean = (me && me.role === 'admin') || (me && me.permissions && me.permissions.cleaning === true);
+    if (!canClean) {
+      toast('⚠️ ليس لديك صلاحية رقابة النظافة — الصلاحية تُمنح من المدير', false);
+      swTab('add');
+      return;
+    }
+    initCleanSuperPane();
+  }
   if (name==='sum')   renderSum();
   if (name==='att')   { if (!unsubAtt) listenAttendance(); renderAttPane(); }
   if (name==='budget')    { initBudgetPane(); }
@@ -8393,6 +8406,7 @@ function renderUsersTab() {
     const safeEmail = esc(u.email||'');
     const perms = u.permissions || {};
     const hasCust = perms.customers === true;
+    const hasClean = perms.cleaning === true;
     const isEmp = u.role === 'employee';
     // uid هو Firebase UID — لا يحتوي على أحرف خاصة، آمن في onclick
     return `<div class="u-row" style="flex-wrap:wrap;gap:8px;">
@@ -8402,11 +8416,18 @@ function renderUsersTab() {
         <div class="u-email">${safeEmail}</div>
       </div>
       <span class="badge ${u.role==='admin'?'rc-admin':'rc-emp'}">${u.role==='admin'?'👑 مدير':'👤 موظف'}</span>
-      ${isEmp && !isMe ? `<label class="perm-toggle ${hasCust?'tog-on':'tog-off'}" title="وصول تاب متابعة العملاء + دليل العملاء" onclick="this.classList.toggle('tog-on');this.classList.toggle('tog-off');setPermission('${u.id}','customers',this.classList.contains('tog-on'))">
-        <span style="font-size:.85rem;">👥</span>
-        <span>قسم العملاء</span>
-        <span class="tog-track"><span class="tog-thumb"></span></span>
-      </label>` : ''}
+      ${isEmp && !isMe ? `
+        <label class="perm-toggle ${hasCust?'tog-on':'tog-off'}" title="وصول تاب متابعة العملاء + دليل العملاء" onclick="this.classList.toggle('tog-on');this.classList.toggle('tog-off');setPermission('${u.id}','customers',this.classList.contains('tog-on'))">
+          <span style="font-size:.85rem;">👥</span>
+          <span>قسم العملاء</span>
+          <span class="tog-track"><span class="tog-thumb"></span></span>
+        </label>
+        <label class="perm-toggle ${hasClean?'tog-on':'tog-off'}" title="صلاحية رقابة النظافة والرفوف الميدانية ومعاينة عمال النظافة" onclick="this.classList.toggle('tog-on');this.classList.toggle('tog-off');setPermission('${u.id}','cleaning',this.classList.contains('tog-on'))">
+          <span style="font-size:.85rem;">🧹</span>
+          <span>رقابة النظافة</span>
+          <span class="tog-track"><span class="tog-thumb"></span></span>
+        </label>
+      ` : ''}
       ${!isMe?`<div class="u-acts">
         ${u.role==='employee'
           ?`<button class="btn btn-sm btn-green" onclick="setRole('${u.id}','admin')">↑ مدير</button>`
@@ -8414,7 +8435,38 @@ function renderUsersTab() {
         <button class="btn btn-sm btn-red" onclick="delUser('${u.id}','${esc(u.name)}')">🗑</button>
       </div>`:''}
     </div>`;
-  }).join('');
+  }).join('') + `
+    <!-- قسم حسابات عمال النظافة والدليفري -->
+    <div style="margin-top:22px;padding-top:16px;border-top:1.5px dashed var(--border);">
+      <div style="font-size:0.9rem;font-weight:900;color:var(--text1);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <span>🛵</span>
+        <span>موظفو النظافة والدليفري (حسابات مخصصة)</span>
+        <span class="badge" style="background:rgba(2,132,199,0.1);color:#0284c7;font-size:0.72rem;font-weight:800;">النظام الذكي</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;">
+        <!-- كارت محمد -->
+        <div style="background:var(--bg1);border:1.5px solid rgba(2,132,199,0.3);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;">
+          <div class="u-av" style="background:#0284c7;color:#fff;font-weight:900;">م</div>
+          <div style="flex:1;">
+            <div style="font-weight:900;font-size:0.92rem;color:var(--text1);">محمد (mohamed)</div>
+            <div style="font-size:0.75rem;color:var(--text3);">قسم رفوف الأدوية (12 قطعة) + مسح الأرضيات</div>
+            <div style="font-size:0.72rem;color:#0284c7;font-weight:800;margin-top:2px;">🔑 كلمة المرور: 1515 | الإجازة: الجمعة</div>
+          </div>
+          <span class="badge rc-emp" style="font-size:0.7rem;">🛵 دليفري ونظافة</span>
+        </div>
+        <!-- كارت يوسف -->
+        <div style="background:var(--bg1);border:1.5px solid rgba(139,92,246,0.3);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;">
+          <div class="u-av" style="background:#8b5cf6;color:#fff;font-weight:900;">ي</div>
+          <div style="flex:1;">
+            <div style="font-weight:900;font-size:0.92rem;color:var(--text1);">يوسف (youssef)</div>
+            <div style="font-size:0.75rem;color:var(--text3);">قسم التجميل (7 قطع) + المطبخ والحمام + مسح الأرضيات</div>
+            <div style="font-size:0.72rem;color:#8b5cf6;font-weight:800;margin-top:2px;">🔑 كلمة المرور: 1616 | الإجازة: السبت</div>
+          </div>
+          <span class="badge rc-emp" style="font-size:0.7rem;">🛵 دليفري ونظافة</span>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ═══════════════════════════════════════════
