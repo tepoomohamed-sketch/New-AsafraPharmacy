@@ -9121,6 +9121,18 @@ function requestWalletPin(actionHtml) {
   });
 }
 
+// ── دالة تقريب المبالغ لأقرب 5 جنيه (386 -> 385، 389 -> 390، 382 -> 380) ──
+function roundToNearest5(n) {
+  return Math.round((Number(n) || 0) / 5) * 5;
+}
+
+// ── حساب رسوم المحفظة: ثابتة 1% ومقربة لأقرب 5 جنيه بناءً على طلب الإدارة ──
+function calcWalletFee(totalAmt, rate = 1.0) {
+  if (!totalAmt || totalAmt <= 0) return 0;
+  const rawFee = totalAmt * (rate / 100);
+  return roundToNearest5(rawFee);
+}
+
 function confirmWalletPin() {
   const inp = document.getElementById('walletPinInp');
   const err = document.getElementById('walletPinErr');
@@ -9130,9 +9142,8 @@ function confirmWalletPin() {
     const modal = document.getElementById('walletPinModal');
     if (modal) modal.classList.remove('on');
     if (_walletPinResolve) {
-      const feeRateInp = document.getElementById('walletFeeRateInp');
-      const feeRate = feeRateInp ? Math.max(0, Math.min(20, parseFloat(feeRateInp.value) || 0)) : 1.0;
-      _walletPinResolve({ success: true, feeRate: feeRate });
+      // الرسوم دائماً ثابتة 1.0% ومقربة لأقرب 5 جنيه
+      _walletPinResolve({ success: true, feeRate: 1.0 });
       _walletPinResolve = null;
     }
   } else {
@@ -9151,28 +9162,13 @@ function confirmWalletPin() {
 function setWalletFeeRate(rate, totalAmt) {
   const inp = document.getElementById('walletFeeRateInp');
   if (inp) {
-    inp.value = rate.toFixed(1);
+    inp.value = '1.0';
     onWalletFeeRateInput(inp, totalAmt);
   }
-  document.querySelectorAll('.fee-btn').forEach(b => {
-    const bRate = parseFloat(b.dataset.rate);
-    const isActive = Math.abs(bRate - rate) < 0.01;
-    b.classList.toggle('active', isActive);
-    if (isActive) {
-      b.style.background = '#f6ad55';
-      b.style.color = '#1a202c';
-      b.style.fontWeight = '900';
-    } else {
-      b.style.background = 'rgba(246,173,85,.15)';
-      b.style.color = '#f6ad55';
-      b.style.fontWeight = '700';
-    }
-  });
 }
 
 function onWalletFeeRateInput(inp, totalAmt) {
-  const rate = Math.max(0, Math.min(20, parseFloat(inp.value) || 0));
-  const fee = Math.round((totalAmt * (rate / 100)) * 100) / 100;
+  const fee = calcWalletFee(totalAmt, 1.0);
   const net = Math.round((totalAmt - fee) * 100) / 100;
 
   const feeEl = document.getElementById('walletFeeAmtText');
@@ -9262,9 +9258,9 @@ function openWalletSettleOptions() {
   const totalEl = document.getElementById('wOptTotalAmt');
   const badgeEl = document.getElementById('wOptAllBadge');
 
-  const estFee = Math.round((totalAmt * 0.01) * 100) / 100;
+  const estFee = calcWalletFee(totalAmt, 1.0);
   const estNet = Math.round((totalAmt - estFee) * 100) / 100;
-  if (totalEl) totalEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.78rem;color:#f6ad55;margin-right:8px;font-weight:700;">(صافي العهدة: +${fmt(estNet)} ج بعد رسوم 1%: -${fmt(estFee)} ج)</span>`;
+  if (totalEl) totalEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.78rem;color:#f6ad55;margin-right:8px;font-weight:700;">(صافي العهدة: +${fmt(estNet)} ج بعد رسوم 1% [-${fmt(estFee)} ج لأقرب 5ج])</span>`;
   if (badgeEl) badgeEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.68rem;opacity:.9;">(صافي: ${fmt(estNet)})</span>`;
 
   if (modal) modal.classList.add('on');
@@ -9369,10 +9365,10 @@ async function settlePartialWalletAmount(targetAmt) {
     return;
   }
 
-  const estFee = Math.round((targetAmt * 0.01) * 100) / 100;
+  const estFee = calcWalletFee(targetAmt, 1.0);
   const estNet = Math.round((targetAmt - estFee) * 100) / 100;
 
-  // طلب الرقم السري وتحديد رسوم السحب (0.5% - 1.5%)
+  // طلب الرقم السري وتأكيد التصفية برسم ثابت 1% مقرب لأقرب 5 جنيه
   const pinRes = await requestWalletPin(`
     <div style="font-weight:900;font-size:1.05rem;color:var(--text1);margin-bottom:10px;">تصفية جزئية بمحفظة الصيدلية</div>
     <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:right;">
@@ -9383,21 +9379,15 @@ async function settlePartialWalletAmount(targetAmt) {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
         <div>
           <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نسبة رسوم السحب:</span>
-          <div style="display:flex;gap:4px;margin-top:4px;">
-            <button type="button" class="btn btn-xs fee-btn" data-rate="0.5" onclick="setWalletFeeRate(0.5, ${targetAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">0.5%</button>
-            <button type="button" class="btn btn-xs fee-btn active" data-rate="1.0" onclick="setWalletFeeRate(1.0, ${targetAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:#f6ad55;color:#1a202c;font-weight:900;cursor:pointer;">1.0%</button>
-            <button type="button" class="btn btn-xs fee-btn" data-rate="1.5" onclick="setWalletFeeRate(1.5, ${targetAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">1.5%</button>
-          </div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">رسوم ثابتة 1% (مقربة لأقرب 5 جنيه)</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
-          <input type="number" id="walletFeeRateInp" step="0.1" min="0" max="10" value="1.0"
-            oninput="onWalletFeeRateInput(this, ${targetAmt})"
-            style="width:58px;padding:3px 6px;text-align:center;font-weight:900;border-radius:6px;border:1px solid rgba(246,173,85,.5);background:var(--bg1);color:#f6ad55;font-size:.9rem;"/>
-          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">%</span>
+          <span style="padding:3px 10px;font-weight:900;border-radius:6px;border:1.5px solid #f6ad55;background:rgba(246,173,85,.18);color:#f6ad55;font-size:.9rem;">1.0% (ثابتة)</span>
+          <input type="hidden" id="walletFeeRateInp" value="1.0" />
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف):</span>
+        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف لأقرب 5ج):</span>
         <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.12);">
@@ -9412,8 +9402,8 @@ async function settlePartialWalletAmount(targetAmt) {
     return;
   }
 
-  const feeRate = (typeof pinRes === 'object' && pinRes?.feeRate != null) ? pinRes.feeRate : 1.0;
-  const fee = Math.round((targetAmt * (feeRate / 100)) * 100) / 100;
+  const feeRate = 1.0;
+  const fee = calcWalletFee(targetAmt, feeRate);
   const netAmt = Math.round((targetAmt - fee) * 100) / 100;
 
   try {
@@ -9484,7 +9474,7 @@ async function settlePartialWalletAmount(targetAmt) {
 
     // 2. قيد مصاريف بقيمة رسوم السحب
     if (fee > 0) {
-      const feeNotes = `رسوم سحب ${feeRate}% عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`;
+      const feeNotes = `رسوم سحب 1% (${fmt(fee)} ج لأقرب 5ج) عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`;
       const { error: feeErr } = await sb.from('entries').insert({
         id: feeId,
         date: today,
@@ -9583,9 +9573,9 @@ function updateOdSelectedBar() {
   bar.style.display = 'flex';
   if (countText) countText.textContent = `تم تحديد ${chks.length} حركة`;
   if (amtText) {
-    const estFee = Math.round((total * 0.01) * 100) / 100;
+    const estFee = calcWalletFee(total, 1.0);
     const estNet = Math.round((total - estFee) * 100) / 100;
-    amtText.innerHTML = `${fmt(total)} ج <span style="font-size:.74rem;color:#f6ad55;font-weight:700;margin-right:6px;">(رسوم 1%: -${fmt(estFee)} ج | صافي العهدة: +${fmt(estNet)} ج)</span>`;
+    amtText.innerHTML = `${fmt(total)} ج <span style="font-size:.74rem;color:#f6ad55;font-weight:700;margin-right:6px;">(رسوم 1% [-${fmt(estFee)} ج لأقرب 5ج] | صافي العهدة: +${fmt(estNet)} ج)</span>`;
   }
 }
 
@@ -9618,10 +9608,10 @@ async function settleSelectedWalletDebts() {
     return;
   }
 
-  const estFee = Math.round((totalAmt * 0.01) * 100) / 100;
+  const estFee = calcWalletFee(totalAmt, 1.0);
   const estNet = Math.round((totalAmt - estFee) * 100) / 100;
 
-  // طلب الرقم السري وتحديد رسوم السحب (0.5% - 1.5%)
+  // طلب الرقم السري وتأكيد التصفية برسم ثابت 1% مقرب لأقرب 5 جنيه
   const pinRes = await requestWalletPin(`
     <div style="font-weight:900;font-size:1.05rem;color:var(--text1);margin-bottom:10px;">تصفية حركات محددة بمحفظة الصيدلية</div>
     <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:right;">
@@ -9632,21 +9622,15 @@ async function settleSelectedWalletDebts() {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
         <div>
           <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نسبة رسوم السحب:</span>
-          <div style="display:flex;gap:4px;margin-top:4px;">
-            <button type="button" class="btn btn-xs fee-btn" data-rate="0.5" onclick="setWalletFeeRate(0.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">0.5%</button>
-            <button type="button" class="btn btn-xs fee-btn active" data-rate="1.0" onclick="setWalletFeeRate(1.0, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:#f6ad55;color:#1a202c;font-weight:900;cursor:pointer;">1.0%</button>
-            <button type="button" class="btn btn-xs fee-btn" data-rate="1.5" onclick="setWalletFeeRate(1.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">1.5%</button>
-          </div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">رسوم ثابتة 1% (مقربة لأقرب 5 جنيه)</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
-          <input type="number" id="walletFeeRateInp" step="0.1" min="0" max="10" value="1.0"
-            oninput="onWalletFeeRateInput(this, ${totalAmt})"
-            style="width:58px;padding:3px 6px;text-align:center;font-weight:900;border-radius:6px;border:1px solid rgba(246,173,85,.5);background:var(--bg1);color:#f6ad55;font-size:.9rem;"/>
-          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">%</span>
+          <span style="padding:3px 10px;font-weight:900;border-radius:6px;border:1.5px solid #f6ad55;background:rgba(246,173,85,.18);color:#f6ad55;font-size:.9rem;">1.0% (ثابتة)</span>
+          <input type="hidden" id="walletFeeRateInp" value="1.0" />
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف):</span>
+        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف لأقرب 5ج):</span>
         <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.12);">
@@ -9661,8 +9645,8 @@ async function settleSelectedWalletDebts() {
     return;
   }
 
-  const feeRate = (typeof pinRes === 'object' && pinRes?.feeRate != null) ? pinRes.feeRate : 1.0;
-  const fee = Math.round((totalAmt * (feeRate / 100)) * 100) / 100;
+  const feeRate = 1.0;
+  const fee = calcWalletFee(totalAmt, feeRate);
   const netAmt = Math.round((totalAmt - fee) * 100) / 100;
 
   try {
@@ -9694,7 +9678,7 @@ async function settleSelectedWalletDebts() {
 
     // 2. قيد مصاريف بقيمة رسوم السحب
     if (fee > 0) {
-      const feeNotes = `رسوم سحب ${feeRate}% عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`;
+      const feeNotes = `رسوم سحب 1% (${fmt(fee)} ج لأقرب 5ج) عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`;
       const { error: feeErr } = await sb.from('entries').insert({
         id: feeId,
         date: today,
@@ -9786,10 +9770,10 @@ async function settleAllWalletDebts() {
     return;
   }
 
-  const estFee = Math.round((totalAmt * 0.01) * 100) / 100;
+  const estFee = calcWalletFee(totalAmt, 1.0);
   const estNet = Math.round((totalAmt - estFee) * 100) / 100;
 
-  // 🔐 طلب الرقم السري وتحديد رسوم السحب (0.5% - 1.5%)
+  // 🔐 طلب الرقم السري وتأكيد التصفية برسم ثابت 1% مقرب لأقرب 5 جنيه
   const pinRes = await requestWalletPin(`
     <div style="font-weight:900;font-size:1.05rem;color:var(--text1);margin-bottom:10px;">تصفية محفظة الصيدلية بالكامل للعهدة</div>
     <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:right;">
@@ -9800,21 +9784,15 @@ async function settleAllWalletDebts() {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
         <div>
           <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نسبة رسوم السحب:</span>
-          <div style="display:flex;gap:4px;margin-top:4px;">
-            <button type="button" class="btn btn-xs fee-btn" data-rate="0.5" onclick="setWalletFeeRate(0.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">0.5%</button>
-            <button type="button" class="btn btn-xs fee-btn active" data-rate="1.0" onclick="setWalletFeeRate(1.0, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:#f6ad55;color:#1a202c;font-weight:900;cursor:pointer;">1.0%</button>
-            <button type="button" class="btn btn-xs fee-btn" data-rate="1.5" onclick="setWalletFeeRate(1.5, ${totalAmt})" style="font-size:.7rem;padding:2px 7px;border-radius:5px;border:1px solid #f6ad55;background:rgba(246,173,85,.15);color:#f6ad55;cursor:pointer;">1.5%</button>
-          </div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">رسوم ثابتة 1% (مقربة لأقرب 5 جنيه)</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
-          <input type="number" id="walletFeeRateInp" step="0.1" min="0" max="10" value="1.0"
-            oninput="onWalletFeeRateInput(this, ${totalAmt})"
-            style="width:58px;padding:3px 6px;text-align:center;font-weight:900;border-radius:6px;border:1px solid rgba(246,173,85,.5);background:var(--bg1);color:#f6ad55;font-size:.9rem;"/>
-          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">%</span>
+          <span style="padding:3px 10px;font-weight:900;border-radius:6px;border:1.5px solid #f6ad55;background:rgba(246,173,85,.18);color:#f6ad55;font-size:.9rem;">1.0% (ثابتة)</span>
+          <input type="hidden" id="walletFeeRateInp" value="1.0" />
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف):</span>
+        <span style="font-size:.82rem;color:#fc8181;">قيمة الرسوم (تسجل مصاريف لأقرب 5ج):</span>
         <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.12);">
@@ -9830,8 +9808,8 @@ async function settleAllWalletDebts() {
     return;
   }
 
-  const feeRate = (typeof pinRes === 'object' && pinRes?.feeRate != null) ? pinRes.feeRate : 1.0;
-  const fee = Math.round((totalAmt * (feeRate / 100)) * 100) / 100;
+  const feeRate = 1.0;
+  const fee = calcWalletFee(totalAmt, feeRate);
   const netAmt = Math.round((totalAmt - fee) * 100) / 100;
 
   try {
@@ -9864,7 +9842,7 @@ async function settleAllWalletDebts() {
 
     // 2. قيد مصاريف بقيمة رسوم السحب (إذا كانت الرسوم > 0)
     if (fee > 0) {
-      const feeNotes = `رسوم سحب ${feeRate}% عن تصفية محفظة الصيدلية بمبلغ ${fmt(totalAmt)} ج`;
+      const feeNotes = `رسوم سحب 1% (${fmt(fee)} ج لأقرب 5ج) عن تصفية محفظة الصيدلية بمبلغ ${fmt(totalAmt)} ج`;
       const { error: feeErr } = await sb.from('entries').insert({
         id: feeId,
         date: today,
