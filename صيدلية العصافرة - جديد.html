@@ -5998,31 +5998,115 @@ async function doSave() {
 //  EDIT ENTRY
 // ═══════════════════════════════════════════
 function editEntry(id) {
-  const e = entries.find(x=>x.id===id);
+  const e = entries.find(x => x.id === id);
   if (!e) return;
   document.getElementById('editId').value       = id;
-  document.getElementById('editOldType').value  = e.type;
-  document.getElementById('editOldAmt').value   = e.amount;
-  document.getElementById('editDate').value     = e.date;
-  document.getElementById('editType').value     = e.type;
-  editTypeChange();
-  setTimeout(()=>{ document.getElementById('editCo').value = e.company||''; }, 0);
-  document.getElementById('editInv').value      = e.invoice||'';
-  document.getElementById('editAmt').value      = e.amount;
-  document.getElementById('editNotes').value    = e.notes||'';
-  document.getElementById('editErr').classList.remove('on');
+  document.getElementById('editOldType').value  = e.type || '';
+  document.getElementById('editOldAmt').value   = e.amount || 0;
+  document.getElementById('editDate').value     = e.date || todayStr();
+
+  // ضبط نوع الحركة في القائمة
+  const typeEl = document.getElementById('editType');
+  if (typeEl) {
+    typeEl.value = e.type || 'ايرادات';
+  }
+
+  // تعبئة بنود النوع مع ضمان وجود بند هذا القيد حتى لو كان قديماً أو مخصصاً أو محذوفاً
+  editTypeChange(e.company);
+
+  // ضبط حقل رقم الفاتورة أو اسم الموظف بحسب طبيعة القيد
+  checkEditInvFieldState(e.company, e.invoice);
+
+  document.getElementById('editAmt').value      = e.amount || 0;
+  document.getElementById('editNotes').value    = e.notes || '';
+  
+  const errEl = document.getElementById('editErr');
+  if (errEl) { errEl.classList.remove('on'); errEl.style.display = 'none'; }
   document.getElementById('editModal').classList.add('on');
 }
 
-function editTypeChange() {
-  const t   = document.getElementById('editType').value;
-  const _hidden = hiddenCOS[t]||[];
-  const all = [...(COS[t]||[]).filter(x=>!_hidden.includes(x)),...(customCos[t]||[])];
+function editTypeChange(targetCo) {
+  const t = document.getElementById('editType').value;
+  const _hidden = hiddenCOS[t] || [];
+  let all = [...(COS[t] || []).filter(x => !_hidden.includes(x)), ...(customCos[t] || [])];
+
+  // دمج أي بنود سابقة مسجلة في entries لهذا النوع لضمان عدم اختفاء أي شركة أو مورد أو بند تسوية
+  const existingCos = entries.filter(e => e.type === t && e.company).map(e => e.company);
+  existingCos.forEach(c => {
+    if (!all.includes(c)) all.push(c);
+  });
+
   const sel = document.getElementById('editCo');
-  const prev= sel.value;
-  sel.innerHTML = '<option value="">اختر...</option>';
-  all.forEach(c=>{ const o=document.createElement('option'); o.value=o.textContent=c; if(c===prev) o.selected=true; sel.appendChild(o); });
+  const prev = targetCo !== undefined ? targetCo : sel.value;
+
+  // إذا كان البند المطلوب أو الحالي غير موجود، نضيفه في البداية حتى لا يصبح فارغاً
+  if (prev && !all.includes(prev)) {
+    all.unshift(prev);
+  }
+
+  sel.innerHTML = '<option value="">اختر البند / الشركة...</option>';
+  all.forEach(c => {
+    const o = document.createElement('option');
+    o.value = o.textContent = c;
+    if (c === prev) o.selected = true;
+    sel.appendChild(o);
+  });
+
   checkEditNotesValidation();
+  checkEditInvFieldState(prev);
+}
+
+function checkEditInvFieldState(explicitCo, explicitInv) {
+  const type = document.getElementById('editType')?.value;
+  const co = explicitCo !== undefined ? explicitCo : (document.getElementById('editCo')?.value || '');
+  const txtInv = document.getElementById('editInv');
+  const selInv = document.getElementById('editInvSel');
+  const lbl = document.getElementById('editInvLbl');
+  if (!txtInv || !selInv) return;
+
+  const isInc = (co === 'حوافز ومكافآت' || co === 'حوافز' || co === 'مكافآت' || (co||'').includes('حوافز') || (co||'').includes('مكافآت'));
+  const isSal = (co === 'رواتب' || (co||'').includes('رواتب'));
+  const isDisc = (type === 'خصومات' || co === 'خصومات' || (co||'').includes('خصم'));
+
+  if (isSal || isInc || isDisc) {
+    // تعبئة قائمة الموظفين
+    selInv.innerHTML = '<option value="">اختر الموظف...</option>';
+    let emps = [...(attEmpNames && attEmpNames.length ? attEmpNames.filter(isSalOn) : [])];
+    
+    // قيمة الموظف الحالية من القيد
+    const prevVal = (explicitInv !== undefined && explicitInv !== null)
+      ? String(explicitInv).trim()
+      : (selInv.value || txtInv.value.trim());
+
+    if (prevVal && !emps.includes(prevVal)) {
+      emps.push(prevVal);
+    }
+
+    emps.forEach(n => {
+      const o = document.createElement('option');
+      o.value = o.textContent = n;
+      if (n === prevVal) o.selected = true;
+      selInv.appendChild(o);
+    });
+
+    if (prevVal) selInv.value = prevVal;
+
+    txtInv.style.display = 'none';
+    selInv.style.display = '';
+
+    if (lbl) {
+      if (isDisc) lbl.textContent = '👤 الموظف المراد الخصم منه';
+      else if (isInc) lbl.textContent = '👤 الموظف المستحق للحافز / المكافأة';
+      else lbl.textContent = '👤 اسم الموظف المستحق للراتب';
+    }
+  } else {
+    txtInv.style.display = '';
+    selInv.style.display = 'none';
+    if (explicitInv !== undefined && explicitInv !== null) {
+      txtInv.value = explicitInv;
+    }
+    if (lbl) lbl.textContent = '🔢 رقم الفاتورة / الإيصال';
+  }
 }
 
 function checkEditNotesValidation() {
@@ -6062,7 +6146,11 @@ async function saveEdit() {
   const date    = document.getElementById('editDate').value;
   const type    = document.getElementById('editType').value;
   const co      = document.getElementById('editCo').value;
-  const inv     = document.getElementById('editInv').value.trim();
+
+  const selInvEl = document.getElementById('editInvSel');
+  const txtInvEl = document.getElementById('editInv');
+  const inv     = (selInvEl && selInvEl.style.display !== 'none') ? selInvEl.value.trim() : txtInvEl.value.trim();
+
   const amt     = parseFloat(document.getElementById('editAmt').value)||0;
   const notes   = document.getElementById('editNotes').value.trim();
   const eEl     = document.getElementById('editErr');
@@ -6071,6 +6159,17 @@ async function saveEdit() {
   if (!date) { showErr('أدخل التاريخ'); return; }
   if (!co)   { showErr('اختر البند أو الشركة'); return; }
   if (amt<=0){ showErr('أدخل مبلغاً أكبر من صفر'); return; }
+
+  const isInc = (co === 'حوافز ومكافآت' || co === 'حوافز' || co === 'مكافآت' || (co||'').includes('حوافز') || (co||'').includes('مكافآت'));
+  const isSal = (co === 'رواتب' || (co||'').includes('رواتب'));
+  const isDisc = (type === 'خصومات' || co === 'خصومات' || (co||'').includes('خصم'));
+
+  if ((isSal || isInc || isDisc) && !inv) {
+    showErr(`⚠️ يرجى اختيار اسم الموظف المعني بالـ${isDisc ? 'خصم' : (isInc ? 'مكافأة' : 'راتب')}`);
+    if (selInvEl) selInvEl.focus();
+    return;
+  }
+
   if (type === 'ذمم اونلاين' && !notes) {
     showErr('⚠️ يرجى كتابة اسم المرسل في الملاحظات (إجباري في الذمم الأونلاين)');
     const nEl = document.getElementById('editNotes');
@@ -6082,21 +6181,81 @@ async function saveEdit() {
   btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true;
 
   try {
-    const oldDelta = (oldType==='ايرادات') ? oldAmt : -oldAmt;
-    const newDelta = (type==='ايرادات')    ? amt    : -amt;
+    const existingEntry = entries.find(x => x.id === id);
+    const oldNotes = existingEntry?.notes || '';
+    const oldCo = existingEntry?.company || '';
+
+    // حماية الرصيد المحايد: الخصومات والمكافآت مع الراتب لا تمس الخزينة أبداً (delta = 0)
+    const oldIsNeutral = (oldType === 'خصومات' || oldCo === 'حوافز ومكافآت' || oldNotes.includes('[مع الراتب') || oldNotes.includes('[تُصرف مع الراتب'));
+    const newIsNeutral = (isDisc || isInc || notes.includes('[مع الراتب') || notes.includes('[تُصرف مع الراتب'));
+
+    const oldDelta = oldIsNeutral ? 0 : ((oldType === 'ايرادات') ? oldAmt : -oldAmt);
+    const newDelta = newIsNeutral ? 0 : ((type === 'ايرادات') ? amt : -amt);
     const diff     = newDelta - oldDelta;
 
     const entryOld = await sb.from('entries').select('balance').eq('id', id).maybeSingle();
-    const entryOldBal = entryOld.data?.balance || 0;
+    const entryOldBal = entryOld.data?.balance || (existingEntry?.balance || 0);
+    const finalBal = newIsNeutral ? entryOldBal : (entryOldBal + diff);
+
+    let finalNotes = notes;
+    if (isInc && !finalNotes.includes('[تُصرف مع الراتب نهاية الشهر')) {
+      finalNotes = (finalNotes ? finalNotes + ' ' : '') + '[تُصرف مع الراتب نهاية الشهر - معتمد من المدير]';
+    } else if (isDisc && !finalNotes.includes('[مع الراتب')) {
+      finalNotes = (finalNotes ? finalNotes + ' ' : '') + '[مع الراتب - معتمد من المدير]';
+    }
+
     const {error: updErr} = await sb.from('entries').update({
-      date, type, company:co, invoice:inv, amount:amt, notes, balance: entryOldBal+diff
+      date, type, company:co, invoice:inv, amount:amt, notes:finalNotes, balance: finalBal
     }).eq('id', id);
     if (updErr) throw updErr;
-    await sbUpdateBalance(diff);
+
+    if (diff !== 0) {
+      await sbUpdateBalance(diff);
+    }
+
+    // تحديث القيد في مصفوفة الذاكرة فوراً ليتطابق كل شيء في الواجهة دون الحاجة لإعادة تحميل
+    if (existingEntry) {
+      existingEntry.date = date;
+      existingEntry.type = type;
+      existingEntry.company = co;
+      existingEntry.invoice = inv;
+      existingEntry.amount = amt;
+      existingEntry.notes = finalNotes;
+      existingEntry.balance = finalBal;
+    }
+
+    // تحديث سجل الاعتمادات في حال كان القيد مرتبطاً بطلب مكافأة أو خصم
+    if (typeof salaryAdjustments !== 'undefined' && Array.isArray(salaryAdjustments)) {
+      const adj = salaryAdjustments.find(x => x.entryId === id);
+      if (adj) {
+        adj.amount = amt;
+        adj.empName = inv;
+        adj.reason = co;
+        adj.notes = notes;
+        adj.date = date;
+        saveSalaryAdjustments();
+      }
+    }
+
     closeEdit();
-    toast('✅ تم تعديل القيد');
-  } catch(e) { eEl.textContent='❌ '+arErr(e); eEl.style.display='block'; }
-  btn.textContent='💾 حفظ التعديل'; btn.disabled=false;
+    toast('✅ تم تعديل القيد بنجاح');
+
+    // إعادة رسم الشاشات والتقارير المرتبطة
+    if (typeof renderEntries === 'function') renderEntries();
+    if (typeof attShowEmpReport === 'function') {
+      const repEmp = document.getElementById('attRepEmp')?.value;
+      if (repEmp && (repEmp === inv || repEmp === existingEntry?.invoice)) {
+        attShowEmpReport();
+      }
+    }
+    if (typeof updateSalaryAdjBadges === 'function') updateSalaryAdjBadges();
+  } catch(e) {
+    eEl.textContent='❌ '+arErr(e);
+    eEl.style.display='block';
+  } finally {
+    btn.textContent='💾 حفظ التعديل';
+    btn.disabled=false;
+  }
 }
 
 async function resetAll() {
@@ -21572,18 +21731,26 @@ function triggerWorkerReminder(title, body) {
       <div class="fg"><label for="editDate">📅 التاريخ</label><input type="date" id="editDate" onkeydown="handleEditKeyNav(event,'editDate')"/></div>
       <div class="fg"><label for="editType">📂 النوع</label>
         <select id="editType" onchange="editTypeChange()" onkeydown="handleEditKeyNav(event,'editType')">
-          <option value="ايرادات">ايرادات</option>
-          <option value="مصاريف">مصاريف</option>
-          <option value="طلبيات">طلبيات</option>
-          <option value="ارباح">ارباح</option>
-          <option value="اصول ثابتة">أصول ثابتة</option>
-          <option value="ذمم اونلاين">ذمم أونلاين</option>
+          <option value="ايرادات">💵 ايرادات</option>
+          <option value="مصاريف">💸 مصاريف</option>
+          <option value="طلبيات">🏭 طلبيات</option>
+          <option value="ارباح">💰 ارباح</option>
+          <option value="اصول ثابتة">🏗 اصول ثابتة</option>
+          <option value="ذمم اونلاين">⏳ ذمم اونلاين</option>
+          <option value="خصومات">✂️ خصومات</option>
         </select>
       </div>
     </div>
-    <div class="fg"><label for="editCo">🏷 البند / الشركة</label><select id="editCo" onkeydown="handleEditKeyNav(event,'editCo')"></select></div>
-    <div class="fg"><label for="editInv">🔢 رقم الفاتورة</label><input type="text" id="editInv" placeholder="اختياري" onkeydown="handleEditKeyNav(event,'editInv')"/></div>
-    <div class="fg"><label for="editAmt">💰 المبلغ (جنيه)</label><input type="number" id="editAmt" step="0.01" min="0" placeholder="0.00" onkeydown="handleEditKeyNav(event,'editAmt')"/></div>
+    <div class="fg">
+      <label for="editCo" id="editCoLbl">🏷 البند / الشركة</label>
+      <select id="editCo" onchange="checkEditInvFieldState()" onkeydown="handleEditKeyNav(event,'editCo')"></select>
+    </div>
+    <div class="fg">
+      <label for="editInv" id="editInvLbl">🔢 رقم الفاتورة</label>
+      <input type="text" id="editInv" placeholder="اختياري" onkeydown="handleEditKeyNav(event,'editInv')"/>
+      <select id="editInvSel" style="display:none;" onkeydown="handleEditKeyNav(event,'editInvSel')"></select>
+    </div>
+    <div class="fg"><label for="editAmt" id="editAmtLbl">💰 المبلغ (جنيه)</label><input type="number" id="editAmt" step="0.01" min="0" placeholder="0.00" onkeydown="handleEditKeyNav(event,'editAmt')"/></div>
     <div class="fg">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label for="editNotes" id="editNotesLbl" style="margin-bottom:0;">📝 ملاحظات</label>
