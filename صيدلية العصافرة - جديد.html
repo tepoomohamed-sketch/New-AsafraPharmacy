@@ -2607,9 +2607,6 @@ function ensureXLSX() {
             ⚖️ <span class="hide-mobile">الاعتمادات</span>
             <span id="topbarSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
           </button>
-          <button id="topbarShiftHandoverBtn" class="saliim-tb-btn" onclick="openShiftHandoverModal()" title="إغلاق وتسليم الشيفت وجرد الدرج 🔄" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.08);font-weight:800;">
-            🔄 <span class="hide-mobile">تسليم شيفت</span>
-          </button>
           <button id="topbarTasksBtn" class="saliim-tb-btn" onclick="swTab('tasks')" title="دفتر المهام والتاسكات 📌" style="color:#0284c7;border-color:rgba(2,132,199,0.4);background:rgba(2,132,199,0.08);font-weight:800;position:relative;">
             📌 <span class="hide-mobile">المهام</span>
             <span id="topbarTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
@@ -10383,18 +10380,6 @@ function parseActionRecord(act) {
       oldType: snap.before?.type || ''
     }];
     totalAmt = parseFloat(snap.after.amount) || 0;
-  } else if (act.action === 'shift_handover' && snap) {
-    items = [{
-      id: act.target_ids?.[0],
-      company: 'تسليم شيفت وجرد درج',
-      amount: parseFloat(snap.actual) || 0,
-      expected: parseFloat(snap.expected) || 0,
-      discrepancy: parseFloat(snap.discrepancy) || 0,
-      date: act.done_at?.slice(0, 10) || '—',
-      notes: snap.notes || '',
-      type: 'شيفت'
-    }];
-    totalAmt = parseFloat(snap.actual) || 0;
   } else if (Array.isArray(snap)) {
     items = snap.map(s => ({
       id: s.id,
@@ -10721,8 +10706,7 @@ function renderActionHistory() {
     unsettle:'↩️ إلغاء تسوية',
     mark_pos:'🏷 تعليم POS',
     unmark_pos:'↩️ إلغاء POS',
-    edit:'✏️ تعديل قيد',
-    shift_handover:'🔄 تسليم شيفت'
+    edit:'✏️ تعديل قيد'
   };
   const colors = {
     delete:'#fc8181',
@@ -10730,8 +10714,7 @@ function renderActionHistory() {
     unsettle:'#f6ad55',
     mark_pos:'#63b3ed',
     unmark_pos:'#f6ad55',
-    edit:'#a78bfa',
-    shift_handover:'#38bdf8'
+    edit:'#a78bfa'
   };
 
   const headerHtml = `
@@ -10769,11 +10752,6 @@ function renderActionHistory() {
       desc = compLabel || 'تسوية ذمم';
     } else if (g.action === 'edit') {
       desc = compLabel ? `تعديل قيد: ${compLabel}` : 'تعديل قيد';
-    } else if (g.action === 'shift_handover') {
-      const snap = rawAct.snapshot || {};
-      const disc = snap.discrepancy != null ? snap.discrepancy : 0;
-      const discTxt = disc === 0 ? 'مطابق ✅' : (disc > 0 ? `+${fmt(disc)} ج 💡` : `${fmt(disc)} ج ⚠️`);
-      desc = `تسليم شيفت (${discTxt})`;
     }
 
     const amtBadge = g.totalAmount > 0
@@ -10823,28 +10801,6 @@ function renderActionHistory() {
             </tbody>
           </table>
         </div>
-      `;
-    } else if (g.action === 'shift_handover' && g.items.length) {
-      const it = g.items[0];
-      const disc = it.discrepancy || 0;
-      const discColor = disc === 0 ? '#68d391' : (disc > 0 ? '#38bdf8' : '#fc8181');
-      const discLabel = disc === 0 ? 'مطابقة تامة ✅' : (disc > 0 ? `زيادة (+${fmt(disc)} ج) 💡` : `عجز (${fmt(disc)} ج) ⚠️`);
-      itemsTableHtml = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:6px;background:rgba(0,0,0,.25);padding:10px;border-radius:8px;">
-          <div style="background:rgba(255,255,255,.03);padding:8px;border-radius:6px;text-align:center;">
-            <div style="font-size:.7rem;color:var(--text3);">المتوقع بالدرج</div>
-            <div style="font-size:.9rem;font-weight:800;color:#f6ad55;">${fmt(it.expected||0)} ج</div>
-          </div>
-          <div style="background:rgba(255,255,255,.03);padding:8px;border-radius:6px;text-align:center;">
-            <div style="font-size:.7rem;color:var(--text3);">الفعلي بعد الجرد</div>
-            <div style="font-size:.9rem;font-weight:800;color:#68d391;">${fmt(it.amount||0)} ج</div>
-          </div>
-          <div style="background:rgba(255,255,255,.03);padding:8px;border-radius:6px;text-align:center;">
-            <div style="font-size:.7rem;color:var(--text3);">الفارق / العجز</div>
-            <div style="font-size:.9rem;font-weight:800;color:${discColor};">${discLabel}</div>
-          </div>
-        </div>
-        ${it.notes ? `<div style="margin-top:6px;font-size:.76rem;color:var(--text2);padding:6px;background:rgba(255,255,255,.03);border-radius:6px;"><b>ملاحظات الشيفت:</b> ${esc(it.notes)}</div>` : ''}
       `;
     } else if (g.items.length) {
       itemsTableHtml = `
@@ -11338,165 +11294,6 @@ function printSupplierLedger() {
     </html>
   `);
   win.document.close();
-}
-
-// ═══════════════════════════════════════════
-//  SHIFT HANDOVER & DRAWER RECONCILIATION (إغلاق وتسليم الشيفت وجرد الخزينة) 🔄
-// ═══════════════════════════════════════════
-function openShiftHandoverModal() {
-  const modal = document.getElementById('shiftHandoverModal');
-  if (!modal) return;
-
-  const uNameEl = document.getElementById('shiftUserName');
-  if (uNameEl) uNameEl.value = me?.name || me?.email || 'المسؤول الحالي';
-
-  const expEl = document.getElementById('shiftExpectedDisplay');
-  const expVal = typeof balance !== 'undefined' ? balance : 0;
-  if (expEl) {
-    expEl.textContent = fmt(expVal) + ' ج';
-    expEl.dataset.val = expVal;
-  }
-
-  const actEl = document.getElementById('shiftActualCash');
-  if (actEl) actEl.value = '';
-
-  const notesEl = document.getElementById('shiftNotes');
-  if (notesEl) notesEl.value = '';
-
-  const diffAlert = document.getElementById('shiftDiffAlert');
-  if (diffAlert) {
-    diffAlert.style.display = 'none';
-    diffAlert.textContent = '';
-  }
-
-  const errEl = document.getElementById('shiftErr');
-  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-
-  modal.style.display = 'flex';
-}
-
-function closeShiftHandoverModal() {
-  const modal = document.getElementById('shiftHandoverModal');
-  if (modal) modal.style.display = 'none';
-}
-
-function calcShiftDiff() {
-  const expEl = document.getElementById('shiftExpectedDisplay');
-  const actEl = document.getElementById('shiftActualCash');
-  const diffAlert = document.getElementById('shiftDiffAlert');
-  if (!diffAlert || !expEl || !actEl) return;
-
-  const expVal = parseFloat(expEl.dataset.val) || 0;
-  const rawAct = actEl.value;
-
-  if (rawAct === '' || isNaN(rawAct)) {
-    diffAlert.style.display = 'none';
-    return;
-  }
-
-  const actVal = parseFloat(rawAct) || 0;
-  const diff = +(actVal - expVal).toFixed(2);
-
-  diffAlert.style.display = 'block';
-  if (Math.abs(diff) < 0.01) {
-    diffAlert.style.background = 'rgba(16,185,129,0.15)';
-    diffAlert.style.border = '1px solid #10b981';
-    diffAlert.style.color = '#68d391';
-    diffAlert.textContent = '✅ مطابقة تامة: النقدية بالدرج متطابقة مع رصيد النظام بالضبط';
-  } else if (diff < 0) {
-    diffAlert.style.background = 'rgba(239,68,68,0.15)';
-    diffAlert.style.border = '1px solid #ef4444';
-    diffAlert.style.color = '#fc8181';
-    diffAlert.textContent = `⚠️ عجز بالخزينة: النقدية بالدرج تقل عن السيستم بقيمة ${fmt(Math.abs(diff))} ج`;
-  } else {
-    diffAlert.style.background = 'rgba(14,165,233,0.15)';
-    diffAlert.style.border = '1px solid #0284c7';
-    diffAlert.style.color = '#38bdf8';
-    diffAlert.textContent = `💡 زيادة بالخزينة: النقدية بالدرج تزيد عن السيستم بقيمة ${fmt(diff)} ج`;
-  }
-}
-
-async function saveShiftHandover() {
-  const actEl = document.getElementById('shiftActualCash');
-  const expEl = document.getElementById('shiftExpectedDisplay');
-  const typeEl = document.getElementById('shiftType');
-  const notesEl = document.getElementById('shiftNotes');
-  const errEl = document.getElementById('shiftErr');
-  const btn = document.getElementById('saveShiftHandoverBtn');
-
-  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-
-  const rawAct = actEl?.value;
-  if (rawAct === '' || isNaN(rawAct) || parseFloat(rawAct) < 0) {
-    if (errEl) {
-      errEl.textContent = '⚠️ برجاء إدخال النقدية الفعلية بعد الجرد بشكل صحيح';
-      errEl.style.display = 'block';
-    }
-    return;
-  }
-
-  const expVal = parseFloat(expEl?.dataset.val) || 0;
-  const actVal = parseFloat(rawAct) || 0;
-  const diff = +(actVal - expVal).toFixed(2);
-  const shiftType = typeEl?.value || 'standard';
-  const notes = notesEl?.value.trim() || '';
-
-  const confirmMsg = Math.abs(diff) < 0.01
-    ? `تأكيد تسليم الشيفت؟\n- رصيد النظام: ${fmt(expVal)} ج\n- النقدية بالدرج: ${fmt(actVal)} ج\n- الفارق: 0 ج (مطابق)`
-    : `⚠️ انتبه: يوجد فارق ${diff < 0 ? 'عجز' : 'زيادة'} بقيمة ${fmt(Math.abs(diff))} ج!\n- رصيد النظام: ${fmt(expVal)} ج\n- النقدية بالدرج: ${fmt(actVal)} ج\n\nهل تريد المتابعة وتوثيق التسليم؟`;
-
-  if (!confirm(confirmMsg)) return;
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ جاري الحفظ والتوثيق...';
-  }
-
-  try {
-    const shiftId = 'shift_' + Date.now();
-    const nowIso = new Date().toISOString();
-
-    const handoverData = {
-      shift_id: shiftId,
-      shift_type: shiftType,
-      user_name: me?.name || me?.email || 'مستخدم',
-      user_uid: me?.uid || null,
-      start_at: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-      end_at: nowIso,
-      expected_cash: expVal,
-      actual_cash: actVal,
-      discrepancy: diff,
-      notes: notes,
-      status: 'closed'
-    };
-
-    // 1. الحفظ في جدول shift_handovers
-    const { error: insErr } = await sb.from('shift_handovers').insert([handoverData]);
-    if (insErr) console.warn('shift_handovers insert warning:', insErr);
-
-    // 2. التوثيق في سجل حركات المدير entry_actions لمتابعته والرقابة عليه
-    await sbLogAction('shift_handover', [shiftId], {
-      expected: expVal,
-      actual: actVal,
-      discrepancy: diff,
-      shift_type: shiftType,
-      notes: notes,
-      user: me?.name || me?.email || 'مستخدم'
-    });
-
-    closeShiftHandoverModal();
-    toast('✅ تم توثيق إغلاق وتسليم الشيفت وجرد الخزينة بنجاح');
-  } catch(e) {
-    if (errEl) {
-      errEl.textContent = '❌ فشل حفظ الشيفت: ' + (e.message || arErr(e));
-      errEl.style.display = 'block';
-    }
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✅ تأكيد إغلاق وتسليم الشيفت';
-    }
-  }
 }
 
 function toast(msg, ok=true) {
@@ -22707,7 +22504,6 @@ function triggerWorkerReminder(title, body) {
         style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:.8rem;">
         <option value="">الكل</option>
         <option value="edit">✏️ تعديل قيد</option>
-        <option value="shift_handover">🔄 تسليم شيفت</option>
         <option value="delete">🗑 مسح</option>
         <option value="settle">✅ تسوية</option>
         <option value="mark_pos">🏷 تعليم POS</option>
@@ -23388,72 +23184,6 @@ function triggerWorkerReminder(title, body) {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1px solid var(--border);">
       <div style="font-size:0.78rem;color:var(--text3);" id="suppLedgerFooterNote"></div>
       <button type="button" onclick="closeSupplierLedgerModal()" class="btn btn-ghost" style="padding:6px 18px;border-radius:8px;">إغلاق</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Shift Handover Modal (إغلاق وتسليم الشيفت وجرد الدرج والخزينة) ── -->
-<div id="shiftHandoverModal" class="modal-overlay" role="dialog" aria-modal="true"
-     onclick="if(event.target===this)closeShiftHandoverModal()" style="display:none;z-index:99999;">
-  <div class="modal-box" style="max-width:580px;width:94%;max-height:92vh;display:flex;flex-direction:column;padding:22px;background:var(--bg1);border-radius:18px;border:2px solid #38bdf8;box-shadow:0 20px 45px rgba(0,0,0,0.55);text-align:right;">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:1.4rem;">🔄</span>
-        <div>
-          <div style="font-size:1.15rem;font-weight:900;color:#38bdf8;">إغلاق وتسليم الشيفت وجرد الخزينة</div>
-          <div style="font-size:0.75rem;color:var(--text3);margin-top:2px;">مطابقة النقدية بالدرج وتوثيق الفوارق في سجل الحركات</div>
-        </div>
-      </div>
-      <button type="button" onclick="closeShiftHandoverModal()" style="background:none;border:none;font-size:1.3rem;color:var(--text3);cursor:pointer;padding:2px 8px;">✕</button>
-    </div>
-
-    <!-- Shift Details Form -->
-    <div style="display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;padding-left:4px;">
-      <div class="fg-row">
-        <div class="fg">
-          <label>👤 المسؤول عن التسليم</label>
-          <input type="text" id="shiftUserName" readonly style="background:var(--bg3);opacity:0.85;cursor:not-allowed;font-weight:700;"/>
-        </div>
-        <div class="fg">
-          <label>🕒 نوع الشيفت</label>
-          <select id="shiftType" style="padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-weight:700;">
-            <option value="morning">صباحي 🌅</option>
-            <option value="evening">مسائي 🌆</option>
-            <option value="night">ليلي / سهر 🌙</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Expected vs Actual Cash Box -->
-      <div style="background:linear-gradient(135deg,rgba(56,189,248,0.06),rgba(99,102,241,0.06));border:1.5px solid rgba(56,189,248,0.3);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;">
-          <span style="font-size:0.85rem;color:var(--text2);font-weight:700;">💼 رصيد الخزينة المحسوب بالنظام:</span>
-          <span id="shiftExpectedDisplay" style="font-size:1.15rem;font-weight:900;color:#f6ad55;">0.00 ج</span>
-        </div>
-        <div class="fg" style="margin-bottom:0;">
-          <label style="color:#38bdf8;font-weight:800;font-size:0.88rem;">💵 النقدية الفعلية بعد الجرد بالدرج (جنيه):</label>
-          <input type="number" id="shiftActualCash" placeholder="0.00" step="0.01" min="0" oninput="calcShiftDiff()"
-                 style="font-size:1.15rem;font-weight:900;color:var(--text1);border:2px solid #38bdf8;border-radius:10px;padding:10px;background:var(--bg3);"/>
-        </div>
-        <!-- Live Discrepancy Alert -->
-        <div id="shiftDiffAlert" style="padding:10px 14px;border-radius:10px;font-size:0.88rem;font-weight:800;text-align:center;display:none;"></div>
-      </div>
-
-      <div class="fg">
-        <label>📝 ملاحظات الشيفت والتسليم للمستلم:</label>
-        <textarea id="shiftNotes" rows="3" placeholder="اكتب أي ملاحظات على الفوارق، التوالف، التوصيات للشيفت القادم..." style="width:100%;border-radius:10px;padding:8px 10px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:0.85rem;resize:vertical;"></textarea>
-      </div>
-
-      <div id="shiftErr" style="display:none;background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#fc8181;padding:8px 12px;border-radius:8px;font-size:0.82rem;font-weight:700;"></div>
-    </div>
-
-    <!-- Footer Actions -->
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-      <button type="button" class="btn btn-ghost" onclick="closeShiftHandoverModal()" style="padding:8px 16px;">إلغاء</button>
-      <button type="button" id="saveShiftHandoverBtn" class="btn btn-primary" onclick="saveShiftHandover()" style="padding:8px 20px;background:#0284c7;border-color:#0284c7;font-weight:800;box-shadow:0 4px 15px rgba(2,132,199,0.35);">
-        ✅ تأكيد إغلاق وتسليم الشيفت
-      </button>
     </div>
   </div>
 </div>
