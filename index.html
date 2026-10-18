@@ -4799,7 +4799,28 @@ let attIncentives = {};  // from meta/attendanceIncentives { "YYYY-MM__name": in
 let attSalaryTypes    = {};  // from meta/attendanceSalaryTypes { name: 'hourly' | 'fixed' }
 let attFixedSalaries  = {};  // from meta/attendanceFixedSalaries { name: fixedAmount }
 let attManualSalaries = {};  // from meta/attendanceManualSalaries { "YYYY-MM__name": manualSalary }
-let walletSettlePin = (function(){ try { return localStorage.getItem('asafra_wallet_pin') || '1234'; } catch(e){ return '1234'; } })(); // الرقم السري لتصفية المحفظة والذمم إلى العهدة
+function getCachedWalletPin() {
+  try {
+    const sec = localStorage.getItem('asafra_wallet_pin_sec');
+    if (sec) return decodeURIComponent(atob(sec)).replace('ASAFRA_PIN_', '');
+    const old = localStorage.getItem('asafra_wallet_pin');
+    if (old) {
+      setCachedWalletPin(old);
+      localStorage.removeItem('asafra_wallet_pin');
+      return old;
+    }
+  } catch(e){}
+  return '1234';
+}
+function setCachedWalletPin(pin) {
+  try {
+    walletSettlePin = String(pin);
+    const obf = btoa(encodeURIComponent('ASAFRA_PIN_' + pin));
+    localStorage.setItem('asafra_wallet_pin_sec', obf);
+    localStorage.removeItem('asafra_wallet_pin');
+  } catch(e){}
+}
+let walletSettlePin = getCachedWalletPin(); // الرقم السري المشفر لتصفية المحفظة والذمم إلى العهدة
 let attAttOff     = new Set();  // موظفين مستبعَدين من الحضور
 let attSalOff     = new Set();  // موظفين مستبعَدين من الرواتب
 let attFilter     = { month: '', emp: '', dateFrom: '', dateTo: '' }; // attendance filter state
@@ -5030,7 +5051,7 @@ function loadLocalSettings() {
     if (s.name)   pharmName = s.name;
     if (s.custom) customCos = s.custom;
     if (s.hidden) hiddenCOS = s.hidden;
-    const savedPin = localStorage.getItem('asafra_wallet_pin');
+    const savedPin = getCachedWalletPin();
     if (savedPin) walletSettlePin = String(savedPin);
   } catch {}
 }
@@ -5104,10 +5125,34 @@ async function doLogin() {
     return;
   }
 
-  btn.textContent='⏳ جاري الدخول...'; btn.disabled=true;
-  try { await auth.signInWithEmailAndPassword(email, pass); }
-  catch(e) {
-    const msgs = {'auth/wrong-password':'❌ كلمة المرور غلط','auth/user-not-found':'❌ البريد غير موجود','auth/invalid-credential':'❌ البريد أو كلمة المرور غلط','auth/too-many-requests':'❌ محاولات كثيرة — انتظر قليلاً'};
+  btn.textContent='⏳ جاري الدخول والتأمين...'; btn.disabled=true;
+  try {
+    // 1. تسجيل الدخول عبر Firebase Auth
+    const fbCred = await auth.signInWithEmailAndPassword(email, pass);
+
+    // 2. مزامنة وتفعيل توكن Supabase Auth لتأمين الاتصال بقاعدة البيانات
+    try {
+      if (sb && sb.auth) {
+        const cleanEmail = email.toLowerCase();
+        const { error: sbErr } = await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
+        if (sbErr && (sbErr.message?.includes('Invalid login') || sbErr.status === 400 || sbErr.code === 'invalid_credentials')) {
+          // ترقية تلقائية وإنشاء الحساب في Supabase Auth بنفس كلمة المرور
+          const { error: signErr } = await sb.auth.signUp({ email: cleanEmail, password: pass });
+          if (!signErr) {
+            await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
+          }
+        }
+      }
+    } catch(err) {
+      console.warn('Supabase auth sync notice:', err);
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/wrong-password':'❌ كلمة المرور غير صحيحة',
+      'auth/user-not-found':'❌ البريد غير مسجل',
+      'auth/invalid-credential':'❌ البريد أو كلمة المرور غير صحيحة',
+      'auth/too-many-requests':'❌ محاولات كثيرة — انتظر قليلاً'
+    };
     eEl.textContent = msgs[e.code]||'❌ '+arErr(e); eEl.classList.add('on');
     btn.textContent='🔐 دخول'; btn.disabled=false;
   }
@@ -5130,7 +5175,19 @@ async function doRegister() {
     const {data: existUsers} = await sb.from('users').select('id').limit(1);
     const role = (!existUsers || existUsers.length===0) ? 'admin' : 'employee';
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    await sb.from('users').insert({id: cred.user.uid, name, email, role});
+
+    // تسجيل متزامن في Supabase Auth
+    try {
+      if (sb && sb.auth) {
+        const cleanEmail = email.toLowerCase();
+        await sb.auth.signUp({ email: cleanEmail, password: pass });
+        await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
+      }
+    } catch(err) {
+      console.warn('Supabase auth signup sync notice:', err);
+    }
+
+    await sb.from('users').insert({id: cred.user.uid, name, email: email.toLowerCase(), role});
   } catch(e) {
     const msgs = {'auth/email-already-in-use':'❌ هذا البريد مستخدم مسبقاً','auth/invalid-email':'❌ بريد إلكتروني غير صالح'};
     eEl.textContent = msgs[e.code]||'❌ '+arErr(e); eEl.classList.add('on');
@@ -5157,6 +5214,7 @@ async function doLogout() {
   });
   me = null;
   show('scLogin');
+  try { if (sb && sb.auth) await sb.auth.signOut(); } catch(e){}
   await auth.signOut();
 }
 
@@ -5178,7 +5236,9 @@ async function onAuth(user) {
     return;
   }
   try {
-    let {data: userRow, error: userErr} = await sb.from('users').select('*').eq('id', user.uid).maybeSingle();
+    let {data: userRow, error: userErr} = await sb.from('users').select('*')
+      .or(`id.eq.${user.uid},email.ilike.${user.email}`)
+      .maybeSingle();
     if (userErr) throw userErr;
     // أول مستخدم Firebase يدخل على قاعدة البيانات الجديدة يصبح المدير تلقائياً
     if (!userRow) {
@@ -5281,7 +5341,7 @@ async function loadAndListenWalletPin() {
     const v = await sbGetMeta('walletSettlePin');
     if (v && v.pin) {
       walletSettlePin = String(v.pin);
-      try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
+      setCachedWalletPin(walletSettlePin);
       const pinInp = document.getElementById('walletPinSettingsInp');
       if (pinInp) pinInp.value = walletSettlePin;
     }
@@ -5300,7 +5360,7 @@ async function loadAndListenWalletPin() {
               const p = raw?.pin || (typeof raw === 'string' ? JSON.parse(raw)?.pin : null);
               if (p) {
                 walletSettlePin = String(p);
-                try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
+                setCachedWalletPin(walletSettlePin);
                 const pinInp = document.getElementById('walletPinSettingsInp');
                 if (pinInp) pinInp.value = walletSettlePin;
               }
@@ -5869,7 +5929,7 @@ function swTab(name, el) {
   if (name==='custdir')    { custSubSwitch('dir');   initCustDir(); }
   if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
   if (name==='trash') { fetchTrash(); }
-  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); try{localStorage.setItem('asafra_wallet_pin',walletSettlePin);}catch(e){} pinInp.value=walletSettlePin; } }).catch(()=>{}); } if(typeof initOverseasSettings==='function') initOverseasSettings(); }
+  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); setCachedWalletPin(walletSettlePin); pinInp.value=walletSettlePin; } }).catch(()=>{}); } if(typeof initOverseasSettings==='function') initOverseasSettings(); }
   // لما ترجع لتبويب القيد الجديد، حدّث درب ليست الموظفين
   if (name==='add') {
     const eCoEl = document.getElementById('eCo');
@@ -9834,7 +9894,7 @@ async function saveWalletPinFromSettings() {
     return;
   }
   walletSettlePin = val;
-  try { localStorage.setItem('asafra_wallet_pin', walletSettlePin); } catch(e){}
+  setCachedWalletPin(walletSettlePin);
   try {
     await sbSetMeta('walletSettlePin', { pin: walletSettlePin });
     toast(`✅ تم حفظ وتحديث الرقم السري لتصفية المحفظة بنجاح`);
