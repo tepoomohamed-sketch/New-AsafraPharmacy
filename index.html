@@ -4777,7 +4777,7 @@ function ensureXLSX() {
 const COS = {
   ايرادات:['بداية العهدة','شيفت صباحي','شيفت وسط','شيفت مسائي','شيفت يوم كامل','د.محمد ايداع'],
   طلبيات:['فارما جروب','ميراميديكال','تاج','الابرار','اللوتس','كريم فارما','كيو فارما','تارجت','المجد','مستورد','ماستر كوزمو','نبض','فارما اوفر سيز','شراء ادوية 50%','ميجا ستور','نفرتيتي','الدوليه','ابن خلدون','الاطباء','الصيادلة المصريين','الفا جروب','اليكس سيوتكس','اليكس واي','براند جروب','جرين فارما','جولدن','ديرما ستامب','ميد شيلد','رويال فارما','عابدين','غرناطه','فارما بروفايدرز','فارما ويست','فاروس','لوتس فارم','مارو مستحضرات','ميديسين','نيو طيبة','نيو ميديسن','هيلثى فارم','صيدلية السيوف','ثوريكس','تراست','فيوتشر ميديكال','ص. الطيبي','براند جمالك','سبشيال فارما','3N','سهم','كير','برايم فارما','قنديل'],
-  مصاريف:['رسوم سحب محفظة','رواتب','حوافز ومكافآت','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
+  مصاريف:['مطالبات اوفر سيز','رسوم سحب محفظة','رواتب','حوافز ومكافآت','ايجار الصيدلية','كهرباء','مياه','إنترنت','تليفون أرضي / موبايل','طباعة ورق','تصوير أوراق','أحبار طابعات','أدوات مكتبية','صيانة تكييف','صيانة تلاجة الأدوية','صيانة كمبيوتر / سيستم','صيانة باب سيكوريت / قفل','سباكة / كهرباء (أعطال)','توصيلات (دليفري / مشاوير)','سحب من الصاحب','اكياس','شنط بلاستيك','فرق حساب','تصليح الادراج','صيانة اللوحة','دعاية','مواصلات','عجلة','انستا باي','عبوات فوارغ','سكر','صيانة عجلة','د.محمد سحب','مستلزمات نظافة','شاي / قهوة','فطار / غداء العاملين','بطاريات / لمبات','ستوك كاش','شيفت مسائي (عجز)'],
   ارباح:['أرباح الشهر','توزيع أرباح'],
   'اصول ثابتة':['معدات طبية','ثلاجات أدوية','كمبيوترات وسيستم','كاميرات مراقبة','أثاث وديكور','سيارة / عجلة توصيل','برامج وتراخيص','شاشات وأجهزة'],
   'ذمم اونلاين':['انستا باي','محفظة الصيدلية'],
@@ -11590,10 +11590,26 @@ function isOverseasPayment(e) {
   if (!e) return false;
   if (e.isOverseasPayment === true) return true;
   if (e.type === 'دفعات') return true;
+
+  const co = (e.company || '').trim().toLowerCase();
   const n = (e.notes || '').toLowerCase();
   const inv = String(e.invoice || '').toLowerCase();
-  if (n.includes('سداد') || n.includes('دفعة') || n.includes('شيك') || n.includes('مطالبة') || n.includes('تحويل')) return true;
-  if (inv.includes('سداد') || inv.includes('دفعة') || inv.includes('شيك') || inv.includes('مطالبة')) return true;
+
+  // بند "مطالبات اوفر سيز" أو "مطالبة أوفر سيز" في المصاريف أو غيرها
+  if (co.includes('مطالب') && (co.includes('اوفر') || co.includes('أوفر') || co.includes('overseas'))) return true;
+
+  // تسجيل قيد باسم شركة أوفر سيز تحت نوع "مصاريف" (سداد للمطالبة)
+  if (isOverseasCompany(e.company) && e.type === 'مصاريف') return true;
+
+  // تسجيل تحت شركة أوفر سيز ومعه أي بيان يفيد السداد أو المطالبة أو الدفعة
+  if (isOverseasCompany(e.company)) {
+    if (n.includes('سداد') || n.includes('دفعة') || n.includes('شيك') || n.includes('مطالب') || n.includes('تحويل')) return true;
+    if (inv.includes('سداد') || inv.includes('دفعة') || inv.includes('شيك') || inv.includes('مطالب')) return true;
+  }
+
+  // إذا كانت الملاحظات تذكر صراحة سداد أو مطالبات أوفر سيز
+  if ((n.includes('اوفر') || n.includes('أوفر') || n.includes('overseas')) && (n.includes('سداد') || n.includes('مطالب') || n.includes('دفعة') || n.includes('شيك'))) return true;
+
   return false;
 }
 
@@ -11629,7 +11645,7 @@ function getOverseasCycleInfo(ym) {
   const monthName = monthNamesAr[month - 1];
   const prevMonthName = monthNamesAr[prevMonth - 1];
   const shortLabel = `${monthName} ${year}`;
-  const cycleLabel = `دورة ${monthName} ${year} (فواتير: 17 ${prevMonthName} إلى 16 ${monthName} — استحقاق: ${lastDay} ${monthName})`;
+  const cycleLabel = `دورة ${monthName} ${year} (فواتير: 17 ${prevMonthName} إلى 16 ${monthName} — سداد: 1 إلى ${lastDay} ${monthName})`;
 
   return {
     cycleKey: ym,
@@ -11687,7 +11703,7 @@ function getOverseasCycleData(cycleKey) {
   const info = getOverseasCycleInfo(cycleKey);
   const target = parseFloat(overseasClaims[info.cycleKey]) || 0;
 
-  // فواتير المسحوبات من 17 الشهر السابق إلى 16 الشهر الحالي
+  // فواتير المسحوبات من 17 الشهر السابق إلى 16 الشهر الحالي (حصراً فواتير مشتريات وليست سداد مطالبات)
   const invoices = entries.filter(e => {
     if (e.deleted) return false;
     if (!isOverseasCompany(e.company)) return false;
@@ -11697,19 +11713,21 @@ function getOverseasCycleData(cycleKey) {
   });
   const invoicesSum = invoices.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
-  // دفعات وسدادات المطالبة
+  // فترة سداد المطالبة: بداية من يوم 1 إلى يوم 31 (أو آخر يوم) من الشهر المحدد لسداد المطالبة
+  const payStartDate = `${info.year}-${String(info.month).padStart(2, '0')}-01`;
+  const payEndDate = `${info.year}-${String(info.month).padStart(2, '0')}-${String(info.lastDay).padStart(2, '0')}`;
+
+  // دفعات وسدادات المطالبة: تسحب أي قيد مدفوع (مثل بند مطالبات أوفر سيز) لنفس المطالبة (1 إلى 31 من الشهر)
   const payments = entries.filter(e => {
     if (e.deleted) return false;
-    if (!isOverseasCompany(e.company)) return false;
     if (!isOverseasPayment(e)) return false;
 
-    // تمييز صريح بالدورة
+    // تمييز صريح بالدورة في الملاحظات إن وجد (مثل "دورة 2026-08")
     if (e.notes && e.notes.includes(info.cycleKey)) return true;
 
-    // فترة السداد المرتبطة بالدورة: من بداية فواتيرها وحتى مهلة 7 أيام بعد تاريخ الاستحقاق
+    // تاريخ السداد: حصرياً من يوم 1 إلى يوم 31 من شهر سداد نفس المطالبة
     const d = e.date || '';
-    const nextGrace = new Date(info.year, info.month, 7).toISOString().slice(0, 10);
-    return d >= info.invStartDate && d <= nextGrace;
+    return d >= payStartDate && d <= payEndDate;
   });
   const paidSum = payments.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
@@ -11726,7 +11744,9 @@ function getOverseasCycleData(cycleKey) {
     payments,
     paidSum,
     remaining,
-    progressPct
+    progressPct,
+    payStartDate,
+    payEndDate
   };
 }
 
@@ -11845,7 +11865,7 @@ function renderOverseasPane(cycleKey) {
 
   const periodTxt = document.getElementById('osCyclePeriodText');
   if (periodTxt) {
-    periodTxt.textContent = `📅 مسحوبات: 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName} | استحقاق السداد: ${data.info.lastDay} ${data.info.monthName}`;
+    periodTxt.textContent = `📅 مسحوبات: 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName} | سدادات المطالبة: 1 إلى ${data.info.lastDay} ${data.info.monthName}`;
   }
 
   const statusBadge = document.getElementById('osCycleStatusBadge');
@@ -11919,7 +11939,7 @@ function renderOverseasPane(cycleKey) {
   }
   const progNote = document.getElementById('osProgressNote');
   if (progNote) {
-    progNote.textContent = `⏳ موعد السداد: ${data.info.dueDate} (نهاية الشهر)`;
+    progNote.textContent = `⏳ فترة سداد المطالبة: من 1 إلى ${data.info.lastDay} ${data.info.monthName}`;
   }
 
   // Update Badges on Subtabs
