@@ -5125,27 +5125,9 @@ async function doLogin() {
     return;
   }
 
-  btn.textContent='⏳ جاري الدخول والتأمين...'; btn.disabled=true;
+  btn.textContent='⏳ جاري الدخول...'; btn.disabled=true;
   try {
-    // 1. تسجيل الدخول عبر Firebase Auth
-    const fbCred = await auth.signInWithEmailAndPassword(email, pass);
-
-    // 2. مزامنة وتفعيل توكن Supabase Auth لتأمين الاتصال بقاعدة البيانات
-    try {
-      if (sb && sb.auth) {
-        const cleanEmail = email.toLowerCase();
-        const { error: sbErr } = await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
-        if (sbErr && (sbErr.message?.includes('Invalid login') || sbErr.status === 400 || sbErr.code === 'invalid_credentials')) {
-          // ترقية تلقائية وإنشاء الحساب في Supabase Auth بنفس كلمة المرور
-          const { error: signErr } = await sb.auth.signUp({ email: cleanEmail, password: pass });
-          if (!signErr) {
-            await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
-          }
-        }
-      }
-    } catch(err) {
-      console.warn('Supabase auth sync notice:', err);
-    }
+    await auth.signInWithEmailAndPassword(email, pass);
   } catch(e) {
     const msgs = {
       'auth/wrong-password':'❌ كلمة المرور غير صحيحة',
@@ -5175,18 +5157,6 @@ async function doRegister() {
     const {data: existUsers} = await sb.from('users').select('id').limit(1);
     const role = (!existUsers || existUsers.length===0) ? 'admin' : 'employee';
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
-
-    // تسجيل متزامن في Supabase Auth
-    try {
-      if (sb && sb.auth) {
-        const cleanEmail = email.toLowerCase();
-        await sb.auth.signUp({ email: cleanEmail, password: pass });
-        await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
-      }
-    } catch(err) {
-      console.warn('Supabase auth signup sync notice:', err);
-    }
-
     await sb.from('users').insert({id: cred.user.uid, name, email: email.toLowerCase(), role});
   } catch(e) {
     const msgs = {'auth/email-already-in-use':'❌ هذا البريد مستخدم مسبقاً','auth/invalid-email':'❌ بريد إلكتروني غير صالح'};
@@ -5214,7 +5184,6 @@ async function doLogout() {
   });
   me = null;
   show('scLogin');
-  try { if (sb && sb.auth) await sb.auth.signOut(); } catch(e){}
   await auth.signOut();
 }
 
