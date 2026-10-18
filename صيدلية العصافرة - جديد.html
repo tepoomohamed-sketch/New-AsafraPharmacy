@@ -2544,11 +2544,20 @@ function ensureXLSX() {
           <span>مقارنة الأشهر</span>
         </div>
 
-        <!-- 3. شؤون الموظفين -->
-        <div class="saliim-group-title">⏱ شؤون الموظفين</div>
+        <!-- 3. شؤون الموظفين والرواتب -->
+        <div class="saliim-group-title">⏱ شؤون الموظفين والرواتب</div>
         <div class="saliim-nav-item" data-tab="att" onclick="swTab('att', this)">
           <span class="saliim-item-icon">⏱</span>
           <span>الحضور والانصراف</span>
+        </div>
+        <div class="saliim-nav-item" id="navItemSalaryAdj" onclick="openSalaryAdjApprovalModal(); toggleSidebar(false);" style="display:none;">
+          <span class="saliim-item-icon">⚖️</span>
+          <span>اعتمادات المرتبات</span>
+          <span class="badge" id="navSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span>
+        </div>
+        <div class="saliim-nav-item" id="navItemLuckyWheel" onclick="openLuckyWheelModal(); toggleSidebar(false);">
+          <span class="saliim-item-icon">🎡</span>
+          <span>لعبة الحظ</span>
         </div>
         <div class="saliim-nav-item" data-tab="users" id="navItemUsers" onclick="swTab('users', this)">
           <span class="saliim-item-icon">👥</span>
@@ -2608,19 +2617,6 @@ function ensureXLSX() {
           <span id="hUName" style="display:none;"></span>
           <span id="hURole" style="display:none;"></span>
 
-          <button id="topbarSalaryAdjBtn" class="saliim-tb-btn" onclick="openSalaryAdjApprovalModal()" title="مركز اعتماد المكافآت والخصومات ⚖️" style="display:none;color:#ec4899;border-color:rgba(236,72,153,0.4);background:rgba(236,72,153,0.08);font-weight:800;position:relative;">
-            ⚖️ <span class="hide-mobile">الاعتمادات</span>
-            <span id="topbarSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
-          </button>
-          <button id="topbarOverseasBtn" class="saliim-tb-btn" onclick="swTab('overseas')" title="متابعة مطالبة فارما أوفر سيز الشهرية 🏢" style="color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);font-weight:800;position:relative;">
-            🏢 <span class="hide-mobile">أوفر سيز</span>
-            <span id="topbarOverseasBadge" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:0 6px;font-size:0.65rem;font-weight:900;margin-right:4px;">0 ج</span>
-          </button>
-          <button id="topbarTasksBtn" class="saliim-tb-btn" onclick="swTab('tasks')" title="دفتر المهام والتاسكات 📌" style="color:#0284c7;border-color:rgba(2,132,199,0.4);background:rgba(2,132,199,0.08);font-weight:800;position:relative;">
-            📌 <span class="hide-mobile">المهام</span>
-            <span id="topbarTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
-          </button>
-          <button id="topbarLuckyBtn" class="saliim-tb-btn" onclick="openLuckyWheelModal()" title="لعبة حظ المكافآت والحوافز 🎡" style="color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);font-weight:800;">🎡 <span class="hide-mobile">لعبة الحظ</span></button>
           <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
           <button id="topbarSearchBtn" class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
           <button class="saliim-tb-btn saliim-tb-logout" onclick="doLogout()" title="تسجيل الخروج">خروج ↩</button>
@@ -5544,6 +5540,11 @@ function renderSaliimNav() {
           + '<span class="saliim-item-icon">👥</span><span>متابعة العملاء</span></div>';
   }
 
+  // مطالبة فارما أوفر سيز
+  html += '<div class="saliim-nav-item" data-tab="overseas" id="navItemOverseas" onclick="swTab(\'overseas\', this)">'
+        + '<span class="saliim-item-icon">🏢</span><span>مطالبة أوفر سيز</span>'
+        + '<span class="badge" id="navOverseasBadge" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0 ج</span></div>';
+
   // المهام والتاسكات (مشترك للمدير والموظفين)
   html += '<div class="saliim-nav-item" data-tab="tasks" id="navItemTasks" onclick="swTab(\'tasks\', this)">'
         + '<span class="saliim-item-icon">📌</span><span>المهام والتاسكات</span>'
@@ -5568,10 +5569,19 @@ function renderSaliimNav() {
           + '<span class="saliim-item-icon">📅</span><span>مقارنة الأشهر</span></div>';
   }
 
-  // 3. شؤون الموظفين
-  html += '<div class="saliim-group-title">⏱ شؤون الموظفين</div>';
+  // 3. شؤون الموظفين والرواتب
+  html += '<div class="saliim-group-title">⏱ شؤون الموظفين والرواتب</div>';
   html += '<div class="saliim-nav-item" data-tab="att" onclick="swTab(\'att\', this)">'
         + '<span class="saliim-item-icon">⏱</span><span>الحضور والانصراف</span></div>';
+
+  // اعتمادات المرتبات
+  html += '<div class="saliim-nav-item" id="navItemSalaryAdj" onclick="openSalaryAdjApprovalModal(); toggleSidebar(false);" style="display:none;">'
+        + '<span class="saliim-item-icon">⚖️</span><span>اعتمادات المرتبات</span>'
+        + '<span class="badge" id="navSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
+
+  // لعبة الحظ
+  html += '<div class="saliim-nav-item" id="navItemLuckyWheel" onclick="openLuckyWheelModal(); toggleSidebar(false);">'
+        + '<span class="saliim-item-icon">🎡</span><span>لعبة الحظ</span></div>';
 
   if (isAdmin) {
     html += '<div class="saliim-nav-item" data-tab="users" onclick="swTab(\'users\', this)">'
@@ -5588,6 +5598,11 @@ function renderSaliimNav() {
   }
 
   navEl.innerHTML = html;
+
+  // Sync badges right after re-rendering nav
+  if (typeof updateOverseasHeaderAndBadges === 'function') updateOverseasHeaderAndBadges();
+  if (typeof updateSalaryAdjBadges === 'function') updateSalaryAdjBadges();
+  if (typeof updateTasksBadges === 'function') updateTasksBadges();
 }
 
 function toggleSidebar(open) {
@@ -15705,11 +15720,26 @@ async function saveSalaryAdjustments() {
 function updateSalaryAdjBadges() {
   const pendingList = (salaryAdjustments || []).filter(x => x.status === 'pending');
   const count = pendingList.length;
+  const hasAccess = (me && me.role === 'admin') || (salaryAdjustments || []).some(x => x.requestedByUid === me?.uid);
 
-  // Topbar Button & Badge
+  // Sidebar Button & Badge
+  const navItem = document.getElementById('navItemSalaryAdj');
+  if (navItem) {
+    navItem.style.display = hasAccess ? 'flex' : 'none';
+  }
+  const navBadge = document.getElementById('navSalaryAdjBadge');
+  if (navBadge) {
+    if (count > 0) {
+      navBadge.textContent = count;
+      navBadge.style.display = 'inline-block';
+    } else {
+      navBadge.style.display = 'none';
+    }
+  }
+
+  // Topbar Button & Badge (fallback if present)
   const btn = document.getElementById('topbarSalaryAdjBtn');
   if (btn) {
-    const hasAccess = (me && me.role === 'admin') || (salaryAdjustments || []).some(x => x.requestedByUid === me?.uid);
     btn.style.display = hasAccess ? 'inline-flex' : 'none';
   }
   const badge = document.getElementById('topbarSalaryAdjBadge');
