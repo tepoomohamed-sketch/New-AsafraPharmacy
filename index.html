@@ -3943,14 +3943,14 @@ function ensureXLSX() {
             <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardDueCountDown">استحقاق: 31 الشهر</div>
           </div>
 
-          <!-- Card 4: إجمالي فواتير المسحوبات بالسيستم -->
+          <!-- Card 4: موعد استحقاق السداد -->
           <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <span style="font-size:0.78rem;font-weight:700;color:var(--text2);">📦 فواتير مسحوبات الدورة</span>
-              <span id="osCardInvoicesCount" class="badge" style="background:var(--border);color:var(--text2);font-size:0.68rem;padding:2px 6px;">0 فاتورة</span>
+              <span style="font-size:0.78rem;font-weight:700;color:var(--text2);">📅 موعد استحقاق السداد</span>
+              <span id="osCardDueDateBadge" class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;font-size:0.68rem;padding:2px 6px;">نهاية الشهر</span>
             </div>
-            <div id="osCardInvoicesSum" style="font-size:1.45rem;font-weight:900;color:var(--text1);">0 ج</div>
-            <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardInvoicesDiff">فرق المطالبة عن الفواتير: 0 ج</div>
+            <div id="osCardDueDateVal" style="font-size:1.45rem;font-weight:900;color:var(--text1);">31 الشهر</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardCycleSub">سداد: 1 إلى 31 من الشهر للمطالبة الحالية</div>
           </div>
         </div>
 
@@ -3964,8 +3964,8 @@ function ensureXLSX() {
             <div id="osProgressBar" style="background:linear-gradient(90deg,#f59e0b,#10b981);height:100%;width:0%;transition:width 0.4s ease;border-radius:10px;"></div>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:0.72rem;color:var(--text3);">
-            <span>بداية الدورة: 17 الشهر السابق</span>
-            <span id="osProgressNote">⏳ يستحق السداد في 31 من الشهر الحالي</span>
+            <span>بداية الفواتير: 17 الشهر السابق</span>
+            <span id="osProgressNote">⏳ فترة سداد المطالبة: من 1 إلى 31 من الشهر الحالي</span>
             <span>نهاية الفواتير: 16 الشهر الحالي</span>
           </div>
         </div>
@@ -3973,13 +3973,10 @@ function ensureXLSX() {
         <!-- Subtabs Navigation -->
         <div style="display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap;">
           <button type="button" class="btn btn-sm os-subtab-btn active" id="osTabBtnPayments" onclick="switchOverseasSubTab('payments')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;">
-            💳 دفعات وسدادات المطالبة (<span id="osTabPaymentsBadge">0</span>)
-          </button>
-          <button type="button" class="btn btn-sm os-subtab-btn" id="osTabBtnInvoices" onclick="switchOverseasSubTab('invoices')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;background:none;border-color:transparent;color:var(--text2);">
-            📦 فواتير مسحوبات الدورة (<span id="osTabInvoicesBadge">0</span>)
+            💳 سدادات ودفعات الدورة الحالية (<span id="osTabPaymentsBadge">0</span>)
           </button>
           <button type="button" class="btn btn-sm os-subtab-btn" id="osTabBtnHistory" onclick="switchOverseasSubTab('history')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;background:none;border-color:transparent;color:var(--text2);">
-            📜 سجل كل حركات فارما أوفر سيز
+            📜 سجل كل سدادات فارما أوفر سيز
           </button>
         </div>
 
@@ -4010,35 +4007,7 @@ function ensureXLSX() {
           </div>
         </div>
 
-        <!-- Subtab 2: فواتير المسحوبات -->
-        <div id="osSubPaneInvoices" class="os-subpane" style="display:none;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-            <div style="font-size:0.85rem;font-weight:700;color:var(--text1);" id="osInvoicesTitle">
-              فواتير المسحوبات المسجلة في الفترة:
-            </div>
-            <button type="button" class="btn btn-sm btn-ghost" onclick="applyOverseasInvoicesAsTarget()" style="border:1px solid rgba(245,158,11,0.5);color:#f59e0b;font-weight:700;">
-              🎯 تعيين إجمالي الفواتير كمبلغ مطلوب للمطالبة
-            </button>
-          </div>
-          <div class="tbl-wrap" style="border:1px solid var(--border);border-radius:10px;overflow-x:auto;">
-            <table class="tbl" style="width:100%;font-size:0.84rem;">
-              <thead>
-                <tr>
-                  <th style="width:110px;">التاريخ</th>
-                  <th style="width:130px;">رقم الفاتورة</th>
-                  <th style="width:130px;">قيمة الفاتورة</th>
-                  <th>البيان / الأصناف</th>
-                  <th style="width:110px;">المسجل</th>
-                </tr>
-              </thead>
-              <tbody id="osInvoicesTableBody">
-                <!-- Populated via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Subtab 3: كل حركات أوفر سيز -->
+        <!-- Subtab 2: كل سدادات وحركات أوفر سيز السابقة والتاريخية -->
         <div id="osSubPaneHistory" class="os-subpane" style="display:none;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
             <div style="font-size:0.85rem;font-weight:700;color:var(--text1);">
@@ -4645,7 +4614,7 @@ function ensureXLSX() {
           <span>🏢</span><span>إعدادات مطالبة فارما أوفر سيز الشهرية</span>
         </div>
         <div style="font-size:.78rem;color:var(--text3);margin-bottom:12px;">
-          المطالبة شهرية: فواتيرها من يوم 17 إلى 16 من الشهر التالي، والسداد في يوم 31. حدد الشهر واكتب إجمالي المبلغ المطلوب لمتابعة السداد.
+          المطالبة شهرية: حدد شهر المطالبة واكتب إجمالي المبلغ المطلوب لمتابعة السداد — يُخصم منه تلقائياً أي سداد يتم خلال الشهر (من 1 إلى 31).
         </div>
         <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
           <div class="fg" style="max-width:180px;margin-bottom:0;">
@@ -4656,10 +4625,9 @@ function ensureXLSX() {
           </div>
           <div class="fg" style="max-width:220px;margin-bottom:0;">
             <label style="font-size:.8rem;color:var(--text3);font-weight:600;">إجمالي المطلوب للمطالبة (جنيه)</label>
-            <input type="number" step="0.01" class="fel" id="overseasClaimTargetInp" placeholder="مثال: 150000" min="0" style="width:100%;margin-top:4px;font-weight:800;color:#f59e0b;"/>
+            <input type="number" step="0.01" class="fel" id="overseasClaimTargetInp" placeholder="مثال: 30000" min="0" style="width:100%;margin-top:4px;font-weight:800;color:#f59e0b;"/>
           </div>
           <button type="button" class="btn btn-sm btn-amber" onclick="saveOverseasSettingsTarget()" style="font-weight:700;background:#f59e0b;color:#fff;">💾 حفظ المبلغ المطلوب</button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="autoFillOverseasTargetFromSet()" title="احتساب مجموع فواتير الدورة المسجلة تلقائياً" style="border:1px solid #f59e0b;color:#d97706;font-weight:700;">⚡ ملء من مجموع الفواتير</button>
         </div>
         <div id="setOverseasCycleInfoNote" style="font-size:.76rem;color:var(--text2);margin-top:10px;font-weight:600;">
           <!-- Populated via JS -->
@@ -11587,29 +11555,15 @@ function isOverseasCompany(co) {
 }
 
 function isOverseasPayment(e) {
-  if (!e) return false;
-  if (e.isOverseasPayment === true) return true;
-  if (e.type === 'دفعات') return true;
-
+  if (!e || e.deleted) return false;
+  // أي حركة مسجلة في السيستم تخص أوفر سيز فهي سداد فعلي من الخزينة
+  if (isOverseasCompany(e.company)) return true;
   const co = (e.company || '').trim().toLowerCase();
+  if (co.includes('مطالب') && (co.includes('اوفر') || co.includes('أوفر') || co.includes('overseas'))) return true;
   const n = (e.notes || '').toLowerCase();
   const inv = String(e.invoice || '').toLowerCase();
-
-  // بند "مطالبات اوفر سيز" أو "مطالبة أوفر سيز" في المصاريف أو غيرها
-  if (co.includes('مطالب') && (co.includes('اوفر') || co.includes('أوفر') || co.includes('overseas'))) return true;
-
-  // تسجيل قيد باسم شركة أوفر سيز تحت نوع "مصاريف" (سداد للمطالبة)
-  if (isOverseasCompany(e.company) && e.type === 'مصاريف') return true;
-
-  // تسجيل تحت شركة أوفر سيز ومعه أي بيان يفيد السداد أو المطالبة أو الدفعة
-  if (isOverseasCompany(e.company)) {
-    if (n.includes('سداد') || n.includes('دفعة') || n.includes('شيك') || n.includes('مطالب') || n.includes('تحويل')) return true;
-    if (inv.includes('سداد') || inv.includes('دفعة') || inv.includes('شيك') || inv.includes('مطالب')) return true;
-  }
-
-  // إذا كانت الملاحظات تذكر صراحة سداد أو مطالبات أوفر سيز
-  if ((n.includes('اوفر') || n.includes('أوفر') || n.includes('overseas')) && (n.includes('سداد') || n.includes('مطالب') || n.includes('دفعة') || n.includes('شيك'))) return true;
-
+  if ((n.includes('اوفر') || n.includes('أوفر') || n.includes('overseas')) && (n.includes('سداد') || n.includes('مطالب') || n.includes('دفعة'))) return true;
+  if ((inv.includes('اوفر') || inv.includes('أوفر') || inv.includes('overseas')) && (inv.includes('سداد') || inv.includes('مطالب') || inv.includes('دفعة'))) return true;
   return false;
 }
 
@@ -11703,26 +11657,16 @@ function getOverseasCycleData(cycleKey) {
   const info = getOverseasCycleInfo(cycleKey);
   const target = parseFloat(overseasClaims[info.cycleKey]) || 0;
 
-  // فواتير المسحوبات من 17 الشهر السابق إلى 16 الشهر الحالي (حصراً فواتير مشتريات وليست سداد مطالبات)
-  const invoices = entries.filter(e => {
-    if (e.deleted) return false;
-    if (!isOverseasCompany(e.company)) return false;
-    if (isOverseasPayment(e)) return false;
-    const d = e.date || '';
-    return d >= info.invStartDate && d <= info.invEndDate;
-  });
-  const invoicesSum = invoices.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-
-  // فترة سداد المطالبة: بداية من يوم 1 إلى يوم 31 (أو آخر يوم) من الشهر المحدد لسداد المطالبة
+  // فترة سداد المطالبة: حصرياً من يوم 1 إلى يوم 31 (أو آخر يوم) من نفس شهر سداد المطالبة
   const payStartDate = `${info.year}-${String(info.month).padStart(2, '0')}-01`;
   const payEndDate = `${info.year}-${String(info.month).padStart(2, '0')}-${String(info.lastDay).padStart(2, '0')}`;
 
-  // دفعات وسدادات المطالبة: تسحب أي قيد مدفوع (مثل بند مطالبات أوفر سيز) لنفس المطالبة (1 إلى 31 من الشهر)
+  // دفعات وسدادات المطالبة: تسحب أي قيد مدفوع لأوفر سيز ضمن نفس الشهر (من 1 إلى 31)
   const payments = entries.filter(e => {
     if (e.deleted) return false;
     if (!isOverseasPayment(e)) return false;
 
-    // تمييز صريح بالدورة في الملاحظات إن وجد (مثل "دورة 2026-08")
+    // تمييز صريح بالدورة في الملاحظات إن وجد (مثل "دورة 2026-10")
     if (e.notes && e.notes.includes(info.cycleKey)) return true;
 
     // تاريخ السداد: حصرياً من يوم 1 إلى يوم 31 من شهر سداد نفس المطالبة
@@ -11731,7 +11675,7 @@ function getOverseasCycleData(cycleKey) {
   });
   const paidSum = payments.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
-  const effectiveTarget = target > 0 ? target : invoicesSum;
+  const effectiveTarget = target;
   const remaining = Math.max(0, effectiveTarget - paidSum);
   const progressPct = effectiveTarget > 0 ? Math.min(100, Math.round((paidSum / effectiveTarget) * 100)) : (paidSum > 0 ? 100 : 0);
 
@@ -11739,8 +11683,6 @@ function getOverseasCycleData(cycleKey) {
     info,
     target,
     effectiveTarget,
-    invoices,
-    invoicesSum,
     payments,
     paidSum,
     remaining,
@@ -11916,17 +11858,13 @@ function renderOverseasPane(cycleKey) {
     cDueCount.textContent = `موعد الاستحقاق: ${data.info.lastDay} ${data.info.monthName}`;
   }
 
-  const cInvSum = document.getElementById('osCardInvoicesSum');
-  if (cInvSum) cInvSum.textContent = `${fmt(data.invoicesSum)} ج`;
-  const cInvCnt = document.getElementById('osCardInvoicesCount');
-  if (cInvCnt) cInvCnt.textContent = `${data.invoices.length} فاتورة`;
-  const cInvDiff = document.getElementById('osCardInvoicesDiff');
-  if (cInvDiff) {
-    const diff = data.target > 0 ? data.target - data.invoicesSum : 0;
-    cInvDiff.textContent = data.target > 0
-      ? (diff === 0 ? 'مطابق تماماً لمجموع الفواتير' : `فرق عن الفواتير: ${diff > 0 ? '+' : ''}${fmt(diff)} ج`)
-      : 'إجمالي الفواتير المعتمد';
-  }
+  // Card 4: موعد استحقاق السداد
+  const cDueVal = document.getElementById('osCardDueDateVal');
+  if (cDueVal) cDueVal.textContent = `${data.info.lastDay} ${data.info.monthName}`;
+  const cDueBadge = document.getElementById('osCardDueDateBadge');
+  if (cDueBadge) cDueBadge.textContent = `نهاية الشهر`;
+  const cCycleSub = document.getElementById('osCardCycleSub');
+  if (cCycleSub) cCycleSub.textContent = `فترة السداد: 1 إلى ${data.info.lastDay} ${data.info.monthName}`;
 
   // Update Progress Bar
   const progText = document.getElementById('osProgressText');
@@ -11945,16 +11883,11 @@ function renderOverseasPane(cycleKey) {
   // Update Badges on Subtabs
   const bPay = document.getElementById('osTabPaymentsBadge');
   if (bPay) bPay.textContent = data.payments.length;
-  const bInv = document.getElementById('osTabInvoicesBadge');
-  if (bInv) bInv.textContent = data.invoices.length;
 
   // Render Table 1: Payments
   renderOverseasPaymentsTable(data.payments);
 
-  // Render Table 2: Invoices
-  renderOverseasInvoicesTable(data.invoices, data.info);
-
-  // Render Table 3: Full History
+  // Render Table 2: Full History
   renderOverseasHistoryTable();
 }
 
@@ -11994,40 +11927,7 @@ function renderOverseasPaymentsTable(payments) {
   }).join('');
 }
 
-function renderOverseasInvoicesTable(invoices, info) {
-  const tbody = document.getElementById('osInvoicesTableBody');
-  const title = document.getElementById('osInvoicesTitle');
-  if (title) {
-    title.textContent = `فواتير المسحوبات المسجلة من 17 ${info.prevMonthName} إلى 16 ${info.monthName}:`;
-  }
-  if (!tbody) return;
 
-  if (!invoices || invoices.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align:center;padding:26px;color:var(--text3);font-size:0.85rem;">
-          لا توجد فواتير مشتريات مسجلة لشركة فارما أوفر سيز في نطاق الفترة (17 ${info.prevMonthName} إلى 16 ${info.monthName}).
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  const sorted = [...invoices].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-  tbody.innerHTML = sorted.map(inv => {
-    const amt = parseFloat(inv.amount) || 0;
-    return `
-      <tr>
-        <td style="padding:8px 10px;font-weight:700;color:var(--text1);">${esc(inv.date || '—')}</td>
-        <td style="padding:8px 10px;font-weight:800;color:#f59e0b;">${esc(inv.invoice || 'بدون رقم')}</td>
-        <td style="padding:8px 10px;font-weight:900;color:var(--text1);">${fmt(amt)} ج</td>
-        <td style="padding:8px 10px;color:var(--text2);font-size:0.8rem;">${esc(inv.notes || 'فاتورة مسحوبات طلبيات')}</td>
-        <td style="padding:8px 10px;font-size:0.8rem;color:var(--text3);">${esc(inv.uname || inv.user || '—')}</td>
-      </tr>
-    `;
-  }).join('');
-}
 
 function renderOverseasHistoryTable() {
   const tbody = document.getElementById('osHistoryTableBody');
@@ -12120,10 +12020,9 @@ function onSetOverseasCycleChange() {
   const note = document.getElementById('setOverseasCycleInfoNote');
   if (note) {
     note.innerHTML = `
-      فواتير مسحوبات الدورة (${data.info.shortLabel}): 
-      من <b>17 ${data.info.prevMonthName}</b> إلى <b>16 ${data.info.monthName}</b> 
-      — المسجل بالسيستم: <b style="color:#f59e0b;">${fmt(data.invoicesSum)} ج</b> (${data.invoices.length} فاتورة) 
-      | موعد السداد: <b style="color:#10b981;">31 ${data.info.monthName}</b>
+      دورة (${data.info.shortLabel}): 
+      المسدد بالسيستم في هذا الشهر: <b style="color:#10b981;">${fmt(data.paidSum)} ج</b> (${data.payments.length} سدادات) 
+      | موعد استحقاق السداد: <b style="color:#f59e0b;">${data.info.lastDay} ${data.info.monthName}</b>
     `;
   }
 }
@@ -12140,24 +12039,6 @@ async function saveOverseasSettingsTarget() {
   } catch(e) {
     toast('❌ خطأ في حفظ المبلغ المطلوب: ' + arErr(e), false);
   }
-}
-
-function autoFillOverseasTargetFromSet() {
-  const setSel = document.getElementById('setOverseasCycleSel');
-  const cycleKey = setSel ? setSel.value : curOverseasCycleKey;
-  const data = getOverseasCycleData(cycleKey);
-  const inp = document.getElementById('overseasClaimTargetInp');
-  if (inp) inp.value = data.invoicesSum;
-  toast(`⚡ تم احتساب مجموع الفواتير تلقائياً: ${fmt(data.invoicesSum)} ج — اضغط حفظ لتأكيد المبلغ`);
-}
-
-function applyOverseasInvoicesAsTarget() {
-  const data = getOverseasCycleData(curOverseasCycleKey);
-  if (!data.invoicesSum || data.invoicesSum <= 0) {
-    toast('⚠️ لا توجد فواتير مسجلة في هذه الدورة لاحتسابها', false);
-    return;
-  }
-  openOverseasTargetModal(curOverseasCycleKey, data.invoicesSum);
 }
 
 function openOverseasPaymentModal() {
@@ -12313,15 +12194,15 @@ function openOverseasTargetModal(cycleKey, prefillAmt) {
   const data = getOverseasCycleData(cKey);
   const inp = document.getElementById('osModalTargetInput');
   if (inp) {
-    inp.value = prefillAmt !== undefined ? prefillAmt : (data.target > 0 ? data.target : data.invoicesSum);
+    inp.value = prefillAmt !== undefined ? prefillAmt : (data.target > 0 ? data.target : '');
     inp.focus();
   }
 
   const infoBox = document.getElementById('osModalInvoicesInfo');
   if (infoBox) {
     infoBox.innerHTML = `
-      فواتير المسحوبات المسجلة بالسيستم للدورة: <b style="color:#f59e0b;">${fmt(data.invoicesSum)} ج</b> (${data.invoices.length} فاتورة).<br/>
-      <span style="font-size:0.72rem;color:var(--text3);">مواعيد الفواتير: من 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName}.</span>
+      المسدد بالخزينة حتى الآن لدورة ${data.info.monthName}: <b style="color:#10b981;">${fmt(data.paidSum)} ج</b> (${data.payments.length} سدادات).<br/>
+      <span style="font-size:0.72rem;color:var(--text3);">فترة السداد المحتسبة للدورة: من ${data.payStartDate} إلى ${data.payEndDate}.</span>
     `;
   }
 
@@ -12340,13 +12221,13 @@ function onOverseasModalCycleChange() {
   const cKey = sel.value;
   const data = getOverseasCycleData(cKey);
   const inp = document.getElementById('osModalTargetInput');
-  if (inp) inp.value = data.target > 0 ? data.target : data.invoicesSum;
+  if (inp) inp.value = data.target > 0 ? data.target : '';
 
   const infoBox = document.getElementById('osModalInvoicesInfo');
   if (infoBox) {
     infoBox.innerHTML = `
-      فواتير المسحوبات المسجلة بالسيستم للدورة: <b style="color:#f59e0b;">${fmt(data.invoicesSum)} ج</b> (${data.invoices.length} فاتورة).<br/>
-      <span style="font-size:0.72rem;color:var(--text3);">مواعيد الفواتير: من 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName}.</span>
+      المسدد بالخزينة حتى الآن لدورة ${data.info.monthName}: <b style="color:#10b981;">${fmt(data.paidSum)} ج</b> (${data.payments.length} سدادات).<br/>
+      <span style="font-size:0.72rem;color:var(--text3);">فترة السداد المحتسبة للدورة: من ${data.payStartDate} إلى ${data.payEndDate}.</span>
     `;
   }
 }
@@ -12375,34 +12256,37 @@ function exportOverseasExcel() {
 
   const data = getOverseasCycleData(curOverseasCycleKey);
 
-  // 1. ملخص وسدادات
+  // 1. ملخص المطالبة
   const summaryRows = [
     { 'البيان': 'دورة المطالبة', 'القيمة': data.info.cycleLabel },
-    { 'البيان': 'فترة الفواتير', 'القيمة': `من 17 ${data.info.prevMonthName} ${data.info.prevYear} إلى 16 ${data.info.monthName} ${data.info.year}` },
-    { 'البيان': 'موعد السداد المستحق', 'القيمة': `${data.info.lastDay} ${data.info.monthName} ${data.info.year}` },
+    { 'البيان': 'فترة سداد الدورة', 'القيمة': `من ${data.payStartDate} إلى ${data.payEndDate}` },
+    { 'البيان': 'موعد استحقاق السداد', 'القيمة': `${data.info.lastDay} ${data.info.monthName} ${data.info.year}` },
     { 'البيان': 'إجمالي المطلوب للمطالبة', 'القيمة': data.effectiveTarget },
-    { 'البيان': 'إجمالي المسدد حتى الآن', 'القيمة': data.paidSum },
+    { 'البيان': 'إجمالي المسدد للدورة', 'القيمة': data.paidSum },
     { 'البيان': 'المتبقي المطلوب سداده', 'القيمة': data.remaining },
-    { 'البيان': 'نسبة الإنجاز', 'القيمة': `${data.progressPct}%` },
-    { 'البيان': 'مجموع فواتير السيستم', 'القيمة': data.invoicesSum }
+    { 'البيان': 'نسبة الإنجاز', 'القيمة': `${data.progressPct}%` }
   ];
 
   const paymentRows = data.payments.map((p, i) => ({
     'م': i + 1,
     'التاريخ': p.date || '',
     'المبلغ المسدد': parseFloat(p.amount) || 0,
-    'البيان': p.notes || '',
+    'البيان': p.notes || p.invoice || 'سداد مطالبة أوفر سيز',
     'الموظف': p.uname || p.user || '',
     'الوقت': p.time || ''
   }));
 
-  const invoiceRows = data.invoices.map((inv, i) => ({
+  const allOverseas = (typeof entries !== 'undefined' ? entries : [])
+    .filter(e => !e.deleted && isOverseasCompany(e.company))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  const historyRows = allOverseas.map((p, i) => ({
     'م': i + 1,
-    'التاريخ': inv.date || '',
-    'رقم الفاتورة': inv.invoice || '',
-    'القيمة': parseFloat(inv.amount) || 0,
-    'البيان': inv.notes || '',
-    'الموظف': inv.uname || inv.user || ''
+    'التاريخ': p.date || '',
+    'المبلغ المسدد': parseFloat(p.amount) || 0,
+    'البيان': p.notes || p.invoice || 'سداد أوفر سيز',
+    'الموظف': p.uname || p.user || '',
+    'الوقت': p.time || ''
   }));
 
   const wb = XLSX.utils.book_new();
@@ -12410,10 +12294,10 @@ function exportOverseasExcel() {
   XLSX.utils.book_append_sheet(wb, wsSum, 'ملخص المطالبة');
 
   const wsPay = XLSX.utils.json_to_sheet(paymentRows);
-  XLSX.utils.book_append_sheet(wb, wsPay, 'سجل السدادات');
+  XLSX.utils.book_append_sheet(wb, wsPay, 'سدادات الدورة الحالية');
 
-  const wsInv = XLSX.utils.json_to_sheet(invoiceRows);
-  XLSX.utils.book_append_sheet(wb, wsInv, 'فواتير المسحوبات');
+  const wsHist = XLSX.utils.json_to_sheet(historyRows);
+  XLSX.utils.book_append_sheet(wb, wsHist, 'سجل كل السدادات');
 
   XLSX.writeFile(wb, `مطالبة_اوفر_سيز_${data.info.cycleKey}.xlsx`);
   toast('✅ تم تصدير ملف إكسيل للمطالبة بنجاح');
@@ -12427,18 +12311,8 @@ function printOverseasStatement() {
       <td style="text-align:center;padding:6px;">${i + 1}</td>
       <td style="padding:6px;">${esc(p.date || '—')}</td>
       <td style="text-align:center;padding:6px;font-weight:bold;color:#047857;">${fmt(p.amount)} ج</td>
-      <td style="padding:6px;">${esc(p.notes || 'سداد مطالبة')}</td>
+      <td style="padding:6px;">${esc(p.notes || p.invoice || 'سداد مطالبة')}</td>
       <td style="padding:6px;">${esc(p.uname || p.user || '—')}</td>
-    </tr>
-  `).join('');
-
-  const invRowsHtml = data.invoices.map((inv, i) => `
-    <tr>
-      <td style="text-align:center;padding:6px;">${i + 1}</td>
-      <td style="padding:6px;">${esc(inv.date || '—')}</td>
-      <td style="padding:6px;font-weight:bold;">${esc(inv.invoice || '—')}</td>
-      <td style="text-align:center;padding:6px;font-weight:bold;">${fmt(inv.amount)} ج</td>
-      <td style="padding:6px;">${esc(inv.notes || '—')}</td>
     </tr>
   `).join('');
 
@@ -12466,8 +12340,8 @@ function printOverseasStatement() {
     <body>
       <div class="hdr">
         <h2 style="margin:0 0 5px 0;">${esc(pharmName || 'صيدلية العصافرة')}</h2>
-        <h3 style="margin:0;color:#d97706;">🏢 كشف مطالبة ومسحوبات فارما أوفر سيز الشهرية</h3>
-        <p style="margin:5px 0 0 0;font-size:13px;color:#555;">${esc(data.info.cycleLabel)}</p>
+        <h3 style="margin:0;color:#d97706;">🏢 كشف مطالبة وسدادات فارما أوفر سيز الشهرية</h3>
+        <p style="margin:5px 0 0 0;font-size:13px;color:#555;">${esc(data.info.cycleLabel)} (سدادات من ${data.payStartDate} إلى ${data.payEndDate})</p>
       </div>
 
       <div class="grid">
@@ -12489,7 +12363,7 @@ function printOverseasStatement() {
         </div>
       </div>
 
-      <h4>💳 دفعات وسدادات المطالبة المسجلة (${data.payments.length})</h4>
+      <h4>💳 دفعات وسدادات المطالبة المسجلة لهذه الدورة (${data.payments.length})</h4>
       <table>
         <thead>
           <tr>
@@ -12501,23 +12375,7 @@ function printOverseasStatement() {
           </tr>
         </thead>
         <tbody>
-          ${payRowsHtml || '<tr><td colspan="5" style="text-align:center;">لا توجد سدادات مسجلة</td></tr>'}
-        </tbody>
-      </table>
-
-      <h4>📦 فواتير مسحوبات الدورة من 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName} (${data.invoices.length} فاتورة - مجموع: ${fmt(data.invoicesSum)} ج)</h4>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:30px;">#</th>
-            <th style="width:100px;">التاريخ</th>
-            <th style="width:120px;">رقم الفاتورة</th>
-            <th style="width:120px;">القيمة</th>
-            <th>البيان / الأصناف</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${invRowsHtml || '<tr><td colspan="5" style="text-align:center;">لا توجد فواتير مسجلة</td></tr>'}
+          ${payRowsHtml || '<tr><td colspan="5" style="text-align:center;">لا توجد سدادات مسجلة لهذه الدورة</td></tr>'}
         </tbody>
       </table>
 
