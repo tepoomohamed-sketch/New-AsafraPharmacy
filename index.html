@@ -21629,28 +21629,33 @@ function checkWorkerCredentialsLogin(emailOrUser, pin) {
   const normUser = (emailOrUser || '').trim().toLowerCase();
   const normPin = (pin || '').trim();
 
-  // فحص محمد
-  if (normUser === 'mohamed' || normUser === 'محمد' || normUser.includes('mohamed') || normUser.includes('محمد') || normUser === '1515') {
+  // إذا كان المدخل بريداً إلكترونياً (يحتوي على @) فهو حساب موظف/مدير عادي ولا يجب اعتراضه
+  if (normUser.includes('@')) {
+    return false;
+  }
+
+  // فحص عامل النظافة محمد (مطابقة دقيقة فقط)
+  if (normUser === 'mohamed' || normUser === 'محمد' || normUser === '1515') {
     if (normPin === '1515' || normPin === '151515') {
       quickWorkerPinLogin('mohamed', '1515');
       return true;
     } else {
       const eEl = document.getElementById('lErr');
-      if (eEl) { eEl.textContent = '❌ كلمة المرور غير صحيحة لمحمد (كلمة المرور: 1515)'; eEl.classList.add('on'); }
+      if (eEl) { eEl.textContent = '❌ رمز PIN غير صحيح لمحمد (عامل النظافة)'; eEl.classList.add('on'); }
       const btn = document.getElementById('lBtn');
       if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
       return true;
     }
   }
 
-  // فحص يوسف
-  if (normUser === 'youssef' || normUser === 'يوسف' || normUser.includes('youssef') || normUser.includes('يوسف') || normUser === '1616') {
+  // فحص عامل النظافة يوسف (مطابقة دقيقة فقط)
+  if (normUser === 'youssef' || normUser === 'يوسف' || normUser === '1616') {
     if (normPin === '1616' || normPin === '161616') {
       quickWorkerPinLogin('youssef', '1616');
       return true;
     } else {
       const eEl = document.getElementById('lErr');
-      if (eEl) { eEl.textContent = '❌ كلمة المرور غير صحيحة ليوسف (كلمة المرور: 1616)'; eEl.classList.add('on'); }
+      if (eEl) { eEl.textContent = '❌ رمز PIN غير صحيح ليوسف (عامل النظافة)'; eEl.classList.add('on'); }
       const btn = document.getElementById('lBtn');
       if (btn) { btn.textContent = '🔐 دخول'; btn.disabled = false; }
       return true;
