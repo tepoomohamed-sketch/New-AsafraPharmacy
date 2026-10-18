@@ -2513,6 +2513,11 @@ function ensureXLSX() {
           <span class="saliim-item-icon">📑</span>
           <span>الموازنة المالية</span>
         </div>
+        <div class="saliim-nav-item" data-tab="overseas" id="navItemOverseas" onclick="swTab('overseas', this)">
+          <span class="saliim-item-icon">🏢</span>
+          <span>مطالبة أوفر سيز</span>
+          <span class="badge" id="navOverseasBadge" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0 ج</span>
+        </div>
         <div class="saliim-nav-item" data-tab="custfollow" id="navItemCust" onclick="swTab('custfollow', this)">
           <span class="saliim-item-icon">👥</span>
           <span>متابعة العملاء</span>
@@ -2607,6 +2612,10 @@ function ensureXLSX() {
             ⚖️ <span class="hide-mobile">الاعتمادات</span>
             <span id="topbarSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
           </button>
+          <button id="topbarOverseasBtn" class="saliim-tb-btn" onclick="swTab('overseas')" title="متابعة مطالبة فارما أوفر سيز الشهرية 🏢" style="color:#f59e0b;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);font-weight:800;position:relative;">
+            🏢 <span class="hide-mobile">أوفر سيز</span>
+            <span id="topbarOverseasBadge" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:0 6px;font-size:0.65rem;font-weight:900;margin-right:4px;">0 ج</span>
+          </button>
           <button id="topbarTasksBtn" class="saliim-tb-btn" onclick="swTab('tasks')" title="دفتر المهام والتاسكات 📌" style="color:#0284c7;border-color:rgba(2,132,199,0.4);background:rgba(2,132,199,0.08);font-weight:800;position:relative;">
             📌 <span class="hide-mobile">المهام</span>
             <span id="topbarTasksBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 5px;font-size:0.65rem;font-weight:900;margin-right:4px;">0</span>
@@ -2640,6 +2649,29 @@ function ensureXLSX() {
             </div>
             <div class="saliim-kpi-val text-cyan" id="hOnlineToday">0 ج</div>
             <div class="saliim-kpi-sub">تحصيل المحفظة وانستا لليوم</div>
+          </div>
+
+          <!-- مطالبة فارما أوفر سيز الشهرية -->
+          <div class="saliim-kpi-card saliim-kpi-overseas" id="overseasKpiCard" onclick="swTab('overseas')" title="اضغط لعرض ومتابعة تفاصيل مطالبة وسداد فارما أوفر سيز" style="cursor:pointer;border:1.5px solid rgba(245,158,11,0.45);background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.12));">
+            <div class="saliim-kpi-head">
+              <span class="saliim-kpi-lbl">🏢 مطالبة أوفر سيز</span>
+              <span class="saliim-kpi-badge badge-amber" id="overseasKpiCycleBadge">دورة 17-16</span>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:2px 0;">
+              <div class="saliim-kpi-val text-amber" id="hOverseasRemaining" style="font-size:1.2rem;">0 ج</div>
+              <span style="font-size:0.7rem;font-weight:700;color:var(--text3);">متبقي للسداد</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.68rem;color:var(--text2);margin-bottom:3px;">
+              <span>مسدد: <b style="color:#68d391;" id="hOverseasPaid">0 ج</b></span>
+              <span>مطلوب: <b style="color:var(--text1);" id="hOverseasTarget">0 ج</b></span>
+            </div>
+            <div style="background:rgba(255,255,255,0.1);border-radius:10px;height:6px;overflow:hidden;margin-top:2px;">
+              <div id="hOverseasProgress" style="background:linear-gradient(90deg,#f59e0b,#10b981);height:100%;width:0%;transition:width 0.4s ease;border-radius:10px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:0.62rem;color:var(--text3);">
+              <span id="hOverseasDueDate">⏳ استحقاق: 31 الشهر</span>
+              <span id="hOverseasPct" style="font-weight:800;color:#f59e0b;">0%</span>
+            </div>
           </div>
 
           <!-- 3. ذمم أونلاين معلقة (تم إخفاؤه بناءً على طلب العميل مع الاحتفاظ بالمعرف للعمليات الخلفية) -->
@@ -3828,6 +3860,216 @@ function ensureXLSX() {
       </div>
     </div>
 
+    <!-- ── OVERSEAS CLAIMS & MONTHLY RECONCILIATION ── -->
+    <div class="pane" id="pane-overseas">
+      <div class="card">
+        <!-- Header -->
+        <div class="at-hdr" style="border-right-color:#f59e0b;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div class="at-hdr-title" style="display:flex;align-items:center;gap:8px;">
+              <span>🏢 متابعة ومطالبة فارما أوفر سيز الشهرية</span>
+              <span id="osHeaderCycleBadge" class="badge" style="background:#f59e0b;color:#fff;font-size:0.75rem;padding:3px 9px;border-radius:12px;">دورة الشهر الحالي</span>
+            </div>
+            <div style="font-size:.78rem;color:var(--text3);margin-top:3px;">
+              فواتير المسحوبات من <b id="osCycleDateFrom" style="color:var(--text1);">17</b> إلى <b id="osCycleDateTo" style="color:var(--text1);">16</b> — موعد السداد المستحق: <b id="osCycleDueDate" style="color:#f59e0b;">31 من الشهر</b>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm btn-green" onclick="openOverseasPaymentModal()" style="font-weight:700;display:inline-flex;align-items:center;gap:5px;">
+              <span>💳</span><span>تسجيل سداد دفعة</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-amber" onclick="openOverseasTargetModal()" style="font-weight:700;background:rgba(245,158,11,0.15);color:#d97706;border:1px solid rgba(245,158,11,0.4);display:inline-flex;align-items:center;gap:5px;">
+              <span>🎯</span><span>تعديل المطلوب</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="exportOverseasExcel()" title="تصدير إكسيل" style="padding:6px 12px;border:1px solid var(--border);">
+              <span>⬇️</span><span>Excel</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="printOverseasStatement()" title="طباعة كشف المطالبة" style="padding:6px 12px;border:1px solid var(--border);">
+              <span>🖨️</span><span>طباعة</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Cycle Selector Bar -->
+        <div style="background:var(--bg2);padding:12px 14px;border-radius:12px;border:1px solid var(--border);margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px;">
+              <span>📅 دورة المطالبة:</span>
+              <select id="overseasCycleSelect" onchange="onOverseasCycleChange()" class="fel" style="min-width:180px;padding:6px 10px;font-weight:700;">
+                <!-- Populated via JS -->
+              </select>
+            </label>
+            <span id="osCyclePeriodText" style="font-size:0.78rem;color:var(--text3);background:var(--bg3);padding:5px 10px;border-radius:8px;border:1px solid var(--border);">
+              📅 فواتير: 17 يوليو إلى 16 أغسطس
+            </span>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="osCycleStatusBadge" class="badge" style="padding:4px 10px;border-radius:8px;font-size:0.75rem;font-weight:800;">
+              ⏳ جاري التحصيل
+            </span>
+          </div>
+        </div>
+
+        <!-- 4 KPI Cards Grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">
+          <!-- Card 1: إجمالي المطلوب للمطالبة -->
+          <div style="background:var(--bg3);border:1.5px solid rgba(245,158,11,0.35);border-radius:12px;padding:14px;position:relative;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:0.78rem;font-weight:700;color:var(--text2);">🎯 إجمالي المطالبة المطلوب</span>
+              <button type="button" onclick="openOverseasTargetModal()" title="تعديل المبلغ المطلوب" style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#f59e0b;padding:0;">✏️ تعديل</button>
+            </div>
+            <div id="osCardTarget" style="font-size:1.45rem;font-weight:900;color:#f59e0b;">0 ج</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardTargetSub">تم تحديده في الإعدادات</div>
+          </div>
+
+          <!-- Card 2: إجمالي المسدد -->
+          <div style="background:var(--bg3);border:1.5px solid rgba(16,185,129,0.35);border-radius:12px;padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:0.78rem;font-weight:700;color:var(--text2);">💳 إجمالي المسدد للدورة</span>
+              <span id="osCardPaidCount" class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;font-size:0.68rem;padding:2px 6px;">0 دفعة</span>
+            </div>
+            <div id="osCardPaid" style="font-size:1.45rem;font-weight:900;color:#10b981;">0 ج</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardPaidPct">نسبة السداد: 0%</div>
+          </div>
+
+          <!-- Card 3: المتبقي للسداد -->
+          <div style="background:var(--bg3);border:1.5px solid rgba(239,68,68,0.35);border-radius:12px;padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:0.78rem;font-weight:700;color:var(--text2);">⏳ المتبقي المطلوب سداده</span>
+              <span id="osCardRemBadge" class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:0.68rem;padding:2px 6px;">مستحق</span>
+            </div>
+            <div id="osCardRemaining" style="font-size:1.45rem;font-weight:900;color:#ef4444;">0 ج</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardDueCountDown">استحقاق: 31 الشهر</div>
+          </div>
+
+          <!-- Card 4: إجمالي فواتير المسحوبات بالسيستم -->
+          <div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:0.78rem;font-weight:700;color:var(--text2);">📦 فواتير مسحوبات الدورة</span>
+              <span id="osCardInvoicesCount" class="badge" style="background:var(--border);color:var(--text2);font-size:0.68rem;padding:2px 6px;">0 فاتورة</span>
+            </div>
+            <div id="osCardInvoicesSum" style="font-size:1.45rem;font-weight:900;color:var(--text1);">0 ج</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;" id="osCardInvoicesDiff">فرق المطالبة عن الفواتير: 0 ج</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar Section -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.8rem;font-weight:700;">
+            <span style="color:var(--text2);">📊 نسبة إنجاز سداد المطالبة:</span>
+            <span id="osProgressText" style="color:#f59e0b;font-weight:900;">0% (مسدد 0 ج من 0 ج)</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:10px;height:10px;overflow:hidden;">
+            <div id="osProgressBar" style="background:linear-gradient(90deg,#f59e0b,#10b981);height:100%;width:0%;transition:width 0.4s ease;border-radius:10px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:0.72rem;color:var(--text3);">
+            <span>بداية الدورة: 17 الشهر السابق</span>
+            <span id="osProgressNote">⏳ يستحق السداد في 31 من الشهر الحالي</span>
+            <span>نهاية الفواتير: 16 الشهر الحالي</span>
+          </div>
+        </div>
+
+        <!-- Subtabs Navigation -->
+        <div style="display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm os-subtab-btn active" id="osTabBtnPayments" onclick="switchOverseasSubTab('payments')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;">
+            💳 دفعات وسدادات المطالبة (<span id="osTabPaymentsBadge">0</span>)
+          </button>
+          <button type="button" class="btn btn-sm os-subtab-btn" id="osTabBtnInvoices" onclick="switchOverseasSubTab('invoices')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;background:none;border-color:transparent;color:var(--text2);">
+            📦 فواتير مسحوبات الدورة (<span id="osTabInvoicesBadge">0</span>)
+          </button>
+          <button type="button" class="btn btn-sm os-subtab-btn" id="osTabBtnHistory" onclick="switchOverseasSubTab('history')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;background:none;border-color:transparent;color:var(--text2);">
+            📜 سجل كل حركات فارما أوفر سيز
+          </button>
+        </div>
+
+        <!-- Subtab 1: الدفعات المسددة -->
+        <div id="osSubPanePayments" class="os-subpane" style="display:block;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text1);">
+              سجل سدادات ودفعات الدورة المختارة:
+            </div>
+            <button type="button" class="btn btn-sm btn-green" onclick="openOverseasPaymentModal()">➕ إضافة سداد جديد</button>
+          </div>
+          <div class="tbl-wrap" style="border:1px solid var(--border);border-radius:10px;overflow-x:auto;">
+            <table class="tbl" style="width:100%;font-size:0.84rem;">
+              <thead>
+                <tr>
+                  <th style="width:110px;">التاريخ</th>
+                  <th style="width:130px;">المبلغ المسدد</th>
+                  <th>البيان / الملاحظات</th>
+                  <th style="width:110px;">الموظف</th>
+                  <th style="width:120px;">الوقت</th>
+                  <th style="width:80px;text-align:center;">إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="osPaymentsTableBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subtab 2: فواتير المسحوبات -->
+        <div id="osSubPaneInvoices" class="os-subpane" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text1);" id="osInvoicesTitle">
+              فواتير المسحوبات المسجلة في الفترة:
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="applyOverseasInvoicesAsTarget()" style="border:1px solid rgba(245,158,11,0.5);color:#f59e0b;font-weight:700;">
+              🎯 تعيين إجمالي الفواتير كمبلغ مطلوب للمطالبة
+            </button>
+          </div>
+          <div class="tbl-wrap" style="border:1px solid var(--border);border-radius:10px;overflow-x:auto;">
+            <table class="tbl" style="width:100%;font-size:0.84rem;">
+              <thead>
+                <tr>
+                  <th style="width:110px;">التاريخ</th>
+                  <th style="width:130px;">رقم الفاتورة</th>
+                  <th style="width:130px;">قيمة الفاتورة</th>
+                  <th>البيان / الأصناف</th>
+                  <th style="width:110px;">المسجل</th>
+                </tr>
+              </thead>
+              <tbody id="osInvoicesTableBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subtab 3: كل حركات أوفر سيز -->
+        <div id="osSubPaneHistory" class="os-subpane" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text1);">
+              جميع قيود وفواتير ودفعات فارما أوفر سيز المسجلة بالنظام:
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="openSupplierLedgerFor('فارما اوفر سيز')" style="border:1px solid var(--border);">
+              📖 فتح في كشف حساب الموردين الشامل
+            </button>
+          </div>
+          <div class="tbl-wrap" style="border:1px solid var(--border);border-radius:10px;overflow-x:auto;">
+            <table class="tbl" style="width:100%;font-size:0.84rem;">
+              <thead>
+                <tr>
+                  <th style="width:110px;">التاريخ</th>
+                  <th style="width:90px;">النوع</th>
+                  <th style="width:120px;">رقم الفاتورة</th>
+                  <th style="width:120px;">المبلغ</th>
+                  <th>البيان</th>
+                  <th style="width:110px;">الموظف</th>
+                </tr>
+              </thead>
+              <tbody id="osHistoryTableBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- ── BUDGET / FINANCIAL STATEMENTS (admin) ── -->
     <div class="pane" id="pane-budget">
       <div class="card">
@@ -4395,6 +4637,33 @@ function ensureXLSX() {
           <button class="btn btn-sm btn-green" onclick="saveSalesTarget()">💾 حفظ</button>
         </div>
         <div style="font-size:.76rem;color:var(--text3);margin-top:8px;">يظهر في الهيدر لجميع الموظفين — يُعدَّل من الأدمن فقط</div>
+      </div>
+
+      <!-- إعدادات مطالبة فارما أوفر سيز الشهرية -->
+      <div class="set-sec" style="border:1.5px solid #f59e0b;background:rgba(245,158,11,0.03);">
+        <div class="set-t" style="color:#d97706;display:flex;align-items:center;gap:6px;">
+          <span>🏢</span><span>إعدادات مطالبة فارما أوفر سيز الشهرية</span>
+        </div>
+        <div style="font-size:.78rem;color:var(--text3);margin-bottom:12px;">
+          المطالبة شهرية: فواتيرها من يوم 17 إلى 16 من الشهر التالي، والسداد في يوم 31. حدد الشهر واكتب إجمالي المبلغ المطلوب لمتابعة السداد.
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+          <div class="fg" style="max-width:180px;margin-bottom:0;">
+            <label style="font-size:.8rem;color:var(--text3);font-weight:600;">شهر المطالبة (الدورة)</label>
+            <select id="setOverseasCycleSel" class="fel" onchange="onSetOverseasCycleChange()" style="width:100%;margin-top:4px;font-weight:700;">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          <div class="fg" style="max-width:220px;margin-bottom:0;">
+            <label style="font-size:.8rem;color:var(--text3);font-weight:600;">إجمالي المطلوب للمطالبة (جنيه)</label>
+            <input type="number" step="0.01" class="fel" id="overseasClaimTargetInp" placeholder="مثال: 150000" min="0" style="width:100%;margin-top:4px;font-weight:800;color:#f59e0b;"/>
+          </div>
+          <button type="button" class="btn btn-sm btn-amber" onclick="saveOverseasSettingsTarget()" style="font-weight:700;background:#f59e0b;color:#fff;">💾 حفظ المبلغ المطلوب</button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="autoFillOverseasTargetFromSet()" title="احتساب مجموع فواتير الدورة المسجلة تلقائياً" style="border:1px solid #f59e0b;color:#d97706;font-weight:700;">⚡ ملء من مجموع الفواتير</button>
+        </div>
+        <div id="setOverseasCycleInfoNote" style="font-size:.76rem;color:var(--text2);margin-top:10px;font-weight:600;">
+          <!-- Populated via JS -->
+        </div>
       </div>
 
       <div class="set-sec">
@@ -5497,6 +5766,7 @@ function buildApp() {
   document.getElementById('pane-add').classList.add('on');
   show('scApp');
   loadSalesTarget();
+  if (typeof loadOverseasClaims === 'function') loadOverseasClaims().then(() => { if (typeof updateOverseasClaimSummary === 'function') updateOverseasClaimSummary(); });
   updateOnlineDebtsHeader();
   initTopSalesCardState();
   renderTopMonthlySalesChart();
@@ -5551,6 +5821,7 @@ function swTab(name, el) {
     'cleanoversight': { title: '🛡️ متابعة المشرفين ومسؤولي النظافة', bc: 'الرقابة العامة / تدقيق المشرفين والنظافة' },
     'sum': { title: '📊 الملخص المالي والأرباح', bc: 'الرئيسية / التقارير' },
     'budget': { title: '📑 الموازنة المالية الشاملة', bc: 'الرئيسية / التقارير' },
+    'overseas': { title: '🏢 متابعة ومطالبة فارما أوفر سيز', bc: 'الموردين / مطالبات شهرية' },
     'salesdb': { title: '📊 داشبورد تحليل المبيعات', bc: 'التقارير / مؤشرات الأداء' },
     'monthcmp': { title: '📅 مقارنة الأشهر والنمو', bc: 'التقارير / مؤشرات الأداء' },
     'custfollow': { title: '👥 كشف حساب ومتابعة العملاء', bc: 'العملاء / الذمم الآجلة' },
@@ -5608,13 +5879,14 @@ function swTab(name, el) {
   if (name==='sum')   renderSum();
   if (name==='att')   { if (!unsubAtt) listenAttendance(); renderAttPane(); }
   if (name==='budget')    { initBudgetPane(); }
+  if (name==='overseas')  { renderOverseasPane(); }
   if (name==='salesdb')   { initSalesDb(); }
   if (name==='monthcmp')  { initMonthCmp(); }
   if (name==='custfollow'){ custSubSwitch('follow'); initCustFollow(); }
   if (name==='custdir')    { custSubSwitch('dir');   initCustDir(); }
   if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
   if (name==='trash') { fetchTrash(); }
-  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); try{localStorage.setItem('asafra_wallet_pin',walletSettlePin);}catch(e){} pinInp.value=walletSettlePin; } }).catch(()=>{}); } }
+  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); try{localStorage.setItem('asafra_wallet_pin',walletSettlePin);}catch(e){} pinInp.value=walletSettlePin; } }).catch(()=>{}); } if(typeof initOverseasSettings==='function') initOverseasSettings(); }
   // لما ترجع لتبويب القيد الجديد، حدّث درب ليست الموظفين
   if (name==='add') {
     const eCoEl = document.getElementById('eCo');
@@ -7542,6 +7814,11 @@ function updateOnlineDebtsHeader() {
   const odModal = document.getElementById('onlineDebtsModal');
   if (odModal && odModal.classList.contains('on')) {
     renderOnlineDebtsModalList();
+  }
+
+  // ── تحديث ومتابعة مطالبة فارما أوفر سيز الشهرية ──
+  if (typeof updateOverseasClaimSummary === 'function') {
+    updateOverseasClaimSummary();
   }
 }
 
@@ -11287,6 +11564,948 @@ function printSupplierLedger() {
         <div>إجمالي المسدد: ${fmt(totalPayments)} ج</div>
         <div>صافي الرصيد المستحق: ${fmt(totalPurchases - totalPayments)} ج</div>
       </div>
+      ${'<' + 'script>'}
+        window.onload = function() { window.print(); }
+      ${'<' + '/script>'}
+    </body>
+    </html>
+  `);
+  win.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  🏢 متابعة ومطالبة فارما أوفر سيز الشهرية (Overseas Monthly Claim System)
+// ═══════════════════════════════════════════════════════════════════════
+
+let curOverseasCycleKey = '';
+let overseasClaims = {}; // { 'YYYY-MM': targetAmount }
+
+function isOverseasCompany(co) {
+  if (!co) return false;
+  const s = String(co).trim().toLowerCase();
+  return s.includes('اوفر') || s.includes('أوفر') || s.includes('overseas');
+}
+
+function isOverseasPayment(e) {
+  if (!e) return false;
+  if (e.isOverseasPayment === true) return true;
+  if (e.type === 'دفعات') return true;
+  const n = (e.notes || '').toLowerCase();
+  const inv = String(e.invoice || '').toLowerCase();
+  if (n.includes('سداد') || n.includes('دفعة') || n.includes('شيك') || n.includes('مطالبة') || n.includes('تحويل')) return true;
+  if (inv.includes('سداد') || inv.includes('دفعة') || inv.includes('شيك') || inv.includes('مطالبة')) return true;
+  return false;
+}
+
+function getOverseasCycleInfo(ym) {
+  if (!ym) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    ym = `${y}-${m}`;
+  }
+  const parts = ym.split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+
+  let prevYear = year;
+  let prevMonth = month - 1;
+  if (prevMonth === 0) {
+    prevMonth = 12;
+    prevYear -= 1;
+  }
+  const prevYStr = String(prevYear);
+  const prevMStr = String(prevMonth).padStart(2, '0');
+  const yStr = String(year);
+  const mStr = String(month).padStart(2, '0');
+
+  const invStartDate = `${prevYStr}-${prevMStr}-17`;
+  const invEndDate = `${yStr}-${mStr}-16`;
+
+  const lastDay = new Date(year, month, 0).getDate();
+  const dueDate = `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`;
+
+  const monthNamesAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const monthName = monthNamesAr[month - 1];
+  const prevMonthName = monthNamesAr[prevMonth - 1];
+  const shortLabel = `${monthName} ${year}`;
+  const cycleLabel = `دورة ${monthName} ${year} (فواتير: 17 ${prevMonthName} إلى 16 ${monthName} — استحقاق: ${lastDay} ${monthName})`;
+
+  return {
+    cycleKey: ym,
+    year,
+    month,
+    prevYear,
+    prevMonth,
+    invStartDate,
+    invEndDate,
+    dueDate,
+    lastDay,
+    monthName,
+    prevMonthName,
+    shortLabel,
+    cycleLabel
+  };
+}
+
+async function loadOverseasClaims() {
+  try {
+    const local = localStorage.getItem('asafra_overseas_claims');
+    if (local) overseasClaims = JSON.parse(local);
+  } catch(e) {}
+  if (typeof sbGetMeta === 'function') {
+    try {
+      const meta = await sbGetMeta('overseas_claims');
+      if (meta && typeof meta === 'object') {
+        overseasClaims = { ...overseasClaims, ...meta };
+        try { localStorage.setItem('asafra_overseas_claims', JSON.stringify(overseasClaims)); } catch(e) {}
+      }
+    } catch(e) {}
+  }
+}
+
+async function saveOverseasClaimTarget(cycleKey, amount) {
+  const num = parseFloat(amount) || 0;
+  overseasClaims[cycleKey] = num;
+  try {
+    localStorage.setItem('asafra_overseas_claims', JSON.stringify(overseasClaims));
+  } catch(e) {}
+  if (typeof sbSetMeta === 'function') {
+    try {
+      await sbSetMeta('overseas_claims', overseasClaims);
+    } catch(e) {
+      console.warn('Failed to save overseas_claims to Supabase:', e);
+    }
+  }
+  updateOverseasClaimSummary();
+  if (document.getElementById('pane-overseas')?.classList.contains('on')) {
+    renderOverseasPane();
+  }
+}
+
+function getOverseasCycleData(cycleKey) {
+  const info = getOverseasCycleInfo(cycleKey);
+  const target = parseFloat(overseasClaims[info.cycleKey]) || 0;
+
+  // فواتير المسحوبات من 17 الشهر السابق إلى 16 الشهر الحالي
+  const invoices = entries.filter(e => {
+    if (e.deleted) return false;
+    if (!isOverseasCompany(e.company)) return false;
+    if (isOverseasPayment(e)) return false;
+    const d = e.date || '';
+    return d >= info.invStartDate && d <= info.invEndDate;
+  });
+  const invoicesSum = invoices.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  // دفعات وسدادات المطالبة
+  const payments = entries.filter(e => {
+    if (e.deleted) return false;
+    if (!isOverseasCompany(e.company)) return false;
+    if (!isOverseasPayment(e)) return false;
+
+    // تمييز صريح بالدورة
+    if (e.notes && e.notes.includes(info.cycleKey)) return true;
+
+    // فترة السداد المرتبطة بالدورة: من بداية فواتيرها وحتى مهلة 7 أيام بعد تاريخ الاستحقاق
+    const d = e.date || '';
+    const nextGrace = new Date(info.year, info.month, 7).toISOString().slice(0, 10);
+    return d >= info.invStartDate && d <= nextGrace;
+  });
+  const paidSum = payments.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  const effectiveTarget = target > 0 ? target : invoicesSum;
+  const remaining = Math.max(0, effectiveTarget - paidSum);
+  const progressPct = effectiveTarget > 0 ? Math.min(100, Math.round((paidSum / effectiveTarget) * 100)) : (paidSum > 0 ? 100 : 0);
+
+  return {
+    info,
+    target,
+    effectiveTarget,
+    invoices,
+    invoicesSum,
+    payments,
+    paidSum,
+    remaining,
+    progressPct
+  };
+}
+
+function populateOverseasCycleSelects() {
+  const now = new Date();
+  const curY = now.getFullYear();
+  const curM = now.getMonth() + 1;
+
+  const cycles = [];
+  for (let offset = 1; offset >= -6; offset--) {
+    const d = new Date(curY, curM - 1 + offset, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    cycles.push(`${y}-${m}`);
+  }
+
+  const defaultCycle = `${curY}-${String(curM).padStart(2, '0')}`;
+  if (!curOverseasCycleKey) curOverseasCycleKey = defaultCycle;
+
+  ['overseasCycleSelect', 'setOverseasCycleSel', 'osModalTargetCycleSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const curVal = el.value || curOverseasCycleKey;
+    el.innerHTML = cycles.map(c => {
+      const inf = getOverseasCycleInfo(c);
+      const isCur = c === defaultCycle ? ' (الشهر الحالي)' : '';
+      return `<option value="${c}">${inf.shortLabel}${isCur}</option>`;
+    }).join('');
+    el.value = cycles.includes(curVal) ? curVal : defaultCycle;
+  });
+}
+
+function updateOverseasClaimSummary() {
+  const now = new Date();
+  const defaultCycle = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const cycleToUse = curOverseasCycleKey || defaultCycle;
+  const data = getOverseasCycleData(cycleToUse);
+
+  // 1. Top KPI Card elements
+  const elRem = document.getElementById('hOverseasRemaining');
+  const elPaid = document.getElementById('hOverseasPaid');
+  const elTarget = document.getElementById('hOverseasTarget');
+  const elProg = document.getElementById('hOverseasProgress');
+  const elPct = document.getElementById('hOverseasPct');
+  const elDue = document.getElementById('hOverseasDueDate');
+  const elCycleBadge = document.getElementById('overseasKpiCycleBadge');
+
+  if (elRem) elRem.textContent = `${fmt(data.remaining)} ج`;
+  if (elPaid) elPaid.textContent = `${fmt(data.paidSum)} ج`;
+  if (elTarget) elTarget.textContent = `${fmt(data.effectiveTarget)} ج`;
+  if (elProg) elProg.style.width = `${data.progressPct}%`;
+  if (elPct) elPct.textContent = `${data.progressPct}%`;
+  if (elDue) elDue.textContent = `⏳ استحقاق: ${data.info.lastDay} ${data.info.monthName}`;
+  if (elCycleBadge) elCycleBadge.textContent = `دورة ${data.info.shortLabel}`;
+
+  // 2. Topbar and Sidebar Badges
+  const topBadge = document.getElementById('topbarOverseasBadge');
+  if (topBadge) {
+    if (data.remaining > 0) {
+      topBadge.style.display = 'inline-block';
+      topBadge.textContent = `${fmt(data.remaining)} ج`;
+      topBadge.style.background = '#f59e0b';
+    } else if (data.remaining === 0 && data.effectiveTarget > 0) {
+      topBadge.style.display = 'inline-block';
+      topBadge.textContent = '✓ مسدد';
+      topBadge.style.background = '#10b981';
+    } else {
+      topBadge.style.display = 'none';
+    }
+  }
+
+  const navBadge = document.getElementById('navOverseasBadge');
+  if (navBadge) {
+    if (data.remaining > 0) {
+      navBadge.style.display = 'inline-block';
+      navBadge.textContent = `${fmt(data.remaining)} ج`;
+      navBadge.style.background = '#f59e0b';
+    } else if (data.remaining === 0 && data.effectiveTarget > 0) {
+      navBadge.style.display = 'inline-block';
+      navBadge.textContent = '✓ مسدد';
+      navBadge.style.background = '#10b981';
+    } else {
+      navBadge.style.display = 'none';
+    }
+  }
+
+  // If pane is open, refresh its cards as well
+  const pane = document.getElementById('pane-overseas');
+  if (pane && pane.classList.contains('on')) {
+    renderOverseasPane();
+  }
+}
+
+function renderOverseasPane(cycleKey) {
+  populateOverseasCycleSelects();
+  if (cycleKey) curOverseasCycleKey = cycleKey;
+  if (!curOverseasCycleKey) {
+    const now = new Date();
+    curOverseasCycleKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  const sel = document.getElementById('overseasCycleSelect');
+  if (sel && sel.value !== curOverseasCycleKey) sel.value = curOverseasCycleKey;
+
+  const data = getOverseasCycleData(curOverseasCycleKey);
+
+  // Update Header & Cycle texts
+  const badgeHdr = document.getElementById('osHeaderCycleBadge');
+  if (badgeHdr) badgeHdr.textContent = `دورة ${data.info.shortLabel}`;
+  const dtFrom = document.getElementById('osCycleDateFrom');
+  if (dtFrom) dtFrom.textContent = `17 ${data.info.prevMonthName} ${data.info.prevYear}`;
+  const dtTo = document.getElementById('osCycleDateTo');
+  if (dtTo) dtTo.textContent = `16 ${data.info.monthName} ${data.info.year}`;
+  const dtDue = document.getElementById('osCycleDueDate');
+  if (dtDue) dtDue.textContent = `${data.info.lastDay} ${data.info.monthName} ${data.info.year}`;
+
+  const periodTxt = document.getElementById('osCyclePeriodText');
+  if (periodTxt) {
+    periodTxt.textContent = `📅 مسحوبات: 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName} | استحقاق السداد: ${data.info.lastDay} ${data.info.monthName}`;
+  }
+
+  const statusBadge = document.getElementById('osCycleStatusBadge');
+  if (statusBadge) {
+    if (data.effectiveTarget > 0 && data.remaining === 0) {
+      statusBadge.textContent = '✅ مسددة بالكامل';
+      statusBadge.style.background = 'rgba(16,185,129,0.18)';
+      statusBadge.style.color = '#10b981';
+      statusBadge.style.border = '1px solid #10b981';
+    } else if (data.paidSum > 0) {
+      statusBadge.textContent = `⏳ مسدد جزئياً (${data.progressPct}%)`;
+      statusBadge.style.background = 'rgba(245,158,11,0.18)';
+      statusBadge.style.color = '#f59e0b';
+      statusBadge.style.border = '1px solid #f59e0b';
+    } else {
+      statusBadge.textContent = '⏳ بانتظار السداد';
+      statusBadge.style.background = 'rgba(239,68,68,0.18)';
+      statusBadge.style.color = '#fc8181';
+      statusBadge.style.border = '1px solid #ef4444';
+    }
+  }
+
+  // Update KPI Cards
+  const cTarget = document.getElementById('osCardTarget');
+  if (cTarget) cTarget.textContent = `${fmt(data.effectiveTarget)} ج`;
+  const cTargetSub = document.getElementById('osCardTargetSub');
+  if (cTargetSub) {
+    cTargetSub.textContent = data.target > 0 ? 'محدد يدوياً في الإعدادات' : 'محسوب تلقائياً من فواتير الدورة';
+  }
+
+  const cPaid = document.getElementById('osCardPaid');
+  if (cPaid) cPaid.textContent = `${fmt(data.paidSum)} ج`;
+  const cPaidCnt = document.getElementById('osCardPaidCount');
+  if (cPaidCnt) cPaidCnt.textContent = `${data.payments.length} سداد`;
+  const cPaidPct = document.getElementById('osCardPaidPct');
+  if (cPaidPct) cPaidPct.textContent = `نسبة السداد: ${data.progressPct}% من المطالبة`;
+
+  const cRem = document.getElementById('osCardRemaining');
+  if (cRem) cRem.textContent = `${fmt(data.remaining)} ج`;
+  const cRemBadge = document.getElementById('osCardRemBadge');
+  if (cRemBadge) {
+    cRemBadge.textContent = data.remaining === 0 ? 'خالصة' : 'مستحق';
+    cRemBadge.style.background = data.remaining === 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+    cRemBadge.style.color = data.remaining === 0 ? '#10b981' : '#ef4444';
+  }
+  const cDueCount = document.getElementById('osCardDueCountDown');
+  if (cDueCount) {
+    cDueCount.textContent = `موعد الاستحقاق: ${data.info.lastDay} ${data.info.monthName}`;
+  }
+
+  const cInvSum = document.getElementById('osCardInvoicesSum');
+  if (cInvSum) cInvSum.textContent = `${fmt(data.invoicesSum)} ج`;
+  const cInvCnt = document.getElementById('osCardInvoicesCount');
+  if (cInvCnt) cInvCnt.textContent = `${data.invoices.length} فاتورة`;
+  const cInvDiff = document.getElementById('osCardInvoicesDiff');
+  if (cInvDiff) {
+    const diff = data.target > 0 ? data.target - data.invoicesSum : 0;
+    cInvDiff.textContent = data.target > 0
+      ? (diff === 0 ? 'مطابق تماماً لمجموع الفواتير' : `فرق عن الفواتير: ${diff > 0 ? '+' : ''}${fmt(diff)} ج`)
+      : 'إجمالي الفواتير المعتمد';
+  }
+
+  // Update Progress Bar
+  const progText = document.getElementById('osProgressText');
+  if (progText) {
+    progText.textContent = `${data.progressPct}% (تم سداد ${fmt(data.paidSum)} ج من أصل ${fmt(data.effectiveTarget)} ج)`;
+  }
+  const progBar = document.getElementById('osProgressBar');
+  if (progBar) {
+    progBar.style.width = `${data.progressPct}%`;
+  }
+  const progNote = document.getElementById('osProgressNote');
+  if (progNote) {
+    progNote.textContent = `⏳ موعد السداد: ${data.info.dueDate} (نهاية الشهر)`;
+  }
+
+  // Update Badges on Subtabs
+  const bPay = document.getElementById('osTabPaymentsBadge');
+  if (bPay) bPay.textContent = data.payments.length;
+  const bInv = document.getElementById('osTabInvoicesBadge');
+  if (bInv) bInv.textContent = data.invoices.length;
+
+  // Render Table 1: Payments
+  renderOverseasPaymentsTable(data.payments);
+
+  // Render Table 2: Invoices
+  renderOverseasInvoicesTable(data.invoices, data.info);
+
+  // Render Table 3: Full History
+  renderOverseasHistoryTable();
+}
+
+function renderOverseasPaymentsTable(payments) {
+  const tbody = document.getElementById('osPaymentsTableBody');
+  if (!tbody) return;
+
+  if (!payments || payments.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:26px;color:var(--text3);font-size:0.85rem;">
+          لا توجد دفعات أو سدادات مسجلة لهذه الدورة حتى الآن. اضغط على <b>"➕ إضافة سداد جديد"</b> لتسجيل دفعة.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Sort descending by date
+  const sorted = [...payments].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  tbody.innerHTML = sorted.map((p, idx) => {
+    const amt = parseFloat(p.amount) || 0;
+    const canDelete = me && me.role === 'admin';
+    return `
+      <tr>
+        <td style="padding:8px 10px;font-weight:700;color:var(--text1);">${esc(p.date || '—')}</td>
+        <td style="padding:8px 10px;font-weight:900;color:#10b981;font-size:0.95rem;">${fmt(amt)} ج</td>
+        <td style="padding:8px 10px;color:var(--text2);">${esc(p.notes || p.invoice || 'سداد مطالبة أوفر سيز')}</td>
+        <td style="padding:8px 10px;font-size:0.8rem;color:var(--text3);">${esc(p.uname || p.user || '—')}</td>
+        <td style="padding:8px 10px;font-size:0.75rem;color:var(--text3);">${esc(p.time || '—')}</td>
+        <td style="padding:8px 10px;text-align:center;">
+          ${canDelete ? `<button type="button" class="btn btn-ghost btn-sm" onclick="deleteOverseasPayment('${p.id}')" title="حذف هذا السداد" style="color:#ef4444;padding:2px 6px;">🗑️</button>` : '—'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderOverseasInvoicesTable(invoices, info) {
+  const tbody = document.getElementById('osInvoicesTableBody');
+  const title = document.getElementById('osInvoicesTitle');
+  if (title) {
+    title.textContent = `فواتير المسحوبات المسجلة من 17 ${info.prevMonthName} إلى 16 ${info.monthName}:`;
+  }
+  if (!tbody) return;
+
+  if (!invoices || invoices.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center;padding:26px;color:var(--text3);font-size:0.85rem;">
+          لا توجد فواتير مشتريات مسجلة لشركة فارما أوفر سيز في نطاق الفترة (17 ${info.prevMonthName} إلى 16 ${info.monthName}).
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const sorted = [...invoices].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  tbody.innerHTML = sorted.map(inv => {
+    const amt = parseFloat(inv.amount) || 0;
+    return `
+      <tr>
+        <td style="padding:8px 10px;font-weight:700;color:var(--text1);">${esc(inv.date || '—')}</td>
+        <td style="padding:8px 10px;font-weight:800;color:#f59e0b;">${esc(inv.invoice || 'بدون رقم')}</td>
+        <td style="padding:8px 10px;font-weight:900;color:var(--text1);">${fmt(amt)} ج</td>
+        <td style="padding:8px 10px;color:var(--text2);font-size:0.8rem;">${esc(inv.notes || 'فاتورة مسحوبات طلبيات')}</td>
+        <td style="padding:8px 10px;font-size:0.8rem;color:var(--text3);">${esc(inv.uname || inv.user || '—')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderOverseasHistoryTable() {
+  const tbody = document.getElementById('osHistoryTableBody');
+  if (!tbody) return;
+
+  const allOverseas = entries.filter(e => !e.deleted && isOverseasCompany(e.company));
+  if (allOverseas.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:26px;color:var(--text3);font-size:0.85rem;">
+          لا توجد أي قيود مسجلة لشركة فارما أوفر سيز في النظام بعد.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const sorted = [...allOverseas].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  tbody.innerHTML = sorted.slice(0, 100).map(e => {
+    const amt = parseFloat(e.amount) || 0;
+    const isPay = isOverseasPayment(e);
+    return `
+      <tr>
+        <td style="padding:8px 10px;font-weight:700;color:var(--text1);">${esc(e.date || '—')}</td>
+        <td style="padding:8px 10px;font-size:0.78rem;">
+          <span class="badge" style="background:${isPay ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)'};color:${isPay ? '#10b981' : '#f59e0b'};">
+            ${isPay ? 'سداد مطالبة' : 'فاتورة مشتريات'}
+          </span>
+        </td>
+        <td style="padding:8px 10px;font-weight:700;color:var(--text2);">${esc(e.invoice || '—')}</td>
+        <td style="padding:8px 10px;font-weight:900;color:${isPay ? '#10b981' : 'var(--text1)'};">
+          ${isPay ? '-' : '+'}${fmt(amt)} ج
+        </td>
+        <td style="padding:8px 10px;color:var(--text2);font-size:0.8rem;">${esc(e.notes || '—')}</td>
+        <td style="padding:8px 10px;font-size:0.8rem;color:var(--text3);">${esc(e.uname || e.user || '—')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function switchOverseasSubTab(tabName) {
+  ['payments', 'invoices', 'history'].forEach(t => {
+    const btn = document.getElementById(`osTabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const pane = document.getElementById(`osSubPane${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    if (t === tabName) {
+      if (btn) {
+        btn.classList.add('active');
+        btn.style.background = 'var(--bg3)';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--text1)';
+      }
+      if (pane) pane.style.display = 'block';
+    } else {
+      if (btn) {
+        btn.classList.remove('active');
+        btn.style.background = 'none';
+        btn.style.borderColor = 'transparent';
+        btn.style.color = 'var(--text2)';
+      }
+      if (pane) pane.style.display = 'none';
+    }
+  });
+}
+
+function onOverseasCycleChange() {
+  const sel = document.getElementById('overseasCycleSelect');
+  if (sel) curOverseasCycleKey = sel.value;
+  renderOverseasPane();
+  updateOverseasClaimSummary();
+}
+
+function initOverseasSettings() {
+  populateOverseasCycleSelects();
+  const setSel = document.getElementById('setOverseasCycleSel');
+  if (setSel && curOverseasCycleKey) setSel.value = curOverseasCycleKey;
+  onSetOverseasCycleChange();
+}
+
+function onSetOverseasCycleChange() {
+  const setSel = document.getElementById('setOverseasCycleSel');
+  const cycleKey = setSel ? setSel.value : curOverseasCycleKey;
+  const data = getOverseasCycleData(cycleKey);
+
+  const inp = document.getElementById('overseasClaimTargetInp');
+  if (inp) {
+    inp.value = data.target > 0 ? data.target : '';
+  }
+
+  const note = document.getElementById('setOverseasCycleInfoNote');
+  if (note) {
+    note.innerHTML = `
+      فواتير مسحوبات الدورة (${data.info.shortLabel}): 
+      من <b>17 ${data.info.prevMonthName}</b> إلى <b>16 ${data.info.monthName}</b> 
+      — المسجل بالسيستم: <b style="color:#f59e0b;">${fmt(data.invoicesSum)} ج</b> (${data.invoices.length} فاتورة) 
+      | موعد السداد: <b style="color:#10b981;">31 ${data.info.monthName}</b>
+    `;
+  }
+}
+
+async function saveOverseasSettingsTarget() {
+  const setSel = document.getElementById('setOverseasCycleSel');
+  const cycleKey = setSel ? setSel.value : curOverseasCycleKey;
+  const inp = document.getElementById('overseasClaimTargetInp');
+  const val = parseFloat(inp?.value) || 0;
+
+  try {
+    await saveOverseasClaimTarget(cycleKey, val);
+    toast(`✅ تم حفظ إجمالي المبلغ المطلوب لمطالبة دورة ${cycleKey}: ${fmt(val)} ج`);
+  } catch(e) {
+    toast('❌ خطأ في حفظ المبلغ المطلوب: ' + arErr(e), false);
+  }
+}
+
+function autoFillOverseasTargetFromSet() {
+  const setSel = document.getElementById('setOverseasCycleSel');
+  const cycleKey = setSel ? setSel.value : curOverseasCycleKey;
+  const data = getOverseasCycleData(cycleKey);
+  const inp = document.getElementById('overseasClaimTargetInp');
+  if (inp) inp.value = data.invoicesSum;
+  toast(`⚡ تم احتساب مجموع الفواتير تلقائياً: ${fmt(data.invoicesSum)} ج — اضغط حفظ لتأكيد المبلغ`);
+}
+
+function applyOverseasInvoicesAsTarget() {
+  const data = getOverseasCycleData(curOverseasCycleKey);
+  if (!data.invoicesSum || data.invoicesSum <= 0) {
+    toast('⚠️ لا توجد فواتير مسجلة في هذه الدورة لاحتسابها', false);
+    return;
+  }
+  openOverseasTargetModal(curOverseasCycleKey, data.invoicesSum);
+}
+
+function openOverseasPaymentModal() {
+  const cycleKey = curOverseasCycleKey || getOverseasCycleInfo().cycleKey;
+  const data = getOverseasCycleData(cycleKey);
+
+  const mCycle = document.getElementById('osPayModalCycleName');
+  if (mCycle) mCycle.textContent = `دورة المطالبة: ${data.info.cycleLabel}`;
+  const mTarget = document.getElementById('osPayModalTarget');
+  if (mTarget) mTarget.textContent = `${fmt(data.effectiveTarget)} ج`;
+  const mPaid = document.getElementById('osPayModalPaid');
+  if (mPaid) mPaid.textContent = `${fmt(data.paidSum)} ج`;
+  const mRem = document.getElementById('osPayModalRem');
+  if (mRem) mRem.textContent = `${fmt(data.remaining)} ج`;
+
+  const inpAmt = document.getElementById('osPayInputAmount');
+  if (inpAmt) {
+    inpAmt.value = data.remaining > 0 ? data.remaining : '';
+    inpAmt.focus();
+  }
+  const inpDate = document.getElementById('osPayInputDate');
+  if (inpDate) inpDate.value = todayStr();
+  const inpNotes = document.getElementById('osPayInputNotes');
+  if (inpNotes) inpNotes.value = '';
+
+  const modal = document.getElementById('overseasPaymentModal');
+  if (modal) modal.classList.add('on');
+}
+
+function closeOverseasPaymentModal() {
+  const modal = document.getElementById('overseasPaymentModal');
+  if (modal) modal.classList.remove('on');
+}
+
+async function submitOverseasPayment(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const amt = parseFloat(document.getElementById('osPayInputAmount')?.value);
+  if (!amt || amt <= 0) {
+    toast('⚠️ برجاء إدخال مبلغ سداد صحيح', false);
+    return;
+  }
+
+  const date = document.getElementById('osPayInputDate')?.value || todayStr();
+  const method = document.getElementById('osPayInputMethod')?.value || 'نقد من الخزينة';
+  const userNotes = (document.getElementById('osPayInputNotes')?.value || '').trim();
+
+  const cycleKey = curOverseasCycleKey || getOverseasCycleInfo().cycleKey;
+  const info = getOverseasCycleInfo(cycleKey);
+
+  const submitBtn = document.getElementById('osPaySubmitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ جاري الحفظ...';
+  }
+
+  try {
+    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const delta = -amt; // دفعات التوريد تخفض رصيد الخزينة
+    let newB = curB;
+
+    if (typeof sbUpdateBalance === 'function') {
+      try {
+        newB = await sbUpdateBalance(delta);
+      } catch(balErr) {
+        console.warn('Balance atomic update warning, falling back:', balErr);
+        newB = curB + delta;
+      }
+    } else {
+      newB = curB + delta;
+    }
+
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const newId = crypto.randomUUID();
+    const finalNotes = `سداد مطالبة أوفر سيز دورة ${cycleKey} [${info.shortLabel}] (${method})${userNotes ? ' - ' + userNotes : ''}`;
+
+    const newEntry = {
+      id: newId,
+      date: date,
+      type: 'طلبيات',
+      company: 'فارما اوفر سيز',
+      invoice: 'سداد مطالبة',
+      amount: amt,
+      notes: finalNotes,
+      uid: (typeof me !== 'undefined' && me && me.uid) ? me.uid : 'admin',
+      uname: (typeof me !== 'undefined' && me && me.name) ? me.name : 'المدير',
+      balance: newB,
+      time: timeStr,
+      ts: Date.now(),
+      isOverseasPayment: true
+    };
+
+    if (typeof sb !== 'undefined' && sb) {
+      const { error: insErr } = await sb.from('entries').insert(newEntry);
+      if (insErr) throw insErr;
+    }
+
+    entries.unshift(newEntry);
+    currentBal = newB;
+
+    // تحديث الهيدر وشاشات النظام
+    updateOnlineDebtsHeader();
+    if (typeof updToday === 'function') updToday();
+    if (typeof renderAll === 'function') renderAll();
+    renderOverseasPane();
+
+    closeOverseasPaymentModal();
+    toast(`✅ تم تسجيل سداد مبلغ ${fmt(amt)} ج لمطالبة أوفر سيز بنجاح`);
+  } catch(err) {
+    console.error('Error saving overseas payment:', err);
+    toast('❌ تعذر تسجيل السداد: ' + arErr(err), false);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💾 تأكيد وتسجيل السداد';
+    }
+  }
+}
+
+async function deleteOverseasPayment(id) {
+  if (!confirm('هل أنت متأكد من حذف هذا السداد؟ سيتم إعادة المبلغ إلى الخزينة.')) return;
+  const entry = entries.find(e => e.id === id);
+  if (!entry) return;
+
+  try {
+    const amt = parseFloat(entry.amount) || 0;
+    if (typeof sbUpdateBalance === 'function') {
+      await sbUpdateBalance(amt); // عكس الخصم بإضافة المبلغ
+    }
+    if (typeof sb !== 'undefined' && sb) {
+      await sb.from('entries').update({ deleted: true }).eq('id', id);
+    }
+    entry.deleted = true;
+
+    updateOnlineDebtsHeader();
+    if (typeof updToday === 'function') updToday();
+    if (typeof renderAll === 'function') renderAll();
+    renderOverseasPane();
+
+    toast(`✅ تم حذف السداد واسترجاع ${fmt(amt)} ج إلى الرصيد`);
+  } catch(e) {
+    toast('❌ تعذر حذف السداد: ' + arErr(e), false);
+  }
+}
+
+function openOverseasTargetModal(cycleKey, prefillAmt) {
+  populateOverseasCycleSelects();
+  const cKey = cycleKey || curOverseasCycleKey || getOverseasCycleInfo().cycleKey;
+  const sel = document.getElementById('osModalTargetCycleSelect');
+  if (sel) sel.value = cKey;
+
+  const data = getOverseasCycleData(cKey);
+  const inp = document.getElementById('osModalTargetInput');
+  if (inp) {
+    inp.value = prefillAmt !== undefined ? prefillAmt : (data.target > 0 ? data.target : data.invoicesSum);
+    inp.focus();
+  }
+
+  const infoBox = document.getElementById('osModalInvoicesInfo');
+  if (infoBox) {
+    infoBox.innerHTML = `
+      فواتير المسحوبات المسجلة بالسيستم للدورة: <b style="color:#f59e0b;">${fmt(data.invoicesSum)} ج</b> (${data.invoices.length} فاتورة).<br/>
+      <span style="font-size:0.72rem;color:var(--text3);">مواعيد الفواتير: من 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName}.</span>
+    `;
+  }
+
+  const modal = document.getElementById('overseasTargetModal');
+  if (modal) modal.classList.add('on');
+}
+
+function closeOverseasTargetModal() {
+  const modal = document.getElementById('overseasTargetModal');
+  if (modal) modal.classList.remove('on');
+}
+
+function onOverseasModalCycleChange() {
+  const sel = document.getElementById('osModalTargetCycleSelect');
+  if (!sel) return;
+  const cKey = sel.value;
+  const data = getOverseasCycleData(cKey);
+  const inp = document.getElementById('osModalTargetInput');
+  if (inp) inp.value = data.target > 0 ? data.target : data.invoicesSum;
+
+  const infoBox = document.getElementById('osModalInvoicesInfo');
+  if (infoBox) {
+    infoBox.innerHTML = `
+      فواتير المسحوبات المسجلة بالسيستم للدورة: <b style="color:#f59e0b;">${fmt(data.invoicesSum)} ج</b> (${data.invoices.length} فاتورة).<br/>
+      <span style="font-size:0.72rem;color:var(--text3);">مواعيد الفواتير: من 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName}.</span>
+    `;
+  }
+}
+
+async function submitOverseasTargetModal(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const sel = document.getElementById('osModalTargetCycleSelect');
+  const cKey = sel ? sel.value : curOverseasCycleKey;
+  const inp = document.getElementById('osModalTargetInput');
+  const amt = parseFloat(inp?.value) || 0;
+
+  try {
+    await saveOverseasClaimTarget(cKey, amt);
+    closeOverseasTargetModal();
+    toast(`✅ تم تحديث إجمالي المطلوب لمطالبة دورة ${cKey}: ${fmt(amt)} ج`);
+  } catch(err) {
+    toast('❌ تعذر حفظ المبلغ: ' + arErr(err), false);
+  }
+}
+
+function exportOverseasExcel() {
+  if (typeof XLSX === 'undefined') {
+    if (typeof ensureXLSX === 'function') ensureXLSX();
+    else { toast('⚠️ جاري تحميل مكتبة إكسيل...', false); return; }
+  }
+
+  const data = getOverseasCycleData(curOverseasCycleKey);
+
+  // 1. ملخص وسدادات
+  const summaryRows = [
+    { 'البيان': 'دورة المطالبة', 'القيمة': data.info.cycleLabel },
+    { 'البيان': 'فترة الفواتير', 'القيمة': `من 17 ${data.info.prevMonthName} ${data.info.prevYear} إلى 16 ${data.info.monthName} ${data.info.year}` },
+    { 'البيان': 'موعد السداد المستحق', 'القيمة': `${data.info.lastDay} ${data.info.monthName} ${data.info.year}` },
+    { 'البيان': 'إجمالي المطلوب للمطالبة', 'القيمة': data.effectiveTarget },
+    { 'البيان': 'إجمالي المسدد حتى الآن', 'القيمة': data.paidSum },
+    { 'البيان': 'المتبقي المطلوب سداده', 'القيمة': data.remaining },
+    { 'البيان': 'نسبة الإنجاز', 'القيمة': `${data.progressPct}%` },
+    { 'البيان': 'مجموع فواتير السيستم', 'القيمة': data.invoicesSum }
+  ];
+
+  const paymentRows = data.payments.map((p, i) => ({
+    'م': i + 1,
+    'التاريخ': p.date || '',
+    'المبلغ المسدد': parseFloat(p.amount) || 0,
+    'البيان': p.notes || '',
+    'الموظف': p.uname || p.user || '',
+    'الوقت': p.time || ''
+  }));
+
+  const invoiceRows = data.invoices.map((inv, i) => ({
+    'م': i + 1,
+    'التاريخ': inv.date || '',
+    'رقم الفاتورة': inv.invoice || '',
+    'القيمة': parseFloat(inv.amount) || 0,
+    'البيان': inv.notes || '',
+    'الموظف': inv.uname || inv.user || ''
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const wsSum = XLSX.utils.json_to_sheet(summaryRows);
+  XLSX.utils.book_append_sheet(wb, wsSum, 'ملخص المطالبة');
+
+  const wsPay = XLSX.utils.json_to_sheet(paymentRows);
+  XLSX.utils.book_append_sheet(wb, wsPay, 'سجل السدادات');
+
+  const wsInv = XLSX.utils.json_to_sheet(invoiceRows);
+  XLSX.utils.book_append_sheet(wb, wsInv, 'فواتير المسحوبات');
+
+  XLSX.writeFile(wb, `مطالبة_اوفر_سيز_${data.info.cycleKey}.xlsx`);
+  toast('✅ تم تصدير ملف إكسيل للمطالبة بنجاح');
+}
+
+function printOverseasStatement() {
+  const data = getOverseasCycleData(curOverseasCycleKey);
+
+  const payRowsHtml = data.payments.map((p, i) => `
+    <tr>
+      <td style="text-align:center;padding:6px;">${i + 1}</td>
+      <td style="padding:6px;">${esc(p.date || '—')}</td>
+      <td style="text-align:center;padding:6px;font-weight:bold;color:#047857;">${fmt(p.amount)} ج</td>
+      <td style="padding:6px;">${esc(p.notes || 'سداد مطالبة')}</td>
+      <td style="padding:6px;">${esc(p.uname || p.user || '—')}</td>
+    </tr>
+  `).join('');
+
+  const invRowsHtml = data.invoices.map((inv, i) => `
+    <tr>
+      <td style="text-align:center;padding:6px;">${i + 1}</td>
+      <td style="padding:6px;">${esc(inv.date || '—')}</td>
+      <td style="padding:6px;font-weight:bold;">${esc(inv.invoice || '—')}</td>
+      <td style="text-align:center;padding:6px;font-weight:bold;">${fmt(inv.amount)} ج</td>
+      <td style="padding:6px;">${esc(inv.notes || '—')}</td>
+    </tr>
+  `).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8">
+      <title>مطالبة فارما أوفر سيز - ${data.info.shortLabel}</title>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; direction: rtl; color: #111; }
+        .hdr { text-align: center; border-bottom: 2px solid #f59e0b; padding-bottom: 12px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .box { border: 1px solid #ccc; border-radius: 8px; padding: 10px; text-align: center; background: #fafafa; }
+        .box-t { font-size: 12px; color: #666; margin-bottom: 4px; }
+        .box-v { font-size: 18px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+        th, td { border: 1px solid #999; padding: 6px; }
+        th { background: #f3f4f6; }
+        h4 { margin: 16px 0 8px 0; color: #b45309; }
+        @media print { button { display: none; } body { padding: 0; } }
+      </style>
+    </head>
+    <body>
+      <div class="hdr">
+        <h2 style="margin:0 0 5px 0;">${esc(pharmName || 'صيدلية العصافرة')}</h2>
+        <h3 style="margin:0;color:#d97706;">🏢 كشف مطالبة ومسحوبات فارما أوفر سيز الشهرية</h3>
+        <p style="margin:5px 0 0 0;font-size:13px;color:#555;">${esc(data.info.cycleLabel)}</p>
+      </div>
+
+      <div class="grid">
+        <div class="box">
+          <div class="box-t">المبلغ المطلوب للمطالبة</div>
+          <div class="box-v" style="color:#d97706;">${fmt(data.effectiveTarget)} ج</div>
+        </div>
+        <div class="box">
+          <div class="box-t">إجمالي المسدد</div>
+          <div class="box-v" style="color:#059669;">${fmt(data.paidSum)} ج</div>
+        </div>
+        <div class="box">
+          <div class="box-t">المتبقي المطلوب سداده</div>
+          <div class="box-v" style="color:#dc2626;">${fmt(data.remaining)} ج</div>
+        </div>
+        <div class="box">
+          <div class="box-t">نسبة السداد</div>
+          <div class="box-v">${data.progressPct}%</div>
+        </div>
+      </div>
+
+      <h4>💳 دفعات وسدادات المطالبة المسجلة (${data.payments.length})</h4>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30px;">#</th>
+            <th style="width:100px;">التاريخ</th>
+            <th style="width:120px;">المبلغ المسدد</th>
+            <th>البيان</th>
+            <th style="width:100px;">الموظف</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${payRowsHtml || '<tr><td colspan="5" style="text-align:center;">لا توجد سدادات مسجلة</td></tr>'}
+        </tbody>
+      </table>
+
+      <h4>📦 فواتير مسحوبات الدورة من 17 ${data.info.prevMonthName} إلى 16 ${data.info.monthName} (${data.invoices.length} فاتورة - مجموع: ${fmt(data.invoicesSum)} ج)</h4>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30px;">#</th>
+            <th style="width:100px;">التاريخ</th>
+            <th style="width:120px;">رقم الفاتورة</th>
+            <th style="width:120px;">القيمة</th>
+            <th>البيان / الأصناف</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invRowsHtml || '<tr><td colspan="5" style="text-align:center;">لا توجد فواتير مسجلة</td></tr>'}
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px;display:flex;justify-content:space-between;font-size:12px;color:#666;">
+        <div>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG-u-nu-latn')} ${new Date().toLocaleTimeString('ar-EG-u-nu-latn')}</div>
+        <div>موعد استحقاق السداد: ${data.info.lastDay} ${data.info.monthName} ${data.info.year}</div>
+      </div>
+
       ${'<' + 'script>'}
         window.onload = function() { window.print(); }
       ${'<' + '/script>'}
@@ -23185,6 +24404,95 @@ function triggerWorkerReminder(title, body) {
       <div style="font-size:0.78rem;color:var(--text3);" id="suppLedgerFooterNote"></div>
       <button type="button" onclick="closeSupplierLedgerModal()" class="btn btn-ghost" style="padding:6px 18px;border-radius:8px;">إغلاق</button>
     </div>
+  </div>
+</div>
+
+<!-- ── MODAL: تسجيل سداد لمطالبة فارما أوفر سيز ── -->
+<div id="overseasPaymentModal" class="modal-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)closeOverseasPaymentModal()">
+  <div class="modal-box" style="border:1.5px solid #f59e0b;max-width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+      <div style="font-weight:900;font-size:1.1rem;color:#f59e0b;display:flex;align-items:center;gap:6px;">
+        <span>💳</span><span>تسجيل سداد لمطالبة فارما أوفر سيز</span>
+      </div>
+      <button type="button" onclick="closeOverseasPaymentModal()" class="btn btn-ghost btn-sm" style="font-size:1.1rem;padding:2px 8px;">✕</button>
+    </div>
+
+    <form onsubmit="submitOverseasPayment(event)">
+      <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;color:var(--text2);border:1px solid var(--border);">
+        <div style="font-weight:800;color:var(--text1);margin-bottom:4px;" id="osPayModalCycleName">دورة المطالبة: أغسطس 2026</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:0.78rem;">
+          <span>المطلوب: <b id="osPayModalTarget" style="color:var(--text1);">0 ج</b></span>
+          <span>المسدد: <b id="osPayModalPaid" style="color:#10b981;">0 ج</b></span>
+          <span>المتبقي: <b id="osPayModalRem" style="color:#ef4444;">0 ج</b></span>
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:12px;">
+        <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">💰 المبلغ المسدد (جنيه) <span style="color:#ef4444;">*</span></label>
+        <input type="number" step="0.01" min="1" id="osPayInputAmount" class="fel" required placeholder="مثال: 25000" style="width:100%;font-size:1.15rem;font-weight:900;color:#10b981;"/>
+      </div>
+
+      <div class="fg-row" style="margin-bottom:12px;gap:10px;">
+        <div class="fg" style="flex:1;margin-bottom:0;">
+          <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">📅 تاريخ السداد <span style="color:#ef4444;">*</span></label>
+          <input type="date" id="osPayInputDate" class="fel" required style="width:100%;"/>
+        </div>
+        <div class="fg" style="flex:1;margin-bottom:0;">
+          <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">🏦 طريقة الدفع</label>
+          <select id="osPayInputMethod" class="fel" style="width:100%;">
+            <option value="نقد من الخزينة">💵 نقد من الخزينة</option>
+            <option value="تحويل بنكي / انستاباي">📱 تحويل بنكي / انستاباي</option>
+            <option value="شيك">📑 شيك بنكي</option>
+            <option value="عهدة الصيدلي">👤 عهدة الصيدلي</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:16px;">
+        <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">📝 ملاحظات / تفاصيل إضافية</label>
+        <input type="text" id="osPayInputNotes" class="fel" placeholder="مثال: سداد دفعة أولى بشيك رقم..." style="width:100%;"/>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" onclick="closeOverseasPaymentModal()" class="btn btn-ghost" style="padding:8px 16px;">إلغاء</button>
+        <button type="submit" id="osPaySubmitBtn" class="btn btn-green" style="font-weight:800;padding:8px 20px;">💾 تأكيد وتسجيل السداد</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── MODAL: تعديل المبلغ المطلوب لمطالبة أوفر سيز ── -->
+<div id="overseasTargetModal" class="modal-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)closeOverseasTargetModal()">
+  <div class="modal-box" style="border:1.5px solid #f59e0b;max-width:440px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+      <div style="font-weight:900;font-size:1.1rem;color:#f59e0b;display:flex;align-items:center;gap:6px;">
+        <span>🎯</span><span>تحديد المبلغ المطلوب للمطالبة</span>
+      </div>
+      <button type="button" onclick="closeOverseasTargetModal()" class="btn btn-ghost btn-sm" style="font-size:1.1rem;padding:2px 8px;">✕</button>
+    </div>
+
+    <form onsubmit="submitOverseasTargetModal(event)">
+      <div class="fg" style="margin-bottom:12px;">
+        <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">📅 الدورة الشهرية</label>
+        <select id="osModalTargetCycleSelect" class="fel" onchange="onOverseasModalCycleChange()" style="width:100%;font-weight:700;">
+          <!-- Populated via JS -->
+        </select>
+      </div>
+
+      <div class="fg" style="margin-bottom:12px;">
+        <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">🎯 إجمالي المبلغ المطلوب من أوفر سيز (جنيه) <span style="color:#ef4444;">*</span></label>
+        <input type="number" step="0.01" min="0" id="osModalTargetInput" class="fel" required placeholder="مثال: 150000" style="width:100%;font-size:1.2rem;font-weight:900;color:#f59e0b;"/>
+      </div>
+
+      <div id="osModalInvoicesInfo" style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:0.78rem;color:var(--text2);border:1px solid var(--border);">
+        <!-- Invoices sum info -->
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" onclick="closeOverseasTargetModal()" class="btn btn-ghost" style="padding:8px 16px;">إلغاء</button>
+        <button type="submit" class="btn btn-amber" style="background:#f59e0b;color:#fff;font-weight:800;padding:8px 20px;">💾 حفظ المبلغ المطلوب</button>
+      </div>
+    </form>
   </div>
 </div>
 
