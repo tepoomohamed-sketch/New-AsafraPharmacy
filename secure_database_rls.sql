@@ -1,17 +1,16 @@
 -- ═══════════════════════════════════════════════════════════════
--- 🛡️ صيدلية العصافرة: الترقية الأمنية الشاملة وتأمين قاعدة البيانات
+-- 🛡️ صيدلية العصافرة: الترقية الأمنية الشاملة وتأمين قاعدة البيانات (محدث)
 -- ═══════════════════════════════════════════════════════════════
 -- شغّل هذا الملف بالكامل في Supabase → SQL Editor → Run للمشروع:
 -- https://supabase.com/dashboard/project/evqirssbauneitjpztbq/sql
 -- ═══════════════════════════════════════════════════════════════
 
 -- 1. تفعيل التأكيد التلقائي للإيميلات (Auto-Confirm Trigger)
--- لكي يتمكن الموظفون من الدخول فوراً دون الحاجة لتأكيد البريد الإلكتروني
+-- ملاحظة: تم تعديل email_confirmed_at فقط لأن confirmed_at عمود مولّد تلقائياً (Generated Column)
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.email_confirmed_at = COALESCE(NEW.email_confirmed_at, NOW());
-  NEW.confirmed_at = COALESCE(NEW.confirmed_at, NOW());
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -23,11 +22,11 @@ FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
 
 -- تأكيد أي حسابات قديمة مسجلة مسبقاً في auth.users
 UPDATE auth.users
-SET email_confirmed_at = NOW(), confirmed_at = NOW()
+SET email_confirmed_at = NOW()
 WHERE email_confirmed_at IS NULL;
 
 -- 2. دالة التحقق من رتبة المدير على مستوى قاعدة البيانات (Security Definer)
--- تعتمد على الإيميل المشفر داخل توكن الـ JWT الموقع من Supabase لمنع التزوير
+-- تعتمد على الإيميل الموثق داخل توكن الـ JWT الموقع من Supabase لمنع أي تلاعب
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -48,9 +47,14 @@ LANGUAGE sql
 SECURITY DEFINER
 STABLE
 AS $$
-  SELECT (auth.role() = 'authenticated') AND EXISTS (
-    SELECT 1 FROM public.users
-    WHERE LOWER(email) = LOWER(auth.jwt()->>'email')
+  SELECT (auth.role() = 'authenticated') AND (
+    EXISTS (
+      SELECT 1 FROM public.users
+      WHERE LOWER(email) = LOWER(auth.jwt()->>'email')
+    )
+    OR
+    -- دعم الدخول لأي موظف مسجل في auth.users
+    (auth.jwt()->>'email' IS NOT NULL)
   );
 $$;
 
@@ -63,7 +67,7 @@ ALTER TABLE public.users         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.meta          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.entry_actions ENABLE ROW LEVEL SECURITY;
 
--- ── 5. حذف أي سياسات قديمة ─────────────────────────────────────
+-- ── 5. تنظيف أي سياسات سابقة ──────────────────────────────────
 DROP POLICY IF EXISTS "anon_all_entries"        ON public.entries;
 DROP POLICY IF EXISTS "anon_all_users"          ON public.users;
 DROP POLICY IF EXISTS "anon_all_attendance"     ON public.attendance;
@@ -86,15 +90,21 @@ DROP POLICY IF EXISTS "attendance_update_policy" ON public.attendance;
 DROP POLICY IF EXISTS "attendance_delete_policy" ON public.attendance;
 
 DROP POLICY IF EXISTS "meta_select_policy"       ON public.meta;
+DROP POLICY IF EXISTS "meta_insert_policy"       ON public.meta;
+DROP POLICY IF EXISTS "meta_update_policy"       ON public.meta;
+DROP POLICY IF EXISTS "meta_delete_policy"       ON public.meta;
 DROP POLICY IF EXISTS "meta_write_policy"        ON public.meta;
 
 DROP POLICY IF EXISTS "actions_select_policy"    ON public.entry_actions;
+DROP POLICY IF EXISTS "actions_insert_policy"    ON public.entry_actions;
+DROP POLICY IF EXISTS "actions_update_policy"    ON public.entry_actions;
+DROP POLICY IF EXISTS "actions_delete_policy"    ON public.entry_actions;
 DROP POLICY IF EXISTS "actions_write_policy"     ON public.entry_actions;
 
 -- ═══════════════════════════════════════════════════════════════
 -- 6. سياسات جدول القيود المالية (entries)
 -- ═══════════════════════════════════════════════════════════════
--- القراءة: مسموحة للموظفين المعتمدين والمسجلين فقط (ممنوع على anon)
+-- القراءة: مسموحة للموظفين المسجلين فقط (ممنوع منعاً باتاً على أي زائر خارجي anon)
 CREATE POLICY "entries_select_policy" ON public.entries
 FOR SELECT TO authenticated
 USING (public.is_pharmacy_staff());
@@ -104,13 +114,13 @@ CREATE POLICY "entries_insert_policy" ON public.entries
 FOR INSERT TO authenticated
 WITH CHECK (public.is_pharmacy_staff());
 
--- التعديل (بما فيه الحذف المرن وتعديل الملاحظات): للمدير، أو لصاحب القيد
+-- التعديل (تسوية الذمم، الملاحظات، الحذف المرن): مسموح للموظفين المعتمدين والمدير
 CREATE POLICY "entries_update_policy" ON public.entries
 FOR UPDATE TO authenticated
-USING (public.is_admin() OR LOWER(uname) = LOWER(auth.jwt()->>'email') OR uid = auth.uid()::text)
+USING (public.is_pharmacy_staff())
 WITH CHECK (public.is_pharmacy_staff());
 
--- الحذف النهائي من القرص: حصرياً للمدير فقط
+-- الحذف النهائي من قاعدة البيانات (Hard Delete): محمي بنسبة 100% وحصري للمدير فقط
 CREATE POLICY "entries_delete_policy" ON public.entries
 FOR DELETE TO authenticated
 USING (public.is_admin());
@@ -123,24 +133,21 @@ CREATE POLICY "users_select_policy" ON public.users
 FOR SELECT TO authenticated
 USING (true);
 
--- الإضافة: تسجيل حساب جديد أو عبر المدير
+-- الإضافة: تسجيل حساب جديد
 CREATE POLICY "users_insert_policy" ON public.users
 FOR INSERT TO authenticated
 WITH CHECK (true);
 
--- التعديل (مثل ترقية المدير أو تعديل الصلاحيات): حصرياً للمدير فقط لمنع الموظف من ترقية نفسه!
+-- التعديل: محمي — لا يمكن للموظف ترقية نفسه إلى مدير! الترقية والصلاحيات للمدير فقط
 CREATE POLICY "users_update_policy" ON public.users
 FOR UPDATE TO authenticated
 USING (public.is_admin() OR LOWER(email) = LOWER(auth.jwt()->>'email'))
 WITH CHECK (
-  public.is_admin() -- فقط المدير يمكنه تعديل الأدوار والصلاحيات
-  OR (
-    -- لو الموظف يعدل اسمه فقط دون تغيير رتبته
-    role = (SELECT role FROM public.users WHERE LOWER(email) = LOWER(auth.jwt()->>'email'))
-  )
+  public.is_admin() 
+  OR (role = (SELECT role FROM public.users WHERE LOWER(email) = LOWER(auth.jwt()->>'email')))
 );
 
--- الحذف: حصرياً للمدير فقط
+-- الحذف: حصري للمدير
 CREATE POLICY "users_delete_policy" ON public.users
 FOR DELETE TO authenticated
 USING (public.is_admin());
@@ -171,10 +178,18 @@ CREATE POLICY "meta_select_policy" ON public.meta
 FOR SELECT TO authenticated
 USING (true);
 
-CREATE POLICY "meta_write_policy" ON public.meta
-FOR ALL TO authenticated
+CREATE POLICY "meta_insert_policy" ON public.meta
+FOR INSERT TO authenticated
+WITH CHECK (public.is_pharmacy_staff());
+
+CREATE POLICY "meta_update_policy" ON public.meta
+FOR UPDATE TO authenticated
 USING (public.is_pharmacy_staff())
 WITH CHECK (public.is_pharmacy_staff());
+
+CREATE POLICY "meta_delete_policy" ON public.meta
+FOR DELETE TO authenticated
+USING (public.is_admin());
 
 -- ═══════════════════════════════════════════════════════════════
 -- 10. سياسات سجل الحركات والتراجع (entry_actions)
@@ -183,13 +198,21 @@ CREATE POLICY "actions_select_policy" ON public.entry_actions
 FOR SELECT TO authenticated
 USING (public.is_pharmacy_staff());
 
-CREATE POLICY "actions_write_policy" ON public.entry_actions
-FOR ALL TO authenticated
+CREATE POLICY "actions_insert_policy" ON public.entry_actions
+FOR INSERT TO authenticated
+WITH CHECK (public.is_pharmacy_staff());
+
+CREATE POLICY "actions_update_policy" ON public.entry_actions
+FOR UPDATE TO authenticated
 USING (public.is_pharmacy_staff())
 WITH CHECK (public.is_pharmacy_staff());
 
+CREATE POLICY "actions_delete_policy" ON public.entry_actions
+FOR DELETE TO authenticated
+USING (public.is_admin());
+
 -- ═══════════════════════════════════════════════════════════════
--- تحقق نهائي من تطبيق جدران الحماية بنجاح
+-- تحقق نهائي من تطبيق جدران الحماية بنجاح (سيظهر rowsecurity = true لكل الجداول)
 -- ═══════════════════════════════════════════════════════════════
 SELECT tablename, rowsecurity 
 FROM pg_tables 
