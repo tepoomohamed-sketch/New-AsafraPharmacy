@@ -4009,7 +4009,7 @@ function ensureXLSX() {
             <div style="font-size:0.85rem;font-weight:700;color:var(--text1);">
               جميع قيود وفواتير ودفعات فارما أوفر سيز المسجلة بالنظام:
             </div>
-            <button type="button" class="btn btn-sm btn-ghost" onclick="openSupplierLedgerFor('فارما اوفر سيز')" style="border:1px solid var(--border);">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="openSupplierLedgerModal('فارما اوفر سيز')" style="border:1px solid var(--border);">
               📖 فتح في كشف حساب الموردين الشامل
             </button>
           </div>
@@ -11281,6 +11281,8 @@ async function openActionHistory() {
 //  SUPPLIER LEDGER & STATEMENT (كشف حساب الموردين والشركات) 📑
 // ═══════════════════════════════════════════
 let curSupplierLedgerList = [];
+
+function openSupplierLedgerFor(co) { openSupplierLedgerModal(co); }
 
 function openSupplierLedgerModal(preselectedCo = '') {
   const modal = document.getElementById('supplierLedgerModal');
