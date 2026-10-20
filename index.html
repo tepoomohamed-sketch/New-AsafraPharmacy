@@ -4570,14 +4570,21 @@ function ensureXLSX() {
           هذا الرقم السري مطلوب عند تصفية ذمم المحفظة أو ترحيل أي مبالغ إلى العهدة الحالية لمنع الموظفين من ترحيل أي مبالغ دون إذنك.
         </div>
         <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-          <div class="fg" style="max-width:220px;margin-bottom:0;">
+          <div class="fg" style="max-width:200px;margin-bottom:0;">
             <label style="font-size:.8rem;color:var(--text3);font-weight:700;">الرقم السري للتصفية</label>
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
               <input type="password" class="fel" id="walletPinSettingsInp" placeholder="أدخل الرقم السري" style="width:100%;font-size:1.1rem;letter-spacing:3px;font-weight:900;text-align:center;"/>
               <button type="button" onclick="togglePinSettingsVisibility()" class="btn btn-sm btn-ghost" style="padding:6px 10px;" title="إظهار / إخفاء">👁</button>
             </div>
           </div>
-          <button class="btn btn-sm btn-green" onclick="saveWalletPinFromSettings()" style="height:38px;">💾 حفظ الرقم السري</button>
+          <div class="fg" style="max-width:240px;margin-bottom:0;">
+            <label style="font-size:.8rem;color:var(--text3);font-weight:700;">عمولة السحب الافتراضية</label>
+            <select class="fel" id="walletFeeDefaultSelect" onchange="saveWalletFeeDefault(this.value)" style="margin-top:4px;font-weight:800;">
+              <option value="fixed5">⚡ 5 جنيه ثابتة</option>
+              <option value="tier10">📊 النسبة لأقرب 10 (10ج/ألف)</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-green" onclick="saveWalletPinFromSettings()" style="height:38px;">💾 حفظ الإعدادات</button>
         </div>
         <div style="font-size:.74rem;color:var(--text3);margin-top:8px;">الرقم الافتراضي: 1234 — يُحفظ في السحابة ويتزامن مع جميع أجهزتك ولا يظهر للموظفين</div>
       </div>
@@ -5314,6 +5321,13 @@ async function loadAndListenWalletPin() {
       const pinInp = document.getElementById('walletPinSettingsInp');
       if (pinInp) pinInp.value = walletSettlePin;
     }
+    const fv = await sbGetMeta('walletFeeMode');
+    if (fv && fv.mode) {
+      walletFeeMode = fv.mode;
+      try { localStorage.setItem('asafra_wallet_fee_mode', walletFeeMode); } catch(e){}
+      const feeSel = document.getElementById('walletFeeDefaultSelect');
+      if (feeSel) feeSel.value = walletFeeMode;
+    }
   } catch(e) {
     console.warn('loadAndListenWalletPin:', e);
   }
@@ -5898,7 +5912,7 @@ function swTab(name, el) {
   if (name==='custdir')    { custSubSwitch('dir');   initCustDir(); }
   if (name==='users') { if(me.role==='admin') loadUsers().then(renderUsersTab); else renderUsersTab(); }
   if (name==='trash') { fetchTrash(); }
-  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); setCachedWalletPin(walletSettlePin); pinInp.value=walletSettlePin; } }).catch(()=>{}); } if(typeof initOverseasSettings==='function') initOverseasSettings(); }
+  if (name==='set')   { document.getElementById('sName').value=pharmName; renderCustomList(); document.getElementById('entCnt').textContent=entries.length; const stInp=document.getElementById('salesTargetInp'); if(stInp&&salesDailyTarget) stInp.value=salesDailyTarget; const smInp=document.getElementById('salesMonthlyTargetInp'); if(smInp&&salesMonthlyTarget) smInp.value=salesMonthlyTarget; const pinInp=document.getElementById('walletPinSettingsInp'); if(pinInp){ pinInp.value=walletSettlePin; sbGetMeta('walletSettlePin').then(v=>{ if(v&&v.pin){ walletSettlePin=String(v.pin); setCachedWalletPin(walletSettlePin); pinInp.value=walletSettlePin; } }).catch(()=>{}); } const fSel = document.getElementById('walletFeeDefaultSelect'); if (fSel) fSel.value = walletFeeMode; if(typeof initOverseasSettings==='function') initOverseasSettings(); }
   // لما ترجع لتبويب القيد الجديد، حدّث درب ليست الموظفين
   if (name==='add') {
     const eCoEl = document.getElementById('eCo');
@@ -9790,12 +9804,109 @@ function roundToNearest5(n) {
   return Math.round((Number(n) || 0) / 5) * 5;
 }
 
-// ── حساب مصاريف سحب المحفظة: دايماً رقم بالعشرة (10 جنيه لكل ألف أو جزء منها) ──
-// 1000 = 10ج، 1200 = 20ج، 1700 = 20ج، 2000 = 20ج، 2001-3000 = 30ج وهكذا
-function calcWalletFee(totalAmt, rate) {
+// ── حساب مصاريف سحب المحفظة: اختياري إما 5 جنيه ثابتة أو النسبة الحالية لأقرب 10 ──
+let walletFeeMode = 'fixed5';
+try {
+  const savedFeeMode = localStorage.getItem('asafra_wallet_fee_mode');
+  if (savedFeeMode) walletFeeMode = savedFeeMode;
+} catch(e){}
+
+function calcWalletFee(totalAmt, mode) {
   const amt = Number(totalAmt) || 0;
   if (amt <= 0) return 0;
+  const m = mode || walletFeeMode || 'fixed5';
+  if (m === 'fixed5') {
+    return 5;
+  }
+  // النسبة الحالية لأقرب 10: 10 جنيه لكل ألف أو جزء منها (1000=10ج، 1200=20ج، 2000=20ج، 2050=30ج)
   return Math.ceil(amt / 1000) * 10;
+}
+
+function setWalletFeeMode(mode, totalAmt) {
+  walletFeeMode = (mode === 'fixed5') ? 'fixed5' : 'tier10';
+  try { localStorage.setItem('asafra_wallet_fee_mode', walletFeeMode); } catch(e){}
+
+  const tAmt = Number(totalAmt) || 0;
+  const fee = calcWalletFee(tAmt, walletFeeMode);
+  const net = Math.round((tAmt - fee) * 100) / 100;
+
+  // تحديث نصوص المودال
+  const feeEl = document.getElementById('walletFeeAmtText');
+  const netEl = document.getElementById('walletNetAmtText');
+  const feeDescEl = document.getElementById('walletFeeModeDesc');
+  if (feeEl) feeEl.textContent = `-${fmt(fee)} ج`;
+  if (netEl) netEl.textContent = `+${fmt(net)} ج`;
+  if (feeDescEl) {
+    feeDescEl.textContent = (walletFeeMode === 'fixed5')
+      ? 'عمولة سحب ثابتة 5 جنيه للمبلغ بالكامل'
+      : 'عمولة 10 جنيه لكل ألف (لأقرب 10)';
+  }
+
+  // تحديث أزرار الاختيار
+  const btn5 = document.getElementById('btnFeeFixed5');
+  const btn10 = document.getElementById('btnFeeTier10');
+  if (btn5) {
+    const isAct = walletFeeMode === 'fixed5';
+    btn5.style.border = isAct ? '2px solid #10b981' : '1.5px solid rgba(255,255,255,.15)';
+    btn5.style.background = isAct ? 'rgba(16,185,129,.25)' : 'rgba(255,255,255,.05)';
+    btn5.style.color = isAct ? '#34d399' : 'var(--text2)';
+    btn5.style.fontWeight = isAct ? '900' : '700';
+  }
+  if (btn10) {
+    const isAct = walletFeeMode === 'tier10';
+    btn10.style.border = isAct ? '2px solid #f59e0b' : '1.5px solid rgba(255,255,255,.15)';
+    btn10.style.background = isAct ? 'rgba(245,158,11,.25)' : 'rgba(255,255,255,.05)';
+    btn10.style.color = isAct ? '#fbbf24' : 'var(--text2)';
+    btn10.style.fontWeight = isAct ? '900' : '700';
+  }
+
+  // تحديث سلكت شاشة الإعدادات إذا كانت مفتوحة
+  const feeSel = document.getElementById('walletFeeDefaultSelect');
+  if (feeSel) feeSel.value = walletFeeMode;
+}
+
+function buildWalletFeeSelectorHtml(totalAmt) {
+  const is5 = walletFeeMode === 'fixed5';
+  const fee5 = calcWalletFee(totalAmt, 'fixed5');
+  const fee10 = calcWalletFee(totalAmt, 'tier10');
+
+  return `
+    <div style="margin-bottom:12px;padding:10px 12px;background:rgba(255,255,255,.04);border:1.5px dashed rgba(255,255,255,.15);border-radius:12px;text-align:right;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.82rem;color:var(--text1);font-weight:800;">⚙️ عمولة السحب (اختياري):</span>
+        <span id="walletFeeModeDesc" style="font-size:.72rem;color:var(--text3);">
+          ${is5 ? 'عمولة سحب ثابتة 5 جنيه' : '10 جنيه لكل ألف (لأقرب 10)'}
+        </span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button type="button" id="btnFeeFixed5" onclick="setWalletFeeMode('fixed5', ${totalAmt})"
+          style="padding:8px 6px;border-radius:10px;font-size:.82rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .2s;
+          border:${is5 ? '2px solid #10b981' : '1.5px solid rgba(255,255,255,.15)'};
+          background:${is5 ? 'rgba(16,185,129,.22)' : 'rgba(255,255,255,.05)'};
+          color:${is5 ? '#34d399' : 'var(--text2)'};
+          font-weight:${is5 ? '900' : '700'};">
+          <span>⚡ 5 جنيه ثابتة</span>
+          <span style="font-size:.7rem;opacity:.9;">(عمولة: -${fmt(fee5)} ج)</span>
+        </button>
+        <button type="button" id="btnFeeTier10" onclick="setWalletFeeMode('tier10', ${totalAmt})"
+          style="padding:8px 6px;border-radius:10px;font-size:.82rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .2s;
+          border:${!is5 ? '2px solid #f59e0b' : '1.5px solid rgba(255,255,255,.15)'};
+          background:${!is5 ? 'rgba(245,158,11,.22)' : 'rgba(255,255,255,.05)'};
+          color:${!is5 ? '#fbbf24' : 'var(--text2)'};
+          font-weight:${!is5 ? '900' : '700'};">
+          <span>📊 النسبة لأقرب 10</span>
+          <span style="font-size:.7rem;opacity:.9;">(عمولة: -${fmt(fee10)} ج)</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function saveWalletFeeDefault(val) {
+  walletFeeMode = (val === 'fixed5') ? 'fixed5' : 'tier10';
+  try { localStorage.setItem('asafra_wallet_fee_mode', walletFeeMode); } catch(e){}
+  try { sbSetMeta('walletFeeMode', { mode: walletFeeMode }); } catch(e){}
+  toast(`✅ تم ضبط عمولة السحب الافتراضية: ${walletFeeMode === 'fixed5' ? '5 جنيه ثابتة' : 'النسبة لأقرب 10'}`);
 }
 
 function confirmWalletPin() {
@@ -9925,7 +10036,8 @@ function openWalletSettleOptions() {
 
   const estFee = calcWalletFee(totalAmt);
   const estNet = Math.round((totalAmt - estFee) * 100) / 100;
-  if (totalEl) totalEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.78rem;color:#f6ad55;margin-right:8px;font-weight:700;">(صافي العهدة: +${fmt(estNet)} ج | مصاريف السحب: -${fmt(estFee)} ج)</span>`;
+  const feeLbl = walletFeeMode === 'fixed5' ? '5 ج ثابتة' : 'لأقرب 10';
+  if (totalEl) totalEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.78rem;color:#f6ad55;margin-right:8px;font-weight:700;">(صافي العهدة: +${fmt(estNet)} ج | عمولة السحب: -${fmt(estFee)} ج [${feeLbl}])</span>`;
   if (badgeEl) badgeEl.innerHTML = `${fmt(totalAmt)} ج <span style="font-size:.68rem;opacity:.9;">(صافي: ${fmt(estNet)})</span>`;
 
   if (modal) modal.classList.add('on');
@@ -10041,16 +10153,7 @@ async function settlePartialWalletAmount(targetAmt) {
         <span style="font-size:.82rem;color:var(--text3);">المبلغ المصفى من الذمم:</span>
         <strong style="color:var(--text1);font-size:1.05rem;">${fmt(targetAmt)} ج</strong>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
-        <div>
-          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نظام مصاريف السحب:</span>
-          <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">10 جنيه لكل 1000 ج (أو جزء منها) - رقم بالعشرة</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="padding:3px 10px;font-weight:900;border-radius:6px;border:1.5px solid #f6ad55;background:rgba(246,173,85,.18);color:#f6ad55;font-size:.85rem;">10ج / ألف</span>
-          <input type="hidden" id="walletFeeRateInp" value="10" />
-        </div>
-      </div>
+${buildWalletFeeSelectorHtml(targetAmt)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-size:.82rem;color:#fc8181;">مصاريف السحب (تسجل بالمصاريف):</span>
         <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
@@ -10138,7 +10241,8 @@ async function settlePartialWalletAmount(targetAmt) {
 
     // 2. قيد مصاريف بقيمة رسوم السحب
     if (fee > 0) {
-      const feeNotes = `مصاريف سحب محفظة (${fmt(fee)} ج) عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`;
+      const feeLabel = walletFeeMode === 'fixed5' ? 'عمولة 5 ج ثابتة' : `${fmt(fee)} ج لأقرب 10`;
+      const feeNotes = `مصاريف سحب محفظة (${feeLabel}) عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`;
       const { error: feeErr } = await sb.from('entries').insert({
         id: feeId,
         date: today,
@@ -10179,7 +10283,7 @@ async function settlePartialWalletAmount(targetAmt) {
         company: 'رسوم سحب محفظة',
         invoice: '',
         amount: fee,
-        notes: `مصاريف سحب محفظة (${fmt(fee)} ج) عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`,
+        notes: `مصاريف سحب محفظة (${walletFeeMode === 'fixed5' ? 'عمولة 5 ج ثابتة' : fmt(fee) + ' ج لأقرب 10'}) عن تصفية جزئية بمبلغ ${fmt(targetAmt)} ج`,
         uid: me.uid,
         uname: me.name,
         balance: newB,
@@ -10201,7 +10305,7 @@ async function settlePartialWalletAmount(targetAmt) {
     renderSum();
     updToday();
 
-    toast(`✅ تم تصفية ${fmt(targetAmt)} ج من المحفظة (مصاريف سحب ${fmt(fee)} ج | صافي العهدة +${fmt(netAmt)} ج)`);
+    toast(`✅ تم تصفية ${fmt(targetAmt)} ج من المحفظة (عمولة سحب ${fmt(fee)} ج [${walletFeeMode === 'fixed5' ? '5 ج ثابتة' : 'لأقرب 10'}] | صافي العهدة +${fmt(netAmt)} ج)`);
   } catch(e) {
     toast('❌ خطأ في التصفية الجزئية: ' + arErr(e), false);
   }
@@ -10238,7 +10342,8 @@ function updateOdSelectedBar() {
   if (amtText) {
     const estFee = calcWalletFee(total);
     const estNet = Math.round((total - estFee) * 100) / 100;
-    amtText.innerHTML = `${fmt(total)} ج <span style="font-size:.74rem;color:#f6ad55;font-weight:700;margin-right:6px;">(مصاريف السحب: -${fmt(estFee)} ج | صافي العهدة: +${fmt(estNet)} ج)</span>`;
+    const feeLbl = walletFeeMode === 'fixed5' ? 'عمولة 5 ج' : 'لأقرب 10';
+    amtText.innerHTML = `${fmt(total)} ج <span style="font-size:.74rem;color:#f6ad55;font-weight:700;margin-right:6px;">(عمولة السحب: -${fmt(estFee)} ج [${feeLbl}] | صافي العهدة: +${fmt(estNet)} ج)</span>`;
   }
 }
 
@@ -10282,16 +10387,7 @@ async function settleSelectedWalletDebts() {
         <span style="font-size:.82rem;color:var(--text3);">إجمالي الحركات المحددة (${selectedEntries.length} حركة):</span>
         <strong style="color:var(--text1);font-size:1.05rem;">${fmt(totalAmt)} ج</strong>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
-        <div>
-          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نظام مصاريف السحب:</span>
-          <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">10 جنيه لكل 1000 ج (أو جزء منها) - رقم بالعشرة</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="padding:3px 10px;font-weight:900;border-radius:6px;border:1.5px solid #f6ad55;background:rgba(246,173,85,.18);color:#f6ad55;font-size:.85rem;">10ج / ألف</span>
-          <input type="hidden" id="walletFeeRateInp" value="10" />
-        </div>
-      </div>
+${buildWalletFeeSelectorHtml(totalAmt)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-size:.82rem;color:#fc8181;">مصاريف السحب (تسجل بالمصاريف):</span>
         <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
@@ -10340,7 +10436,8 @@ async function settleSelectedWalletDebts() {
 
     // 2. قيد مصاريف بقيمة رسوم السحب
     if (fee > 0) {
-      const feeNotes = `مصاريف سحب محفظة (${fmt(fee)} ج) عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`;
+      const feeLabel = walletFeeMode === 'fixed5' ? 'عمولة 5 ج ثابتة' : `${fmt(fee)} ج لأقرب 10`;
+      const feeNotes = `مصاريف سحب محفظة (${feeLabel}) عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`;
       const { error: feeErr } = await sb.from('entries').insert({
         id: feeId,
         date: today,
@@ -10383,7 +10480,7 @@ async function settleSelectedWalletDebts() {
         company: 'رسوم سحب محفظة',
         invoice: '',
         amount: fee,
-        notes: `مصاريف سحب محفظة (${fmt(fee)} ج) عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`,
+        notes: `مصاريف سحب محفظة (${walletFeeMode === 'fixed5' ? 'عمولة 5 ج ثابتة' : fmt(fee) + ' ج لأقرب 10'}) عن تصفية حركات محددة بمبلغ ${fmt(totalAmt)} ج`,
         uid: me.uid,
         uname: me.name,
         balance: newB,
@@ -10442,16 +10539,7 @@ async function settleAllWalletDebts() {
         <span style="font-size:.82rem;color:var(--text3);">إجمالي رصيد المحفظة (${walletDebts.length} حركة):</span>
         <strong style="color:var(--text1);font-size:1.05rem;">${fmt(totalAmt)} ج</strong>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 0;border-top:1px dashed rgba(255,255,255,.1);border-bottom:1px dashed rgba(255,255,255,.1);">
-        <div>
-          <span style="font-size:.8rem;color:#f6ad55;font-weight:700;">نظام مصاريف السحب:</span>
-          <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">10 جنيه لكل 1000 ج (أو جزء منها) - رقم بالعشرة</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="padding:3px 10px;font-weight:900;border-radius:6px;border:1.5px solid #f6ad55;background:rgba(246,173,85,.18);color:#f6ad55;font-size:.85rem;">10ج / ألف</span>
-          <input type="hidden" id="walletFeeRateInp" value="10" />
-        </div>
-      </div>
+${buildWalletFeeSelectorHtml(totalAmt)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-size:.82rem;color:#fc8181;">مصاريف السحب (تسجل بالمصاريف):</span>
         <strong id="walletFeeAmtText" style="color:#fc8181;font-size:1rem;">-${fmt(estFee)} ج</strong>
@@ -10502,7 +10590,8 @@ async function settleAllWalletDebts() {
 
     // 2. قيد مصاريف بقيمة رسوم السحب (إذا كانت الرسوم > 0)
     if (fee > 0) {
-      const feeNotes = `مصاريف سحب محفظة (${fmt(fee)} ج) عن تصفية محفظة الصيدلية بمبلغ ${fmt(totalAmt)} ج`;
+      const feeLabel = walletFeeMode === 'fixed5' ? 'عمولة 5 ج ثابتة' : `${fmt(fee)} ج لأقرب 10`;
+      const feeNotes = `مصاريف سحب محفظة (${feeLabel}) عن تصفية محفظة الصيدلية بمبلغ ${fmt(totalAmt)} ج`;
       const { error: feeErr } = await sb.from('entries').insert({
         id: feeId,
         date: today,
