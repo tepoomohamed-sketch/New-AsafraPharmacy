@@ -2341,6 +2341,54 @@
     .print-btn{display:none!important;}
   }
 
+
+/* ── Searchable Alphabetical Combobox (البحث الأبجدي) ── */
+.co-drop-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg2);
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.65);
+  z-index: 9999;
+  display: none;
+}
+.co-drop-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--text1);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.co-drop-item:last-child {
+  border-bottom: none;
+}
+.co-drop-item:hover, .co-drop-item.highlighted {
+  background: rgba(99, 179, 237, 0.18);
+  color: var(--accent);
+  font-weight: 800;
+  padding-right: 18px;
+}
+.co-drop-item.selected {
+  background: rgba(72, 187, 120, 0.18);
+  color: #68d391;
+  font-weight: 800;
+}
+.co-highlight-match {
+  color: #f6ad55;
+  font-weight: 900;
+  text-decoration: underline;
+}
+
 </style>
 </head>
 <body>
@@ -2865,11 +2913,21 @@ function ensureXLSX() {
         </div>
         <div class="fg-row">
           <div class="fg"><label for="eDate">📅 التاريخ</label><input type="date" id="eDate" onkeydown="handleEntryKeyNav(event,'eDate')"/></div>
-          <div class="fg">
+          <div class="fg" style="position:relative;">
             <label id="eCoLbl">🏷 البند / الشركة</label>
-            <select class="fel" id="eCo" onchange="coSelectChanged(); checkDuplicateInvoice(false);" onkeydown="handleEntryKeyNav(event,'eCo')">
-              <option value="">اختر البند...</option>
-            </select>
+            <div style="position:relative;display:flex;align-items:center;">
+              <input type="text" class="fel" id="eCo"
+                placeholder="🔍 ابحث أو اختر من القائمة..."
+                autocomplete="off"
+                onfocus="openCoDrop()"
+                oninput="filterCoDrop()"
+                onkeydown="coDropKeyNav(event)"
+                style="padding-left:36px;cursor:pointer;font-weight:700;" />
+              <span id="eCoDropArrow" onclick="toggleCoDrop()"
+                style="position:absolute;left:10px;color:var(--text3);cursor:pointer;font-size:0.75rem;padding:6px;user-select:none;transition:transform 0.2s ease;">▼</span>
+            </div>
+            <!-- القائمة المنسدلة المفلترة أبجدياً -->
+            <div id="eCoDropList" class="co-drop-menu"></div>
           </div>
           <div class="fg" id="eInvWrap">
             <label id="eInvLbl">🔢 رقم الفاتورة</label>
@@ -6069,47 +6127,305 @@ function handleEditKeyNav(e, field) {
 }
 
 let _allCos = [];  // current type's full options list
+let _filteredCos = []; // currently filtered options in dropdown
 let _coDropIdx = -1;  // keyboard nav index
 
+function normAr(str) {
+  return (str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[\u064B-\u065F]/g, '');
+}
+
 function rebuildCoDrop() {
-  const _hidden = hiddenCOS[curType]||[];
-  _allCos = [...(COS[curType]||[]).filter(x=>!_hidden.includes(x)), ...(customCos[curType]||[])];
+  const _hidden = hiddenCOS[curType] || [];
+  const raw = [...(COS[curType] || []).filter(x => !_hidden.includes(x)), ...(customCos[curType] || [])];
+  _allCos = Array.from(new Set(raw));
+  // ── ترتيب أبجدي عربي دقيق ──
+  _allCos.sort((a, b) => a.localeCompare(b, 'ar'));
   _coDropIdx = -1;
+
   const inp = document.getElementById('eCo');
-  if (inp && inp.value) updateInvField(inp.value);
-}
-
-// ═══════════════════════════════════════════
-//  POPULATE COMPANY DROPDOWN
-// ═══════════════════════════════════════════
-function populateCompanyDropdown() {
-  const select = document.getElementById('eCo');
-  if (!select) return;
-  
-  // Clear existing options except first
-  select.innerHTML = '<option value="">اختر البند...</option>';
-  
-  // Add all companies
-  _allCos.forEach(company => {
-    const option = document.createElement('option');
-    option.value = company;
-    option.textContent = company;
-    select.appendChild(option);
-  });
-}
-
-function coSelectChanged() {
-  const select = document.getElementById('eCo');
-  if (select && select.value) {
-    updateInvField(select.value);
+  if (inp && inp.value) {
+    if (_allCos.includes(inp.value)) {
+      updateInvField(inp.value);
+    } else {
+      inp.value = '';
+      updateInvField('');
+    }
   }
 }
 
-// AUTOCOMPLETE BACKWARD COMPATIBILITY
-function filterCoDrop() { }
-function selectCo() { }
-function hideCoDrop() { const el = document.getElementById('coDropList'); if (el) el.style.display = 'none'; }
-function coDropKeyNav() { }
+function populateCompanyDropdown() {
+  rebuildCoDrop();
+}
+
+function openCoDrop() {
+  const drop = document.getElementById('eCoDropList');
+  const arrow = document.getElementById('eCoDropArrow');
+  if (!drop) return;
+  drop.style.display = 'block';
+  if (arrow) arrow.style.transform = 'rotate(180deg)';
+  _coDropIdx = -1;
+  renderCoDropList(document.getElementById('eCo')?.value || '');
+}
+
+function hideCoDrop() { closeCoDrop(); }
+
+function closeCoDrop() {
+  const drop = document.getElementById('eCoDropList');
+  const arrow = document.getElementById('eCoDropArrow');
+  if (drop) drop.style.display = 'none';
+  if (arrow) arrow.style.transform = 'rotate(0deg)';
+  _coDropIdx = -1;
+}
+
+function toggleCoDrop() {
+  const drop = document.getElementById('eCoDropList');
+  if (drop && drop.style.display !== 'none') {
+    closeCoDrop();
+  } else {
+    const inp = document.getElementById('eCo');
+    if (inp) inp.focus();
+    openCoDrop();
+  }
+}
+
+function filterCoDrop() {
+  const inp = document.getElementById('eCo');
+  if (!inp) return;
+  const q = inp.value;
+  const drop = document.getElementById('eCoDropList');
+  if (drop && drop.style.display === 'none') {
+    openCoDrop();
+  } else {
+    renderCoDropList(q);
+  }
+}
+
+function renderCoDropList(query = '') {
+  const drop = document.getElementById('eCoDropList');
+  if (!drop) return;
+
+  const nQ = normAr(query);
+  if (!nQ) {
+    _filteredCos = [..._allCos];
+  } else {
+    _filteredCos = _allCos.filter(c => normAr(c).includes(nQ));
+  }
+
+  const currentVal = document.getElementById('eCo')?.value || '';
+
+  if (_filteredCos.length === 0) {
+    drop.innerHTML = `
+      <div style="padding:14px;text-align:center;color:#fc8181;font-size:0.84rem;font-weight:700;">
+        🚫 لا يوجد بند بهذا الاسم في القائمة<br>
+        <span style="font-size:0.75rem;color:var(--text3);font-weight:normal;margin-top:4px;display:inline-block;">(يجب الاختيار من البنود المعتمدة المسجلة فقط)</span>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  _filteredCos.forEach((item, idx) => {
+    const isSel = item === currentVal;
+    let displayHtml = esc(item);
+
+    // تمييز الحروف المطابقة
+    if (nQ) {
+      const matchPos = normAr(item).indexOf(nQ);
+      if (matchPos !== -1) {
+        const origPart = item.substr(matchPos, query.trim().length);
+        displayHtml = esc(item.substring(0, matchPos)) +
+          `<span class="co-highlight-match">${esc(origPart)}</span>` +
+          esc(item.substring(matchPos + origPart.length));
+      }
+    }
+
+    html += `
+      <div class="co-drop-item ${isSel ? 'selected' : ''}" id="coItem_${idx}"
+        onmousedown="selectCo('${esc(item)}')"
+        style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+        <span>${displayHtml}</span>
+        ${isSel ? '<span style="color:#68d391;font-size:0.85rem;">✓</span>' : ''}
+      </div>
+    `;
+  });
+
+  drop.innerHTML = html;
+}
+
+function selectCo(item) {
+  const inp = document.getElementById('eCo');
+  if (inp) {
+    inp.value = item;
+    inp.classList.remove('shake-alert');
+  }
+  closeCoDrop();
+  coSelectChanged();
+  checkDuplicateInvoice(false);
+
+  // الانتقال للحقل التالي
+  const invSel = document.getElementById('eInvSel');
+  const invTxt = document.getElementById('eInv');
+  const target = (invSel && invSel.style.display !== 'none') ? invSel : invTxt;
+  if (target && target.style.display !== 'none') {
+    target.focus();
+    try { if (target.select) target.select(); } catch(e){}
+  } else {
+    document.getElementById('eAmt')?.focus();
+  }
+}
+
+function coSelectChanged() {
+  const inp = document.getElementById('eCo');
+  if (inp && inp.value) {
+    updateInvField(inp.value);
+  }
+}
+
+function coDropKeyNav(e) {
+  const drop = document.getElementById('eCoDropList');
+  const isDropOpen = drop && drop.style.display !== 'none';
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (!isDropOpen) {
+      openCoDrop();
+      return;
+    }
+    if (_filteredCos.length > 0) {
+      _coDropIdx = Math.min(_coDropIdx + 1, _filteredCos.length - 1);
+      highlightCoDropItem(_coDropIdx);
+    }
+    return;
+  }
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!isDropOpen) return;
+    if (_filteredCos.length > 0) {
+      _coDropIdx = Math.max(_coDropIdx - 1, 0);
+      highlightCoDropItem(_coDropIdx);
+    }
+    return;
+  }
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (isDropOpen && _coDropIdx >= 0 && _coDropIdx < _filteredCos.length) {
+      selectCo(_filteredCos[_coDropIdx]);
+      return;
+    }
+    if (isDropOpen && _filteredCos.length > 0) {
+      selectCo(_filteredCos[0]);
+      return;
+    }
+
+    const currentVal = (document.getElementById('eCo')?.value || '').trim();
+    if (_allCos.includes(currentVal)) {
+      closeCoDrop();
+      const invSel = document.getElementById('eInvSel');
+      const invTxt = document.getElementById('eInv');
+      const target = (invSel && invSel.style.display !== 'none') ? invSel : invTxt;
+      if (target && target.style.display !== 'none') {
+        target.focus();
+      } else {
+        document.getElementById('eAmt')?.focus();
+      }
+    } else {
+      toast('⚠️ يرجى اختيار بند من القائمة فقط', false);
+      const inp = document.getElementById('eCo');
+      if (inp) {
+        inp.classList.add('shake-alert');
+        setTimeout(() => inp.classList.remove('shake-alert'), 600);
+      }
+    }
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    closeCoDrop();
+    return;
+  }
+
+  if (e.key === 'Tab') {
+    if (isDropOpen && _coDropIdx >= 0 && _coDropIdx < _filteredCos.length) {
+      selectCo(_filteredCos[_coDropIdx]);
+    } else if (isDropOpen && _filteredCos.length === 1) {
+      selectCo(_filteredCos[0]);
+    } else {
+      closeCoDrop();
+      validateCoSelectionOnBlur();
+    }
+  }
+}
+
+function highlightCoDropItem(idx) {
+  document.querySelectorAll('.co-drop-item').forEach((el, i) => {
+    if (i === idx) {
+      el.classList.add('highlighted');
+      el.scrollIntoView({ block: 'nearest' });
+    } else {
+      el.classList.remove('highlighted');
+    }
+  });
+}
+
+function validateCoSelectionOnBlur() {
+  const inp = document.getElementById('eCo');
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) {
+    updateInvField('');
+    return;
+  }
+
+  // مطابقة تامة
+  if (_allCos.includes(val)) {
+    return;
+  }
+
+  // مطابقة بدون همزات وتشكيل
+  const nVal = normAr(val);
+  const exactNorm = _allCos.find(c => normAr(c) === nVal);
+  if (exactNorm) {
+    inp.value = exactNorm;
+    updateInvField(exactNorm);
+    return;
+  }
+
+  // مطابقة جزئية وحيدة
+  const partial = _allCos.filter(c => normAr(c).includes(nVal));
+  if (partial.length === 1) {
+    inp.value = partial[0];
+    updateInvField(partial[0]);
+    return;
+  }
+
+  // إدخال خاطئ غير موجود بالقائمة -> تفريغ الحقل وتنبيه المستخدم
+  inp.value = '';
+  updateInvField('');
+  toast('🚫 غير مسموح: يجب اختيار بند من القائمة المعتمدة فقط — لا يمكن كتابة أي بند عشوائي', false);
+  inp.classList.add('shake-alert');
+  setTimeout(() => inp.classList.remove('shake-alert'), 600);
+}
+
+// إغلاق القائمة والتحقق عند النقر بالخارج
+document.addEventListener('click', function(e) {
+  const drop = document.getElementById('eCoDropList');
+  const inp = document.getElementById('eCo');
+  const arrow = document.getElementById('eCoDropArrow');
+  if (drop && drop.style.display !== 'none') {
+    if (e.target !== inp && e.target !== arrow && !drop.contains(e.target)) {
+      closeCoDrop();
+      validateCoSelectionOnBlur();
+    }
+  }
+});
 
 function updateInvField(company) {
   const txtInv = document.getElementById('eInv');
@@ -6193,7 +6509,17 @@ async function doSave() {
   const notes= document.getElementById('eNotes').value.trim();
 
   if (!date) { toast('⚠️ أدخل التاريخ',false); return; }
-  if (!co)   { toast('⚠️ اختر البند أو الشركة',false); return; }
+  if (!co)   { toast('⚠️ اختر البند أو الشركة من القائمة',false); return; }
+  if (!_allCos.includes(co)) {
+    toast('🚫 غير مسموح: يجب اختيار بند موجود بالقائمة فقط — لا يمكن تسجيل اسم غير موجود!', false);
+    const el = document.getElementById('eCo');
+    if (el) {
+      el.focus();
+      el.classList.add('shake-alert');
+      setTimeout(() => el.classList.remove('shake-alert'), 600);
+    }
+    return;
+  }
   if (amt<=0){ toast('⚠️ أدخل مبلغاً أكبر من صفر',false); return; }
 
   // ── التحقق من تكرار رقم الفاتورة للطلبيات ──
@@ -6398,6 +6724,8 @@ function editTypeChange(targetCo) {
   if (prev && !all.includes(prev)) {
     all.unshift(prev);
   }
+  all = Array.from(new Set(all));
+  all.sort((a, b) => a.localeCompare(b, 'ar'));
 
   sel.innerHTML = '<option value="">اختر البند / الشركة...</option>';
   all.forEach(c => {
