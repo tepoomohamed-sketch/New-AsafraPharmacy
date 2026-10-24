@@ -4971,6 +4971,7 @@ function bootFB(cfg) {
     const sbKey = 'sb_publishable_RmNPf0sTo7M2wnN8SDZDtw_N6x3JRzU';
     sb = supabase.createClient(sbUrl, sbKey);
     loadLocalSettings();
+    sbPreloadAllMeta(); // [SWR] تحميل مسبق فوري لكافة إعدادات meta بطلب واحد بدلاً من 20+ طلب
     // Update login screen title
     const loginTitle = document.getElementById('loginPharmTitle');
     if (loginTitle) loginTitle.textContent = pharmName;
@@ -4982,15 +4983,75 @@ function bootFB(cfg) {
   }
 }
 
-// ── Supabase Meta Helpers ──
-async function sbGetMeta(key) {
+// ── Supabase Meta Helpers (SWR Cache & Consolidated Batch Preload) ──
+let _metaCache = {};
+try {
+  const cachedMetaStr = localStorage.getItem('asafra_cached_meta_v1');
+  if (cachedMetaStr) _metaCache = JSON.parse(cachedMetaStr) || {};
+} catch(e){}
+
+let _metaPreloadPromise = null;
+function sbPreloadAllMeta(forceRefresh = false) {
+  if (_metaPreloadPromise && !forceRefresh) return _metaPreloadPromise;
+  if (!sb) return Promise.resolve(_metaCache);
+  _metaPreloadPromise = sb.from('meta').select('key, value').then(({ data, error }) => {
+    if (!error && Array.isArray(data)) {
+      data.forEach(item => {
+        if (item && item.key) _metaCache[item.key] = item.value || {};
+      });
+      try { localStorage.setItem('asafra_cached_meta_v1', JSON.stringify(_metaCache)); } catch(e){}
+    }
+    return _metaCache;
+  }).catch(err => {
+    console.warn('sbPreloadAllMeta failed:', err);
+    return _metaCache;
+  });
+  return _metaPreloadPromise;
+}
+
+let sbChanAllMeta = null;
+function listenAllMetaChanges() {
+  if (sbChanAllMeta || !sb || !sb.channel) return;
+  try {
+    sbChanAllMeta = sb.channel('all-meta-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meta' }, payload => {
+        try {
+          const k = payload.new?.key;
+          const v = payload.new?.value;
+          if (k) {
+            _metaCache[k] = v;
+            try { localStorage.setItem('asafra_cached_meta_v1', JSON.stringify(_metaCache)); } catch(e){}
+          }
+        } catch(e){}
+      })
+      .subscribe();
+  } catch(e){}
+}
+
+async function sbGetMeta(key, options = {}) {
+  if (options && options.forceRefresh) {
+    const {data, error} = await sb.from('meta').select('value').eq('key',key).maybeSingle();
+    if (error) { console.error('sbGetMeta:', key, error); return _metaCache[key] || {}; }
+    const val = data?.value || {};
+    _metaCache[key] = val;
+    try { localStorage.setItem('asafra_cached_meta_v1', JSON.stringify(_metaCache)); } catch(e){}
+    return val;
+  }
+  if (_metaCache && Object.prototype.hasOwnProperty.call(_metaCache, key)) {
+    return _metaCache[key];
+  }
   const {data, error} = await sb.from('meta').select('value').eq('key',key).maybeSingle();
   if (error) { console.error('sbGetMeta:', key, error); return {}; }
-  return data?.value || {};
+  const val = data?.value || {};
+  _metaCache[key] = val;
+  try { localStorage.setItem('asafra_cached_meta_v1', JSON.stringify(_metaCache)); } catch(e){}
+  return val;
 }
+
 async function sbSetMeta(key, value) {
+  _metaCache[key] = value;
+  try { localStorage.setItem('asafra_cached_meta_v1', JSON.stringify(_metaCache)); } catch(e){}
   const {error} = await sb.from('meta').upsert({key, value}, {onConflict:'key'});
-  // [v12] كان الفشل يمر بصمت تام، فيبقى الرصيد خاطئاً دون أن يعلم أحد.
   if (error) { console.error('sbSetMeta:', key, error); throw error; }
 }
 
@@ -5237,6 +5298,7 @@ async function doLogout() {
   unsubE=null; unsubB=null; unsubAtt=null;
   if (attClockInt) { clearInterval(attClockInt); attClockInt=null; }
   try {
+    localStorage.removeItem('asafra_cached_me_v1');
     localStorage.removeItem('asafra_worker_session');
     if (typeof workerShiftReminderInt !== 'undefined' && workerShiftReminderInt) {
       clearInterval(workerShiftReminderInt);
@@ -5269,6 +5331,36 @@ async function onAuth(user) {
     show('scLogin');
     return;
   }
+
+  // ⚡ [تسريع الفتح الفوري SWR] لو كان الحساب محفوظاً محلياً، اعرض واجهة الصيدلية في 0.1 ثانية فوراً
+  let hydratedFromCache = false;
+  try {
+    const cachedMeStr = localStorage.getItem('asafra_cached_me_v1');
+    const cachedUsersStr = localStorage.getItem('asafra_cached_users_v1');
+    if (cachedMeStr) {
+      const cMe = JSON.parse(cachedMeStr);
+      if (cMe && (cMe.uid === user.uid || (cMe.email && cMe.email.toLowerCase() === (user.email||'').toLowerCase()))) {
+        me = cMe;
+        if (cachedUsersStr) {
+          try { users = JSON.parse(cachedUsersStr) || {}; } catch(e){}
+        }
+        buildApp();
+        hydrateEntriesFromCache();
+        listenBalance();
+        listenEntries();
+        if (me.role === 'admin') { listenPOS(); loadBalances(); }
+        loadAndListenCustomItems();
+        loadAttMeta();
+        loadAndListenWalletPin();
+        loadAndListenSalaryAdjustments();
+        listenAllMetaChanges();
+        hydratedFromCache = true;
+      }
+    }
+  } catch(e) {
+    console.warn('Fast auth hydration fallback:', e);
+  }
+
   try {
     let {data: userRow, error: userErr} = await sb.from('users').select('*')
       .or(`id.eq.${user.uid},email.ilike.${user.email}`)
@@ -5293,6 +5385,7 @@ async function onAuth(user) {
     }
     // المستخدمون التاليون يحتاجون سجلاً مفعلاً في جدول users
     if (!userRow) {
+      localStorage.removeItem('asafra_cached_me_v1');
       await auth.signOut();
       show('scLogin');
       const eEl = document.getElementById('lErr');
@@ -5301,22 +5394,37 @@ async function onAuth(user) {
       return;
     }
     me = { uid: user.uid, ...userRow, permissions: userRow.permissions || {} };
+    try { localStorage.setItem('asafra_cached_me_v1', JSON.stringify(me)); } catch(e){}
     await loadUsers(); // يُحمَّل للجميع لمعرفة أدوار المستخدمين
-    buildApp();
-    listenBalance();
-    listenEntries();
-    if (me.role==='admin') { listenPOS(); loadBalances(); }
-    loadAndListenCustomItems(); // مزامنة البنود المخصصة عبر الأجهزة
-    loadAttMeta(); // تحميل أسماء الموظفين مبكراً لقائمة الرواتب
-    loadAndListenWalletPin(); // تحميل ومزامنة الرقم السري لتصفية المحفظة
-    loadAndListenSalaryAdjustments(); // تحميل ومزامنة اعتمادات وطلبات المكافآت والخصومات
-    // attendance: lazy load — يُحمَّل فقط عند فتح تبويب الحضور
+
+    if (!hydratedFromCache) {
+      buildApp();
+      hydrateEntriesFromCache();
+      listenBalance();
+      listenEntries();
+      if (me.role==='admin') { listenPOS(); loadBalances(); }
+      loadAndListenCustomItems(); // مزامنة البنود المخصصة عبر الأجهزة
+      loadAttMeta(); // تحميل أسماء الموظفين مبكراً لقائمة الرواتب
+      loadAndListenWalletPin(); // تحميل ومزامنة الرقم السري لتصفية المحفظة
+      loadAndListenSalaryAdjustments(); // تحميل ومزامنة اعتمادات وطلبات المكافآت والخصومات
+      listenAllMetaChanges();
+    } else {
+      // إذا كان معروضاً بالفعل، حدّث الشارة والاسم فوراً لو حدث تعديل
+      const rc = document.getElementById('hURole');
+      if (rc) {
+        rc.textContent = me.role==='admin' ? '👑 مدير' : '👤 موظف';
+        rc.className   = 'r-chip '+(me.role==='admin'?'rc-admin':'rc-emp');
+      }
+      const sideR = document.getElementById('sideURole');
+      if (sideR) sideR.textContent = me.role==='admin' ? '👑 مدير النظام' : '👤 موظف صيدلية';
+    }
   } catch(e) {
     console.error('onAuth error:', e);
-    toast('❌ خطأ في التحميل: '+e.message, false);
-    show('scLogin');
-    // re-enable login button in case it's still disabled
-    const lBtn=document.getElementById('lBtn'); if(lBtn){lBtn.textContent='🔐 دخول';lBtn.disabled=false;}
+    if (!hydratedFromCache) {
+      toast('❌ خطأ في التحميل: '+e.message, false);
+      show('scLogin');
+      const lBtn=document.getElementById('lBtn'); if(lBtn){lBtn.textContent='🔐 دخول';lBtn.disabled=false;}
+    }
   }
 }
 
@@ -5327,6 +5435,7 @@ async function loadUsers() {
   const {data: uRows} = await sb.from('users').select('*');
   users = {};
   (uRows||[]).forEach(r => { users[r.id] = r; });
+  try { localStorage.setItem('asafra_cached_users_v1', JSON.stringify(users)); } catch(e){}
 }
 
 async function setRole(uid, role) {
@@ -5515,6 +5624,29 @@ function arErr(e) {
   return raw || 'حدث خطأ غير معروف';
 }
 
+function hydrateEntriesFromCache() {
+  try {
+    const raw = localStorage.getItem('asafra_cached_entries_v1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        entries = parsed;
+        entries.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0));
+        updToday();
+        updateOnlineDebtsHeader();
+        refreshActivePane();
+        renderSalesTarget();
+        renderMonthlyProgress();
+        console.log(`⚡ [SWR Cache] تم تحميل ${entries.length} حركة فوراً من الذاكرة المحلية`);
+        return true;
+      }
+    }
+  } catch(e) {
+    console.warn('hydrateEntriesFromCache error:', e);
+  }
+  return false;
+}
+
 async function fetchEntries() {
   const d6 = new Date(); d6.setMonth(d6.getMonth() - 6);
   const since = d6.toISOString().slice(0, 10);
@@ -5551,18 +5683,25 @@ async function fetchEntries() {
     }
   }
 
-  entries = allData.map(r => ({
-    ...r,
-    posReviewed: r.pos_reviewed,
-    posReviewedAt: r.pos_reviewed_at,
-    posReviewedBy: r.pos_reviewed_by
-  }));
-  entries.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0));
-  updToday();
-  updateOnlineDebtsHeader();
-  refreshActivePane();
-  renderSalesTarget();
-  renderMonthlyProgress();
+  if (allData.length > 0 || entries.length === 0) {
+    entries = allData.map(r => ({
+      ...r,
+      posReviewed: r.pos_reviewed,
+      posReviewedAt: r.pos_reviewed_at,
+      posReviewedBy: r.pos_reviewed_by
+    }));
+    entries.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0));
+    try {
+      localStorage.setItem('asafra_cached_entries_v1', JSON.stringify(entries));
+    } catch(e) {
+      console.warn('Failed to cache entries to localStorage:', e);
+    }
+    updToday();
+    updateOnlineDebtsHeader();
+    refreshActivePane();
+    renderSalesTarget();
+    renderMonthlyProgress();
+  }
 }
 
 // [v13] تجميع أحداث realtime — كان كل حدث يُعيد جلب قيود ستة أشهر كاملة
@@ -5723,6 +5862,19 @@ function toggleSidebar(open) {
 }
 
 function buildApp() {
+  // [SWR] استرجاع الرصيد فوراً من الكاش دون انتظار استجابة الشبكة
+  try {
+    const cachedBal = localStorage.getItem('asafra_new_cached_balance');
+    if (cachedBal !== null && cachedBal !== undefined && cachedBal !== '') {
+      const el = document.getElementById('hBal');
+      if (el) {
+        const b = Number(cachedBal);
+        el.textContent = fmt(b);
+        el.style.color = b >= 0 ? '#d4edda' : '#ffb3b3';
+      }
+    }
+  } catch(e){}
+
   document.getElementById('hPhName').textContent = '🏥 '+pharmName;
   const sidePh = document.getElementById('sidePhName');
   if (sidePh) sidePh.textContent = pharmName;
