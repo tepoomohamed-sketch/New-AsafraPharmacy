@@ -6563,7 +6563,7 @@ function normAr(str) {
 
 function rebuildCoDrop() {
   const _hidden = hiddenCOS[curType] || [];
-  const raw = [...(COS[curType] || []).filter(x => !_hidden.includes(x)), ...(customCos[curType] || [])];
+  const raw = [...(customCos[curType] || []), ...(COS[curType] || [])].filter(x => !_hidden.includes(x));
   _allCos = Array.from(new Set(raw));
   // ── ترتيب أبجدي عربي دقيق ──
   _allCos.sort((a, b) => a.localeCompare(b, 'ar'));
@@ -7181,7 +7181,7 @@ function editEntry(id) {
 function editTypeChange(targetCo) {
   const t = document.getElementById('editType').value;
   const _hidden = hiddenCOS[t] || [];
-  let all = [...(COS[t] || []).filter(x => !_hidden.includes(x)), ...(customCos[t] || [])];
+  let all = [...(customCos[t] || []), ...(COS[t] || [])].filter(x => !_hidden.includes(x));
 
   // دمج أي بنود سابقة مسجلة في entries لهذا النوع لضمان عدم اختفاء أي شركة أو مورد أو بند تسوية
   const existingCos = entries.filter(e => e.type === t && e.company).map(e => e.company);
@@ -10193,13 +10193,15 @@ function setItemStatusFilter(status, btn) {
   renderAllItems();
 }
 
+// ── إضافة بند جديد (خارجي متاح للجميع) ──
 async function addCustom() {
   const type = document.getElementById('cType')?.value || window._currentItemsCategory || 'مصاريف';
   const input = document.getElementById('cName');
   const name = input ? input.value.trim() : '';
   if (!name) { toast('⚠️ يرجى كتابة اسم البند أولاً', false); return; }
   if (!customCos[type]) customCos[type] = [];
-  const allExisting = [...(COS[type]||[]), ...(customCos[type]||[])];
+
+  const allExisting = Array.from(new Set([...(customCos[type] || []), ...(COS[type] || [])]));
   if (allExisting.includes(name)) { toast('⚠️ هذا البند موجود بالفعل', false); return; }
   
   if ((hiddenCOS[type]||[]).includes(name)) {
@@ -10207,6 +10209,8 @@ async function addCustom() {
   } else {
     customCos[type].push(name);
   }
+  customCos[type].sort((a, b) => a.localeCompare(b, 'ar'));
+
   saveLoc();
   await sbSetMeta('customItems', customCos);
   await sbSetMeta('hiddenItems', hiddenCOS);
@@ -10216,15 +10220,16 @@ async function addCustom() {
   toast('✅ تم إضافة البند بنجاح');
 }
 
+// ── إخفاء / إظهار البند في القوائم المنسدلة ──
 async function toggleItemVisibility(type, name) {
   if (!hiddenCOS[type]) hiddenCOS[type] = [];
   const isCurrentlyHidden = hiddenCOS[type].includes(name);
   if (isCurrentlyHidden) {
     hiddenCOS[type] = hiddenCOS[type].filter(x => x !== name);
-    toast('👁 تم إظهار البند في القوائم');
+    toast('👁 تم إظهار البند في القوائم المنسدلة');
   } else {
     hiddenCOS[type].push(name);
-    toast('🙈 تم إخفاء البند من القوائم');
+    toast('🙈 تم إخفاء البند من القوائم المنسدلة');
   }
   saveLoc();
   renderAllItems();
@@ -10232,32 +10237,68 @@ async function toggleItemVisibility(type, name) {
   sbSetMeta('hiddenItems', hiddenCOS).catch(e => console.warn('hiddenItems sync:', e));
 }
 
-async function remCustom(type, name) {
-  const countInEntries = (entries || []).filter(e => !e.deleted && e.type === type && (e.company||'').trim() === name.trim()).length;
-  if (countInEntries > 0) {
-    const ok = confirm(`⚠️ تنبيه: هذا البند مسجل به ${countInEntries} قيد في الحركات المالية!\nهل أنت متأكد من حذفه من قائمة الاختيارات السريعة؟ (لن يتم حذف القيود المسجلة)`);
-    if (!ok) return;
-  }
-  customCos[type] = (customCos[type]||[]).filter(c => c !== name);
-  saveLoc();
-  await sbSetMeta('customItems', customCos);
-  renderAllItems();
-  if (curType === type) { rebuildCoDrop(); populateCompanyDropdown(); }
-  toast('🗑 تم حذف البند المخصص');
-}
-
 function hideBuiltin(type, name) { toggleItemVisibility(type, name); }
 function restoreBuiltin(type, name) { toggleItemVisibility(type, name); }
 
+// ── حذف بند نهائياً (مع حظر مسح أي بند له حركات سابقة) ──
+async function deleteItem(type, name) {
+  // 1. الفحص الصارم: هل البند له قيود مالية سابقة في قاعدة البيانات؟
+  const matches = (entries || []).filter(e => 
+    !e.deleted && 
+    e.type === type && 
+    (e.company || '').trim() === name.trim()
+  );
+
+  if (matches.length > 0) {
+    // حظر الحذف نهائياً لحماية الحسابات القديمة
+    alert(
+      '⛔ غير مسموح بمسح هذا البند نهائياً!\n\n' +
+      'البند: "' + name + '" مسجل به [ ' + matches.length + ' حركة مالية سابقة ] في قاعدة البيانات.\n\n' +
+      'مسح هذا البند سيؤدي إلى تلف التقارير التاريخية وكشوف الحسابات القديمة المرتبطة به.\n\n' +
+      '💡 الحل البديل:\nيمكنك الضغط على زر [🙈 إخفاء] لإخفائه من القوائم المنسدلة عند تسجيل القيود الجديدة دون المساس بالحسابات السابقة.'
+    );
+    return; // إيقاف فوري — لا يُمسح أبداً!
+  }
+
+  // 2. إذا لم يكن له أي قيود مسجلة (0 حركة)، نطلب تأكيد الحذف
+  const ok = confirm('هل أنت متأكد من مسح البند "' + name + '" نهائياً من النظام؟\n\n(هذا البند غير مستخدم في أي قيود سابقة وسيتم حذفه بالكامل)');
+  if (!ok) return;
+
+  // 3. حذف البند من القائمة المحفوظة بالسحابة
+  if (customCos[type]) {
+    customCos[type] = customCos[type].filter(c => c !== name);
+  }
+  if (typeof COS !== 'undefined' && COS[type]) {
+    COS[type] = COS[type].filter(c => c !== name);
+  }
+  if (hiddenCOS[type]) {
+    hiddenCOS[type] = hiddenCOS[type].filter(c => c !== name);
+  }
+
+  saveLoc();
+  await sbSetMeta('customItems', customCos);
+  await sbSetMeta('hiddenItems', hiddenCOS);
+
+  renderAllItems();
+  if (curType === type) {
+    rebuildCoDrop();
+    populateCompanyDropdown();
+  }
+  toast('🗑 تم مسح البند "' + name + '" نهائياً');
+}
+
+// دالة التوافق القديمة
+async function remCustom(type, name) {
+  return deleteItem(type, name);
+}
+
+// ── عرض كافة بنود النظام بتصميم موحد بدون تقسيم مدمج/مخصص ──
 function renderAllItems() {
   const el = document.getElementById('customList');
   if (!el) return;
   const type = document.getElementById('cType')?.value || window._currentItemsCategory || 'مصاريف';
-  const builtIn = COS[type] || [];
-  const custom = customCos[type] || [];
-  const hidden = hiddenCOS[type] || [];
-
-  // Gather historical counts & totals from entries
+  
+  // إحصاء الحركات والمبالغ السابقة لكل بند في entries
   const histMap = {};
   (entries || []).forEach(e => {
     if (!e.deleted && e.type === type && e.company) {
@@ -10269,20 +10310,26 @@ function renderAllItems() {
     }
   });
 
-  // Combine all distinct names
-  const allNamesSet = new Set([...builtIn, ...custom, ...Object.keys(histMap)]);
+  // جمع كافة البنود من القائمة الخارجية المحفوظة بالسحابة + أي قيود مسجلة
+  const allNamesSet = new Set([
+    ...(customCos[type] || []),
+    ...(COS[type] || []),
+    ...Object.keys(histMap)
+  ]);
   let allNames = Array.from(allNamesSet);
 
-  // Alphabetical sort (Arabic collation)
+  // ترتيب أبجدي عربي دقيق
   allNames.sort((a, b) => a.localeCompare(b, 'ar'));
 
-  // Search filter
+  // فلترة بالبحث اللحظي
   const searchFilter = (document.getElementById('itemsSearchInp')?.value || '').trim().toLowerCase();
   if (searchFilter) {
     allNames = allNames.filter(n => n.toLowerCase().includes(searchFilter));
   }
 
-  // Status filter ('all' | 'active' | 'hidden')
+  const hidden = hiddenCOS[type] || [];
+
+  // فلترة بالحالة (الكل / النشطة فقط / المخفية فقط)
   const statusFilter = window._itemStatusFilter || 'all';
   if (statusFilter === 'active') {
     allNames = allNames.filter(n => !hidden.includes(n));
@@ -10308,30 +10355,14 @@ function renderAllItems() {
   }
 
   const itemsHtml = allNames.map(name => {
-    const isBuiltIn = builtIn.includes(name);
-    const isCustom = custom.includes(name);
     const isHidden = hidden.includes(name);
     const stats = histMap[name] || { count: 0, total: 0 };
-
-    // Badges
-    let badgeHtml = '';
-    if (isBuiltIn) {
-      badgeHtml += `<span style="font-size:.68rem;background:rgba(59,130,246,0.12);color:#3b82f6;padding:2px 7px;border-radius:6px;font-weight:700;">أساسي</span>`;
-    }
-    if (isCustom) {
-      badgeHtml += `<span style="font-size:.68rem;background:rgba(16,185,129,0.12);color:#10b981;padding:2px 7px;border-radius:6px;font-weight:700;">مخصص</span>`;
-    }
-    if (!isBuiltIn && !isCustom && stats.count > 0) {
-      badgeHtml += `<span style="font-size:.68rem;background:rgba(139,92,246,0.12);color:#8b5cf6;padding:2px 7px;border-radius:6px;font-weight:700;">تاريخي</span>`;
-    }
-    if (isHidden) {
-      badgeHtml += `<span style="font-size:.68rem;background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 7px;border-radius:6px;font-weight:700;">مخفي</span>`;
-    }
+    const hasHistory = stats.count > 0;
 
     const qt = JSON.stringify(type).replace(/"/g, '&quot;');
     const qn = JSON.stringify(name).replace(/"/g, '&quot;');
 
-    // Highlight search match in name
+    // تمييز كلمة البحث داخل الاسم
     let displayName = esc(name);
     if (searchFilter) {
       const idx = name.toLowerCase().indexOf(searchFilter);
@@ -10349,25 +10380,23 @@ function renderAllItems() {
           <div style="min-width:0;flex:1;">
             <div style="font-size:.9rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <span>${displayName}</span>
-              ${badgeHtml}
+              ${isHidden ? '<span style="font-size:.68rem;background:rgba(239,68,68,0.12);color:#ef4444;padding:2px 7px;border-radius:6px;font-weight:700;">مخفي من القوائم</span>' : ''}
             </div>
             <div style="font-size:.76rem;color:var(--text3);margin-top:2px;">
-              ${stats.count > 0 ? `📊 ${stats.count} قيد مسجل • إجمالي ${fmt(stats.total)} ج` : '⚪ لا توجد قيود مسجلة بهذا الاسم'}
+              ${hasHistory ? `📊 ${stats.count} قيد مسجل • إجمالي ${fmt(stats.total)} ج` : '⚪ بند غير مستخدم (0 قيود)'}
             </div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <button type="button" class="btn btn-xs btn-blue" onclick="openItemRenameModal(${qt}, ${qn})" title="تعديل اسم البند في السجلات" style="font-weight:700;padding:4px 9px;">
+          <button type="button" class="btn btn-xs btn-blue" onclick="openItemRenameModal(${qt}, ${qn})" title="تعديل اسم البند وتحديث قيوده السابقة" style="font-weight:700;padding:4px 9px;">
             ✏️ تعديل
           </button>
-          <button type="button" class="btn btn-xs btn-ghost" onclick="toggleItemVisibility(${qt}, ${qn})" title="${isHidden ? 'إظهار في القوائم' : 'إخفاء من القوائم'}" style="font-size:.82rem;padding:4px 7px;">
+          <button type="button" class="btn btn-xs btn-ghost" onclick="toggleItemVisibility(${qt}, ${qn})" title="${isHidden ? 'إظهار في القوائم المنسدلة' : 'إخفاء من القوائم المنسدلة'}" style="font-size:.82rem;padding:4px 7px;">
             ${isHidden ? '👁 إظهار' : '🙈 إخفاء'}
           </button>
-          ${isCustom ? `
-            <button type="button" class="btn btn-xs btn-red" onclick="remCustom(${qt}, ${qn})" title="حذف نهائي" style="font-size:.82rem;padding:4px 7px;">
-              🗑
-            </button>
-          ` : ''}
+          <button type="button" class="btn btn-xs btn-red" onclick="deleteItem(${qt}, ${qn})" title="${hasHistory ? 'لا يمكن حذفه لوجود قيود سابقة' : 'حذف نهائي'}" style="font-size:.82rem;padding:4px 7px;${hasHistory ? 'opacity:0.65;' : ''}">
+            🗑
+          </button>
         </div>
       </div>
     `;
@@ -10376,10 +10405,10 @@ function renderAllItems() {
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:.82rem;">
       <span style="color:var(--text2);font-weight:700;">
-        إجمالي البنود: <strong style="color:${themeCol};">${allNames.length}</strong>
+        إجمالي البنود: <strong style="color:${themeCol};">${allNames.length}</strong> بند متاح وقابل للتعديل
       </span>
       <span style="color:var(--text3);font-size:.76rem;">
-        مرتبة أبجدياً — يمكنك تعديل الاسم أو إخفاء أي بند بنقرة واحدة
+        مرتبة أبجدياً — اضغط ✏️ للتعديل أو 🙈 للإخفاء
       </span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:10px;">
@@ -10392,7 +10421,7 @@ function renderCustomList() { renderAllItems(); }
 
 function saveLoc() { localStorage.setItem('asafra_new_ph_set', JSON.stringify({name:pharmName,custom:customCos})); }
 
-// ── Item Rename Modal & Database Cascade Logic ──
+// ── نافذة تعديل اسم البند وتحديث القيود السابقة في قاعدة البيانات ──
 window._renamingItem = null;
 
 function openItemRenameModal(type, oldName) {
@@ -10411,7 +10440,7 @@ function openItemRenameModal(type, oldName) {
     inp.value = oldName;
   }
 
-  // Count historical entries
+  // فحص القيود السابقة لهذا البند
   const matches = (entries || []).filter(e => !e.deleted && e.type === type && (e.company||'').trim() === oldName.trim());
   const totalAmount = matches.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
@@ -10425,7 +10454,7 @@ function openItemRenameModal(type, oldName) {
       if (chk) { chk.checked = true; chk.disabled = false; }
       if (chkLabel) chkLabel.style.opacity = '1';
     } else {
-      statsText.innerHTML = `لا توجد قيود سابقة مسجلة بهذا الاسم في قاعدة البيانات. سيتم فقط تحديث اسم البند في القوائم.`;
+      statsText.innerHTML = `لا توجد قيود سابقة مسجلة بهذا الاسم في قاعدة البيانات. سيتم تعديل اسم البند في القوائم مباشرة.`;
       if (chk) { chk.checked = false; chk.disabled = true; }
       if (chkLabel) chkLabel.style.opacity = '0.6';
     }
@@ -10465,10 +10494,10 @@ function onRenameInputChanged() {
 
   if (btn) btn.disabled = false;
 
-  // Check collision with existing items in this type
+  // فحص التكرار مع بنود أخرى موجودة
   const allExisting = new Set([
-    ...(COS[type] || []),
     ...(customCos[type] || []),
+    ...(COS[type] || []),
     ...((entries || []).filter(e => !e.deleted && e.type === type && e.company).map(e => (e.company||'').trim()))
   ]);
 
@@ -10504,35 +10533,29 @@ async function executeItemRename() {
   }
 
   try {
-    // 1. Update customCos and hiddenCOS
+    // 1. تحديث الاسم في القائمة الخارجية customCos
     if (!customCos[type]) customCos[type] = [];
-    if (!hiddenCOS[type]) hiddenCOS[type] = [];
+    customCos[type] = customCos[type].map(x => x === oldName ? newName : x);
+    if (!customCos[type].includes(newName)) customCos[type].push(newName);
+    customCos[type] = Array.from(new Set(customCos[type])).sort((a, b) => a.localeCompare(b, 'ar'));
 
-    const isBuiltIn = (COS[type] || []).includes(oldName);
-    const isCustom = customCos[type].includes(oldName);
-    const isHidden = hiddenCOS[type].includes(oldName);
-
-    if (isCustom) {
-      customCos[type] = customCos[type].map(x => x === oldName ? newName : x);
-    } else if (isBuiltIn) {
-      if (!hiddenCOS[type].includes(oldName)) hiddenCOS[type].push(oldName);
-      if (!customCos[type].includes(newName)) customCos[type].push(newName);
-    } else {
-      if (!customCos[type].includes(newName)) customCos[type].push(newName);
+    // تحديث COS إن وُجد كاحتياط
+    if (typeof COS !== 'undefined' && COS[type]) {
+      COS[type] = COS[type].map(x => x === oldName ? newName : x);
+      if (!COS[type].includes(newName)) COS[type].push(newName);
     }
 
-    if (isHidden) {
+    // تحديث البنود المخفية إن كان مخفياً
+    if (hiddenCOS[type] && hiddenCOS[type].includes(oldName)) {
       hiddenCOS[type] = hiddenCOS[type].map(x => x === oldName ? newName : x);
+      hiddenCOS[type] = Array.from(new Set(hiddenCOS[type]));
     }
-
-    customCos[type] = Array.from(new Set(customCos[type]));
-    hiddenCOS[type] = Array.from(new Set(hiddenCOS[type]));
 
     saveLoc();
     await sbSetMeta('customItems', customCos);
     await sbSetMeta('hiddenItems', hiddenCOS);
 
-    // 2. Cascade update in Database if requested
+    // 2. تحديث القيود السابقة في قاعدة البيانات إن اختار المستخدم ذلك
     let updatedDbCount = 0;
     if (cascade) {
       const { data, error } = await sb.from('entries')
@@ -10544,6 +10567,7 @@ async function executeItemRename() {
         console.error('Cascade rename error:', error);
         toast('❌ حدث خطأ أثناء تحديث القيود السابقة في السحابة: ' + error.message, false);
       } else {
+        // تحديث مصفوفة القيود في الذاكرة
         (entries || []).forEach(e => {
           if (e.type === type && (e.company || '').trim() === oldName.trim()) {
             e.company = newName;
@@ -10577,7 +10601,7 @@ async function executeItemRename() {
       }
     }
 
-    // 3. Refresh UI across app
+    // 3. تحديث واجهات المستخدم
     renderAllItems();
     if (curType === type) {
       rebuildCoDrop();
