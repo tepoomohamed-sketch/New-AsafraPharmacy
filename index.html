@@ -2984,18 +2984,18 @@ function ensureXLSX() {
         <div id="adminSalaryAdjPendingBanner" class="card" style="display:none;margin-bottom:12px;border:1.5px solid #ec4899;background:linear-gradient(135deg,rgba(236,72,153,0.08),rgba(147,51,234,0.06));padding:10px 14px;border-radius:12px;">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:1.3rem;">⏳</span>
+              <span style="font-size:1.3rem;">🎁</span>
               <div>
                 <div style="font-weight:900;color:var(--text1);font-size:0.88rem;">
-                  تنبيه الإدارة: يوجد <strong style="color:#ec4899;" id="adminSalaryAdjPendingCount">0</strong> طلب مكافآت/خصومات بانتظار موافقتك
+                  تنبيه الإدارة: يوجد <strong style="color:#ec4899;" id="adminSalaryAdjPendingCount">0</strong> حركة مكافآت/خصومات بانتظار إجرائك
                 </div>
                 <div style="font-size:0.75rem;color:var(--text3);margin-top:2px;">
-                  جميع المكافآت والخصومات تُسجل مع الراتب ولا تمس الخزينة إطلاقاً.
+                  يمكنك اعتمادها مع الراتب أو سدادها وصرفها نقداً فوراً من الخزينة.
                 </div>
               </div>
             </div>
             <button type="button" class="btn btn-sm" onclick="openSalaryAdjApprovalModal()" style="background:#ec4899;color:#fff;border:none;border-radius:8px;font-weight:800;padding:6px 14px;cursor:pointer;box-shadow:0 3px 10px rgba(236,72,153,0.3);">
-              ⚖️ مراجعة واعتماد الطلبات ➔
+              🎁 مراجعة وسداد الحركات ➔
             </button>
           </div>
         </div>
@@ -6083,9 +6083,9 @@ function renderSaliimNav() {
   html += '<div class="saliim-nav-item" data-tab="att" onclick="swTab(\'att\', this)">'
         + '<span class="saliim-item-icon">⏱</span><span>الحضور والانصراف</span></div>';
 
-  // اعتمادات المرتبات
-  html += '<div class="saliim-nav-item" id="navItemSalaryAdj" onclick="openSalaryAdjApprovalModal(); toggleSidebar(false);" style="display:none;">'
-        + '<span class="saliim-item-icon">⚖️</span><span>اعتمادات المرتبات</span>'
+  // حركات الخصومات والمكافآت
+  html += '<div class="saliim-nav-item" id="navItemSalaryAdj" onclick="openSalaryAdjApprovalModal(); toggleSidebar(false);">'
+        + '<span class="saliim-item-icon">🎁</span><span>حركات الخصومات والمكافآت</span>'
         + '<span class="badge" id="navSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span></div>';
 
   // لعبة الحظ
