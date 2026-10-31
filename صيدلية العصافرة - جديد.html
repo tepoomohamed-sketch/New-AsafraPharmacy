@@ -2643,7 +2643,11 @@ function ensureXLSX() {
     <!-- ── MAIN APP SHELL (Crisp Slate Content Area) ── -->
     <main class="saliim-main">
       <!-- TOPBAR -->
-      <header class="saliim-topbar">
+      <!-- شريط تنبيه انقطاع الإنترنت لحماية المعاملات المالية -->
+    <div id="networkOfflineBanner" style="display:none;background:#e53e3e;color:#fff;text-align:center;padding:10px 16px;font-size:0.95rem;font-weight:700;position:sticky;top:0;z-index:999999;box-shadow:0 4px 12px rgba(229,62,62,.35);">
+      ⚠️ تنبيه: تم فقدان الاتصال بالإنترنت! تم قفل عمليات الحفظ والحذف مؤقتاً لحماية الخزينة من التضارب لحين عودة الشبكة.
+    </div>
+    <header class="saliim-topbar">
         <div class="saliim-topbar-right">
           <button class="saliim-mobile-toggle" onclick="toggleSidebar(true)" aria-label="القائمة الرئيسية">☰</button>
           <div class="saliim-page-header">
@@ -4976,6 +4980,21 @@ function bootFB(cfg) {
     const loginTitle = document.getElementById('loginPharmTitle');
     if (loginTitle) loginTitle.textContent = pharmName;
     auth.onAuthStateChanged(onAuth);
+    // ── حماية انقطاع النت في الصيدلية ──
+    if (typeof window !== 'undefined') {
+      window.addEventListener('offline', () => {
+        const b = document.getElementById('networkOfflineBanner');
+        if (b) b.style.display = 'block';
+        toast('⚠️ انقطع اتصال الإنترنت! تم إيقاف الحفظ مؤقتاً لحماية الخزينة.', false);
+      });
+      window.addEventListener('online', () => {
+        const b = document.getElementById('networkOfflineBanner');
+        if (b) b.style.display = 'none';
+        toast('✅ عاد الاتصال بالإنترنت بنجاح! جاري مزامنة أحدث البيانات...');
+        fetchEntriesDebounced(250);
+        listenBalance();
+      });
+    }
     show('scLoad');
   } catch(e) {
     toast('❌ خطأ في التشغيل: '+e.message, false);
@@ -6651,6 +6670,20 @@ function checkDuplicateInvoice(isEdit = false) {
 //  SAVE ENTRY
 // ═══════════════════════════════════════════
 async function doSave() {
+  // ── حماية فورية: منع الحفظ عند انقطاع الإنترنت ──
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    toast('⚠️ لا يوجد اتصال بالإنترنت حالياً! تم منع حفظ القيد لحماية الخزينة من أي تكرار.', false);
+    return;
+  }
+  // ── حماية ضد الضغط المزدوج (Mutex Lock) ──
+  if (window._isSavingEntryLock) return;
+  window._isSavingEntryLock = true;
+  const btn = document.getElementById('saveBtn') || document.querySelector('#pane-add .btn-primary');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الحفظ والتأكيد...';
+  }
+
   const date = document.getElementById('eDate').value;
   const co   = document.getElementById('eCo').value;
   const selInvEl = document.getElementById('eInvSel');
@@ -6708,8 +6741,7 @@ async function doSave() {
     return;
   }
 
-  const btn = document.getElementById('saveBtn');
-  btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true;
+  if (btn) { btn.textContent='⏳ جاري الحفظ...'; btn.disabled=true; }
 
   const isInc = (co === 'حوافز ومكافآت' || co === 'حوافز' || co === 'مكافآت' || (co||'').includes('حوافز') || (co||'').includes('مكافآت'));
   const isDisc = curType === 'خصومات';
@@ -6768,25 +6800,44 @@ async function doSave() {
     }
 
     const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
-    let balUpdated = false;
-    let newB = curB;
-    if (!isNeutral) {
-      newB = await sbUpdateBalance(delta);
-      balUpdated = true;
-    }
     const now = new Date();
     const timeStr = now.toTimeString().slice(0,5); // HH:MM
     const newId = crypto.randomUUID();
-    const {error: insErr} = await sb.from('entries').insert({
+    const entryPayload = {
       id: newId, date, type:curType, company:co, invoice:inv, amount:amt, notes:finalNotes,
-      uid: me.uid, uname: me.name, balance: newB, time: timeStr, ts: Date.now()
-    });
-    if (insErr) {
-      if (balUpdated) {
-        // حماية عند انقطاع النت: التراجع عن تعديل الرصيد إذا فشل حفظ السجل لمنع الخصم المزدوج عند إعادة المحاولة
-        try { await sbUpdateBalance(-delta); } catch(rErr){}
+      uid: me.uid, uname: me.name, balance: curB, time: timeStr, ts: Date.now()
+    };
+
+    let newB = curB;
+    let savedViaAtomicRpc = false;
+
+    // 1. المحاولة الذرية في PostgreSQL (تحديث الرصيد + القيد في خطوة واحدة لا تنقسم)
+    try {
+      const { data: rpcRes, error: rpcErr } = await sb.rpc('save_entry_atomic', {
+        p_entry: entryPayload,
+        p_delta: isNeutral ? 0 : delta
+      });
+      if (!rpcErr && rpcRes && rpcRes.success) {
+        newB = Number(rpcRes.balance) || curB;
+        savedViaAtomicRpc = true;
       }
-      throw insErr;
+    } catch(rpcE){}
+
+    // 2. الـ Fallback الآمن مع درع الحماية والتراجع الذاتي إذا لم تكن الدالة منشأة بالسيرفر بعد
+    if (!savedViaAtomicRpc) {
+      let balUpdated = false;
+      if (!isNeutral) {
+        newB = await sbUpdateBalance(delta);
+        balUpdated = true;
+      }
+      entryPayload.balance = newB;
+      const { error: insErr } = await sb.from('entries').insert(entryPayload);
+      if (insErr) {
+        if (balUpdated) {
+          try { await sbUpdateBalance(-delta); } catch(rErr){}
+        }
+        throw insErr;
+      }
     }
 
     // تسجيل في مصفوفة الاعتمادات في حال سجلها المدير مباشرة
@@ -6831,8 +6882,16 @@ async function doSave() {
     // تحديث فوري للجدول في حالة عدم وصول الـ snapshot بعد
     setTimeout(refreshActivePane, 800);
 
-  } catch(e) { toast('❌ فشل الحفظ: '+e.message, false); }
-  btn.textContent='💾 حفظ القيد'; btn.disabled=false;
+  } catch(e) {
+    toast('❌ فشل الحفظ: ' + (e.message || arErr(e)), false);
+  } finally {
+    window._isSavingEntryLock = false;
+    const saveBtnEl = document.getElementById('saveBtn') || document.querySelector('#pane-add .btn-primary');
+    if (saveBtnEl) {
+      saveBtnEl.textContent = '💾 حفظ القيد';
+      saveBtnEl.disabled = false;
+    }
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -7262,24 +7321,42 @@ async function togglePosReview(id, currentVal) {
 }
 
 async function delEntry(id, type, amount) {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    toast('⚠️ لا يوجد اتصال بالإنترنت حالياً! تم منع الحذف لحماية الحسابات.', false);
+    return;
+  }
   if (!confirm('حذف هذا القيد؟\n(يمكن استعادته من تاب المحذوفات أو سجل الحركات)')) return;
   try {
     const isNeutral = type === 'خصومات';
     const isIn = type==='ايرادات';
     const delta = isNeutral ? 0 : (isIn ? -amount : amount);
-    // snapshot: بيانات القيد قبل الحذف
     const entry = entries.find(e => e.id === id);
     const snap = entry ? { id: entry.id, type: entry.type, company: entry.company, invoice: entry.invoice, amount: entry.amount, date: entry.date } : { type, amount };
-    const {error: delEntErr} = await sb.from('entries').update({
-      deleted: true,
-      deleted_at: Date.now(),
-      deleted_by: me.name || me.uid
-    }).eq('id', id);
-    if (delEntErr) throw delEntErr;
-    if (!isNeutral) await sbUpdateBalance(delta);
-    // سجل الحركة
+
+    let deletedViaRpc = false;
+    try {
+      const { data: rpcRes, error: rpcErr } = await sb.rpc('delete_entry_atomic', {
+        p_entry_id: id,
+        p_deleted_by: (me && (me.name || me.uid)) || 'مدير'
+      });
+      if (!rpcErr && rpcRes && rpcRes.success) {
+        deletedViaRpc = true;
+      }
+    } catch(rpcE){}
+
+    if (!deletedViaRpc) {
+      const {error: delEntErr} = await sb.from('entries').update({
+        deleted: true,
+        deleted_at: Date.now(),
+        deleted_by: me.name || me.uid
+      }).eq('id', id);
+      if (delEntErr) throw delEntErr;
+      if (!isNeutral) await sbUpdateBalance(delta);
+    }
+
     sbLogAction('delete', [id], [snap]);
     toast('🗑 تم حذف القيد — يمكن استعادته من سجل الحركات');
+    fetchEntries();
   } catch(e) { toast('❌ فشل الحذف: '+e.message, false); }
 }
 
@@ -7688,21 +7765,38 @@ async function permDeleteOne(id) {
 }
 
 async function restoreEntry(id) {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    toast('⚠️ لا يوجد اتصال بالإنترنت حالياً! تم منع الاستعادة لحماية الحسابات.', false);
+    return;
+  }
   const e = trashedEntries.find(x => x.id === id);
   if (!e) return;
   if (!confirm(`استعادة هذا القيد؟\n${e.type} — ${e.company} — ${fmt(e.amount)}`)) return;
   try {
     const isIn  = e.type === 'ايرادات';
     const delta = isIn ? e.amount : -e.amount;
-    const {error} = await sb.from('entries').update({
-      deleted: false,
-      deleted_at: null,
-      deleted_by: null
-    }).eq('id', id);
-    if (error) throw error;
-    await sbUpdateBalance(delta);
+
+    let restoredViaRpc = false;
+    try {
+      const { data: rpcRes, error: rpcErr } = await sb.rpc('restore_entry_atomic', {
+        p_entry_id: id
+      });
+      if (!rpcErr && rpcRes && rpcRes.success) {
+        restoredViaRpc = true;
+      }
+    } catch(rpcE){}
+
+    if (!restoredViaRpc) {
+      const {error} = await sb.from('entries').update({
+        deleted: false,
+        deleted_at: null,
+        deleted_by: null
+      }).eq('id', id);
+      if (error) throw error;
+      await sbUpdateBalance(delta);
+    }
+
     toast('✅ تم استعادة القيد بنجاح');
-    // refresh both lists
     fetchTrash();
     fetchEntries();
   } catch(err) { toast('❌ فشل الاستعادة: ' + err.message, false); }
