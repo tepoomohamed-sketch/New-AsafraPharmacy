@@ -2698,9 +2698,9 @@ function ensureXLSX() {
           <span class="saliim-item-icon">⏱</span>
           <span>الحضور والانصراف</span>
         </div>
-        <div class="saliim-nav-item" id="navItemSalaryAdj" onclick="openSalaryAdjApprovalModal(); toggleSidebar(false);" style="display:none;">
-          <span class="saliim-item-icon">⚖️</span>
-          <span>اعتمادات المرتبات</span>
+        <div class="saliim-nav-item" id="navItemSalaryAdj" onclick="openSalaryAdjApprovalModal(); toggleSidebar(false);">
+          <span class="saliim-item-icon">🎁</span>
+          <span>حركات الخصومات والمكافآت</span>
           <span class="badge" id="navSalaryAdjBadge" style="display:none;background:#ec4899;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.68rem;margin-right:auto;font-weight:900;">0</span>
         </div>
         <div class="saliim-nav-item" id="navItemLuckyWheel" onclick="openLuckyWheelModal(); toggleSidebar(false);">
@@ -15322,11 +15322,16 @@ function attRenderAdmin() {
       isMatch(e)
     ).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
+    const isSettledDeduct = e => {
+      const n = (e.notes || '');
+      return n.includes('[سُدد نقداً') || n.includes('[مسدد نقداً') || n.includes('[تم السداد') || n.includes('[مسددة بالكامل') || n.includes('[سداد فوري');
+    };
     const empDeduct = entries.filter(e =>
       !e.deleted &&
       e.type === 'خصومات' &&
       e.date && e.date.startsWith(attFilter.month) &&
-      isMatch(e)
+      isMatch(e) &&
+      !isSettledDeduct(e)
     ).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
     const incKey = `${attFilter.month}__${n}`;
@@ -16047,6 +16052,12 @@ function attShowEmpReport() {
   const salWithdrawnAmt = salEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
   const totalWithdrawnAmt = salWithdrawnAmt + dailyIncCashNow;
 
+  // فحص الخصومات المسددة نقداً فوراً لاستبعادها من الخصم من الراتب لمنع الازدواج
+  const isSettledDeduct = e => {
+    const n = (e.notes || '');
+    return n.includes('[سُدد نقداً') || n.includes('[مسدد نقداً') || n.includes('[تم السداد') || n.includes('[مسددة بالكامل') || n.includes('[سداد فوري');
+  };
+
   // الخصومات المسجلة
   const discEntries = entries.filter(e =>
     !e.deleted &&
@@ -16054,9 +16065,14 @@ function attShowEmpReport() {
     e.date && e.date.startsWith(month) &&
     isMatchEmp(e)
   ).sort((a,b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : (b.ts||0)-(a.ts||0)));
-  const discAmt = discEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
-  // صافي الراتب المتبقي
+  // الخصومات المعلقة فقط (التي تخصم من الراتب)
+  const activeDiscEntries = discEntries.filter(e => !isSettledDeduct(e));
+  // الخصومات المسددة نقداً فوراً (لا تخصم من الراتب)
+  const settledDiscEntries = discEntries.filter(e => isSettledDeduct(e));
+  const discAmt = activeDiscEntries.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  // صافي الراتب المتبقي للصرف نهاية الشهر (لا يتكرر خصم ما تم سداده، ولا تتكرر مكافأة تم صرفها كاش)
   const netRemaining = totalDue - totalWithdrawnAmt - discAmt;
 
   // ── تنسيق أيام الإجازة ──
@@ -17029,14 +17045,13 @@ async function saveSalaryAdjustments() {
 }
 
 function updateSalaryAdjBadges() {
-  const pendingList = (salaryAdjustments || []).filter(x => x.status === 'pending');
+  const pendingList = (salaryAdjustments || []).filter(x => x.status === 'pending' && !x.settled);
   const count = pendingList.length;
-  const hasAccess = (me && me.role === 'admin') || (salaryAdjustments || []).some(x => x.requestedByUid === me?.uid);
 
-  // Sidebar Button & Badge
+  // Sidebar Button & Badge (Always visible for fast access)
   const navItem = document.getElementById('navItemSalaryAdj');
   if (navItem) {
-    navItem.style.display = hasAccess ? 'flex' : 'none';
+    navItem.style.display = 'flex';
   }
   const navBadge = document.getElementById('navSalaryAdjBadge');
   if (navBadge) {
@@ -17048,11 +17063,9 @@ function updateSalaryAdjBadges() {
     }
   }
 
-  // Topbar Button & Badge (fallback if present)
+  // Topbar Button & Badge (if present)
   const btn = document.getElementById('topbarSalaryAdjBtn');
-  if (btn) {
-    btn.style.display = hasAccess ? 'inline-flex' : 'none';
-  }
+  if (btn) btn.style.display = 'inline-flex';
   const badge = document.getElementById('topbarSalaryAdjBadge');
   if (badge) {
     if (count > 0) {
@@ -17121,12 +17134,14 @@ async function submitSalaryAdjustmentRequest(reqData) {
     requestedByUid: me ? me.uid : 'anon',
     requestedByName: me ? me.name : 'موظف',
     requestedRole: me ? me.role : 'user',
-    status: 'pending',
-    approvedBy: null,
-    approvedAt: null,
+    status: reqData.status || 'pending',
+    settled: reqData.settled || false,
+    settledHow: reqData.settledHow || 'with_salary',
+    approvedBy: reqData.approvedBy || null,
+    approvedAt: reqData.approvedAt || null,
     rejectedBy: null,
     rejectedAt: null,
-    entryId: null,
+    entryId: reqData.entryId || null,
     createdAt: new Date().toISOString()
   };
 
@@ -17136,10 +17151,137 @@ async function submitSalaryAdjustmentRequest(reqData) {
 
   toast(
     newReq.kind === 'bonus'
-      ? `📩 تم إرسال طلب اعتماد المكافأة (${fmt(newReq.amount)} ج لـ ${newReq.empName}) للمدير بنجاح`
-      : `📩 تم إرسال طلب اعتماد الخصم (${fmt(newReq.amount)} ج على ${newReq.empName}) للمدير بنجاح`
+      ? `📩 تم تسجيل طلب المكافأة (${fmt(newReq.amount)} ج لـ ${newReq.empName})`
+      : `📩 تم تسجيل طلب الخصم (${fmt(newReq.amount)} ج على ${newReq.empName})`
   );
   return newReq;
+}
+
+// ── السداد الفوري الآن (كاش من الخزينة مع منع تكرارها في الراتب) ──
+async function settleSalaryAdjustmentNow(reqId) {
+  if (!me || me.role !== 'admin') {
+    toast('❌ غير مصرح: سداد وصرف الحركات مخصص للمدير فقط', false);
+    return;
+  }
+  const req = (salaryAdjustments || []).find(x => x.id === reqId);
+  if (!req) {
+    toast('❌ لم يتم العثور على الحركة', false);
+    return;
+  }
+  if (req.settled) {
+    toast('⚠️ هذه الحركة مسددة مسبقاً', false);
+    return;
+  }
+
+  const isBonus = req.kind === 'bonus';
+  const amt = parseFloat(req.amount) || 0;
+  const empName = req.empName;
+
+  const confirmMsg = isBonus
+    ? `تأكيد صرف وسداد مكافأة بقيمة [ ${fmt(amt)} ج ] نقداً فوراً للموظف (${empName}) من الخزينة؟\n\n` +
+      `• سيتم خصم المبلغ من الخزينة الآن وتسجيل قيد صرف نقدي.\n` +
+      `• لن تظهر هذه المكافأة مرة أخرى في مسير الراتب نهاية الشهر لمنع تكرار الصرف.`
+    : `تأكيد تحصيل وسداد مبلغ الخصم [ ${fmt(amt)} ج ] نقداً من الموظف (${empName}) وتوريده للخزينة الآن؟\n\n` +
+      `• سيتم توريد المبلغ للخزينة وتوثيق سداده نقداً.\n` +
+      `• لن يُخصم هذا المبلغ مرة ثانية من راتب الموظف نهاية الشهر لمنع تكرار الخصم.`;
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    const today = todayStr();
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const entryId = crypto.randomUUID();
+    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+
+    if (isBonus) {
+      // صرف نقدي للمكافأة من الخزينة
+      const notesTag = `[صُرفت نقداً فوراً - تم السداد بالكامل] ${req.notes || req.reason || 'مكافأة'}`;
+      const entryObj = {
+        id: entryId,
+        date: today,
+        type: 'مصاريف',
+        company: 'حوافز ومكافآت',
+        invoice: empName,
+        amount: amt,
+        notes: notesTag,
+        uid: me.uid,
+        uname: me.name,
+        balance: curB - amt,
+        time: timeStr,
+        ts: Date.now()
+      };
+
+      if (typeof sbRpcSaveEntryAtomic === 'function') {
+        await sbRpcSaveEntryAtomic(entryObj, -amt);
+      } else {
+        const { error: insErr } = await sb.from('entries').insert(entryObj);
+        if (insErr) throw insErr;
+        currentBal = curB - amt;
+        await sbSetMeta('balance', { amount: currentBal });
+      }
+      entries.unshift(entryObj);
+    } else {
+      // توريد نقدي للخصم في الخزينة
+      const notesTag = `[سُدد نقداً فوراً - تم السداد بالكامل] ${req.notes || req.reason || 'تسوية خصم'}`;
+      const entryObj = {
+        id: entryId,
+        date: today,
+        type: 'ايرادات',
+        company: 'تسوية ذمم محفظة الصيدلية',
+        invoice: empName,
+        amount: amt,
+        notes: notesTag,
+        uid: me.uid,
+        uname: me.name,
+        balance: curB + amt,
+        time: timeStr,
+        ts: Date.now()
+      };
+
+      if (typeof sbRpcSaveEntryAtomic === 'function') {
+        await sbRpcSaveEntryAtomic(entryObj, amt);
+      } else {
+        const { error: insErr } = await sb.from('entries').insert(entryObj);
+        if (insErr) throw insErr;
+        currentBal = curB + amt;
+        await sbSetMeta('balance', { amount: currentBal });
+      }
+      entries.unshift(entryObj);
+
+      // تحديث قيد الخصم الأصلي إن وُجد
+      if (req.entryId) {
+        const orig = entries.find(e => e.id === req.entryId);
+        if (orig) {
+          orig.notes = (orig.notes ? orig.notes + ' ' : '') + '[سُدد نقداً فوراً]';
+          sb.from('entries').update({ notes: orig.notes }).eq('id', req.entryId).then();
+        }
+      }
+    }
+
+    // توثيق السداد في سجل الحركات
+    req.status = 'approved';
+    req.settled = true;
+    req.settledHow = 'cash_now';
+    req.settledAt = new Date().toISOString();
+    req.settledBy = me.name;
+    req.settledEntryId = entryId;
+
+    await saveSalaryAdjustments();
+    renderSalaryAdjApprovalList();
+    if (typeof renderEntries === 'function') renderEntries();
+    if (typeof renderOverview === 'function') renderOverview();
+    if (typeof attShowEmpReport === 'function') {
+      const repEmp = document.getElementById('attRepEmp')?.value;
+      if (repEmp === empName) attShowEmpReport();
+    }
+    if (typeof renderAttStaffSalaries === 'function') renderAttStaffSalaries();
+
+    toast(`✅ تم سداد ${isBonus ? 'المكافأة' : 'الخصم'} نقداً فوراً بنجاح ولن تظهر في الراتب`);
+  } catch(e) {
+    console.error('settleSalaryAdjustmentNow error:', e);
+    toast('❌ فشل السداد: ' + arErr(e), false);
+  }
 }
 
 async function approveSalaryAdjustment(reqId, customAmt) {
@@ -17152,10 +17294,6 @@ async function approveSalaryAdjustment(reqId, customAmt) {
     toast('❌ لم يتم العثور على الطلب', false);
     return;
   }
-  if (req.status !== 'pending') {
-    toast('⚠️ هذا الطلب تم البت فيه مسبقاً', false);
-    return;
-  }
 
   const finalAmt = (customAmt !== undefined && customAmt !== null && !isNaN(customAmt) && customAmt > 0)
     ? parseFloat(customAmt)
@@ -17163,8 +17301,8 @@ async function approveSalaryAdjustment(reqId, customAmt) {
 
   const isBonus = req.kind === 'bonus';
   const confirmMsg = `تأكيد اعتماد ${isBonus ? 'مكافأة' : 'خصم'} بقيمة ${fmt(finalAmt)} ج للموظف (${req.empName})؟\n\n` +
-    `• ستُسجل في الحركات محايدة تماماً (مع الراتب) دون التأثير على رصيد الخزينة إطلاقاً.\n` +
-    `• ستظهر تلقائياً في تقرير ومسير راتب الموظف.`;
+    `• ستُسجل وتصرف مع الراتب نهاية الشهر دون المساس بالخزينة الآن.\n` +
+    `• ستظهر تلقائياً في مسير راتب الموظف.`;
   if (!confirm(confirmMsg)) return;
 
   try {
@@ -17212,6 +17350,8 @@ async function approveSalaryAdjustment(reqId, customAmt) {
 
     req.amount = finalAmt;
     req.status = 'approved';
+    req.settled = false;
+    req.settledHow = 'with_salary';
     req.approvedBy = me.name;
     req.approvedAt = new Date().toISOString();
     req.entryId = entryId;
@@ -17236,34 +17376,29 @@ async function rejectSalaryAdjustment(reqId) {
     return;
   }
   const req = (salaryAdjustments || []).find(x => x.id === reqId);
-  if (!req) {
-    toast('❌ لم يتم العثور على الطلب', false);
-    return;
-  }
-  if (req.status !== 'pending') {
-    toast('⚠️ هذا الطلب تم البت فيه مسبقاً', false);
-    return;
-  }
+  if (!req) return;
 
   const reason = prompt('سبب رفض الطلب (اختياري):', '');
-  if (reason === null) return; // user cancelled
+  if (reason === null) return;
 
   req.status = 'rejected';
   req.rejectedBy = me.name;
   req.rejectedAt = new Date().toISOString();
-  if (reason.trim()) {
-    req.rejectReason = reason.trim();
-  }
+  if (reason.trim()) req.rejectReason = reason.trim();
 
   await saveSalaryAdjustments();
   renderSalaryAdjApprovalList();
-  toast('❌ تم رفض الطلب بنجاح');
+  toast('❌ تم رفض الحركة');
 }
 
+// ── فتح نافذة حركات الخصومات والمكافآت وتجهيز الفلاتر ──
 function openSalaryAdjApprovalModal(initialFilter) {
-  if (initialFilter) salaryAdjActiveFilter = initialFilter;
   const modal = document.getElementById('salaryAdjApprovalModal');
   if (!modal) return;
+
+  // تجهيز قائمة الموظفين في الفلتر والنموذج
+  populateAdjEmployeesDropdown();
+
   modal.style.display = 'flex';
   modal.classList.add('on');
   renderSalaryAdjApprovalList();
@@ -17274,24 +17409,100 @@ function closeSalaryAdjApprovalModal() {
   if (!modal) return;
   modal.classList.remove('on');
   modal.style.display = 'none';
+  toggleQuickAddAdjForm(false);
 }
 
-function setSalaryAdjFilter(f) {
-  salaryAdjActiveFilter = f;
-  document.querySelectorAll('.salary-adj-tab-btn').forEach(b => {
-    if (b.getAttribute('data-filter') === f) {
-      b.classList.add('active');
-      b.style.background = '#6366f1';
-      b.style.color = '#fff';
-    } else {
-      b.classList.remove('active');
-      b.style.background = 'var(--bg2)';
-      b.style.color = 'var(--text2)';
+function populateAdjEmployeesDropdown() {
+  const empSel = document.getElementById('adjFilterEmp');
+  const quickEmpSel = document.getElementById('quickAdjEmp');
+
+  // استخراج كافة أسماء الموظفين من الحضور والرواتب والمستخدمين
+  const names = new Set();
+  (attendanceEmployees?.names || []).forEach(n => { if (n) names.add(n.trim()); });
+  Object.keys(attFixedSalaries || {}).forEach(n => { if (n) names.add(n.trim()); });
+  Object.keys(attRates || {}).forEach(n => { if (n) names.add(n.trim()); });
+  (salaryAdjustments || []).forEach(x => { if (x.empName) names.add(x.empName.trim()); });
+
+  const sortedNames = Array.from(names).filter(Boolean).sort((a, b) => a.localeCompare(b, 'ar'));
+
+  if (empSel) {
+    const prev = empSel.value || 'all';
+    empSel.innerHTML = '<option value="all">👤 كل الموظفين (' + sortedNames.length + ')</option>' +
+      sortedNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    empSel.value = prev;
+  }
+
+  if (quickEmpSel) {
+    quickEmpSel.innerHTML = sortedNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  }
+}
+
+function toggleQuickAddAdjForm(forceState) {
+  const form = document.getElementById('quickAddAdjFormWrap');
+  if (!form) return;
+  const isHidden = form.style.display === 'none';
+  const show = forceState !== undefined ? forceState : isHidden;
+  form.style.display = show ? 'block' : 'none';
+  if (show) {
+    populateAdjEmployeesDropdown();
+    document.getElementById('quickAdjAmt')?.focus();
+  }
+}
+
+function onQuickAdjKindChange() {
+  const kind = document.getElementById('quickAdjKind')?.value || 'bonus';
+  const amtInp = document.getElementById('quickAdjAmt');
+  if (amtInp) {
+    amtInp.style.color = kind === 'bonus' ? '#10b981' : '#ef4444';
+  }
+}
+
+async function submitQuickAdjustment() {
+  const empName = document.getElementById('quickAdjEmp')?.value || '';
+  const kind = document.getElementById('quickAdjKind')?.value || 'bonus';
+  const amount = parseFloat(document.getElementById('quickAdjAmt')?.value);
+  const settleMethod = document.getElementById('quickAdjSettleMethod')?.value || 'with_salary';
+  const reason = (document.getElementById('quickAdjReason')?.value || '').trim();
+  const notes = (document.getElementById('quickAdjNotes')?.value || '').trim();
+
+  if (!empName) { toast('⚠️ يرجى اختيار الموظف', false); return; }
+  if (isNaN(amount) || amount <= 0) { toast('⚠️ يرجى كتابة مبلغ صحيح', false); return; }
+
+  const btn = document.getElementById('btnSaveQuickAdj');
+  if (btn) btn.disabled = true;
+
+  try {
+    const isPayNow = settleMethod === 'pay_now';
+    const req = await submitSalaryAdjustmentRequest({
+      empName,
+      kind,
+      amount,
+      reason: reason || (kind === 'bonus' ? 'مكافأة' : 'خصم'),
+      notes,
+      status: 'approved',
+      settled: false,
+      settledHow: isPayNow ? 'cash_now' : 'with_salary'
+    });
+
+    if (isPayNow) {
+      await settleSalaryAdjustmentNow(req.id);
     }
-  });
-  renderSalaryAdjApprovalList();
+
+    // تفريغ الحقول وإغلاق النموذج
+    document.getElementById('quickAdjAmt').value = '';
+    document.getElementById('quickAdjReason').value = '';
+    document.getElementById('quickAdjNotes').value = '';
+    toggleQuickAddAdjForm(false);
+    renderSalaryAdjApprovalList();
+  } catch(e) {
+    console.error('submitQuickAdjustment error:', e);
+    toast('❌ خطأ: ' + e.message, false);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
+// ── عرض جدول وبطاقات حركات الخصومات والمكافآت مع تطبيق كافة الفلاتر ──
 function renderSalaryAdjApprovalList() {
   const listEl = document.getElementById('salaryAdjListBody');
   if (!listEl) return;
@@ -17299,55 +17510,87 @@ function renderSalaryAdjApprovalList() {
   const isAdmin = me && me.role === 'admin';
   let items = salaryAdjustments || [];
 
-  // If non-admin, only show their own requested adjustments or adjustments regarding them
   if (!isAdmin) {
     items = items.filter(x => x.requestedByUid === me?.uid || x.empName === me?.name);
   }
 
-  // Apply Filter
-  if (salaryAdjActiveFilter === 'pending') {
+  // 1. فلتر الموظف
+  const empFilter = document.getElementById('adjFilterEmp')?.value || 'all';
+  if (empFilter !== 'all') {
+    items = items.filter(x => (x.empName || '').trim() === empFilter.trim());
+  }
+
+  // 2. فلتر النوع (مكافأة / خصم)
+  const kindFilter = document.getElementById('adjFilterKind')?.value || 'all';
+  if (kindFilter !== 'all') {
+    items = items.filter(x => x.kind === kindFilter);
+  }
+
+  // 3. فلتر حالة السداد
+  const statusFilter = document.getElementById('adjFilterStatus')?.value || 'all';
+  if (statusFilter === 'pending') {
     items = items.filter(x => x.status === 'pending');
-  } else if (salaryAdjActiveFilter === 'bonus') {
-    items = items.filter(x => x.kind === 'bonus');
-  } else if (salaryAdjActiveFilter === 'deduction') {
-    items = items.filter(x => x.kind === 'deduction');
-  } else if (salaryAdjActiveFilter === 'approved') {
-    items = items.filter(x => x.status === 'approved');
-  } else if (salaryAdjActiveFilter === 'rejected') {
+  } else if (statusFilter === 'settled_cash') {
+    items = items.filter(x => x.settled && x.settledHow === 'cash_now');
+  } else if (statusFilter === 'with_salary') {
+    items = items.filter(x => x.status === 'approved' && !x.settled);
+  } else if (statusFilter === 'rejected') {
     items = items.filter(x => x.status === 'rejected');
   }
 
-  // Stats banner in modal
-  const totalPending = (salaryAdjustments || []).filter(x => x.status === 'pending').length;
-  const pendingAmt = (salaryAdjustments || []).filter(x => x.status === 'pending').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
-  const approvedBonusAmt = (salaryAdjustments || []).filter(x => x.status === 'approved' && x.kind === 'bonus').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
-  const approvedDeductAmt = (salaryAdjustments || []).filter(x => x.status === 'approved' && x.kind === 'deduction').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
+  // 4. فلتر الشهر
+  const monthFilter = document.getElementById('adjFilterMonth')?.value || 'this_month';
+  const nowStr = todayStr();
+  const thisMonth = nowStr.slice(0, 7);
+  const lastMonthDate = new Date();
+  lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+  const lastMonth = lastMonthDate.toISOString().slice(0, 7);
+
+  if (monthFilter === 'this_month') {
+    items = items.filter(x => (x.date || '').startsWith(thisMonth));
+  } else if (monthFilter === 'last_month') {
+    items = items.filter(x => (x.date || '').startsWith(lastMonth));
+  }
+
+  // 5. بحث نصي
+  const searchTxt = (document.getElementById('adjFilterSearch')?.value || '').trim().toLowerCase();
+  if (searchTxt) {
+    items = items.filter(x => 
+      (x.empName || '').toLowerCase().includes(searchTxt) ||
+      (x.reason || '').toLowerCase().includes(searchTxt) ||
+      (x.notes || '').toLowerCase().includes(searchTxt) ||
+      (x.requestedByName || '').toLowerCase().includes(searchTxt)
+    );
+  }
+
+  // إحصائيات سريعة للنتائج المعروضة
+  const totalItemsCount = items.length;
+  const totalBonus = items.filter(x => x.kind === 'bonus' && x.status !== 'rejected').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
+  const totalDeduct = items.filter(x => x.kind === 'deduction' && x.status !== 'rejected').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
+  const settledCashAmt = items.filter(x => x.settled && x.settledHow === 'cash_now').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
+  const pendingSalaryAmt = items.filter(x => x.status === 'approved' && !x.settled).reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
 
   const statsEl = document.getElementById('salaryAdjModalStats');
   if (statsEl) {
     statsEl.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);border-radius:12px;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
-          <span style="font-size:0.82rem;font-weight:700;color:var(--text1);">
-            ⏳ طلبات معلقة: <strong style="color:#ec4899;font-size:0.95rem;">${totalPending}</strong> (${fmt(pendingAmt)} ج)
-          </span>
-          <span style="font-size:0.82rem;font-weight:700;color:var(--text1);">
-            🎁 مكافآت معتمدة: <strong style="color:#10b981;">+${fmt(approvedBonusAmt)} ج</strong>
-          </span>
-          <span style="font-size:0.82rem;font-weight:700;color:var(--text1);">
-            ✂️ خصومات معتمدة: <strong style="color:#ef4444;">-${fmt(approvedDeductAmt)} ج</strong>
-          </span>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px;margin-bottom:12px;flex-wrap:wrap;gap:8px;font-size:0.8rem;">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <span>📋 عدد الحركات: <strong>${totalItemsCount}</strong></span>
+          <span style="color:#10b981;">🎁 إجمالي المكافآت: <strong>+${fmt(totalBonus)} ج</strong></span>
+          <span style="color:#ef4444;">✂️ إجمالي الخصومات: <strong>-${fmt(totalDeduct)} ج</strong></span>
+          <span style="color:#3b82f6;">💵 مسددة نقداً: <strong>${fmt(settledCashAmt)} ج</strong></span>
         </div>
-        <div style="font-size:0.75rem;color:var(--text3);">🔒 تصرف وتخصم مع الراتب دون المساس بالخزينة</div>
+        <div style="color:var(--text3);font-size:0.75rem;">🔒 يتم استبعاد المسدد نقداً فوراً من مسير الراتب</div>
       </div>
     `;
   }
 
   if (items.length === 0) {
     listEl.innerHTML = `
-      <div style="text-align:center;padding:40px 10px;color:var(--text3);">
+      <div style="text-align:center;padding:45px 10px;color:var(--text3);">
         <div style="font-size:2.4rem;margin-bottom:8px;">🍃</div>
-        <div style="font-weight:800;font-size:0.92rem;">لا توجد طلبات أو سجلات في هذا التصنيف حالياً</div>
+        <div style="font-weight:800;font-size:0.95rem;">لا توجد حركات مطابقة للفلاتر المحددة</div>
+        <div style="font-size:0.78rem;margin-top:4px;">يمكنك تغيير الفلاتر أو الضغط على <b>➕ حركة جديدة</b> لتسجيل مكافأة أو خصم</div>
       </div>
     `;
     return;
@@ -17355,27 +17598,34 @@ function renderSalaryAdjApprovalList() {
 
   listEl.innerHTML = items.map(req => {
     const isBonus = req.kind === 'bonus';
-    const isPending = req.status === 'pending';
-    const isApproved = req.status === 'approved';
+    const isSettled = req.settled === true;
+    const isCashNow = req.settledHow === 'cash_now';
+    const isPending = req.status === 'pending' && !isSettled;
+    const isApprovedWithSal = req.status === 'approved' && !isSettled;
     const isRejected = req.status === 'rejected';
 
-    const statusBadge = isPending
-      ? `<span style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">⏳ بانتظار اعتماد المدير</span>`
-      : (isApproved
-          ? `<span style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid #10b981;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">✅ معتمد مع الراتب</span>`
-          : `<span style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">❌ مرفوض</span>`);
+    let statusBadge = '';
+    if (isSettled && isCashNow) {
+      statusBadge = `<span style="background:rgba(16,185,129,0.18);color:#10b981;border:1px solid #10b981;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">✅ مسددة نقداً فوراً (مستبعدة من الراتب)</span>`;
+    } else if (isApprovedWithSal) {
+      statusBadge = `<span style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid #3b82f6;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">📅 معتمدة مع الراتب القادم</span>`;
+    } else if (isPending) {
+      statusBadge = `<span style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">⏳ بانتظار الاعتماد / السداد</span>`;
+    } else if (isRejected) {
+      statusBadge = `<span style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">❌ مرفوضة</span>`;
+    }
 
     const kindBadge = isBonus
-      ? `<span style="background:rgba(99,102,241,0.12);color:#6366f1;border:1px solid rgba(99,102,241,0.3);padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:800;">🎁 مكافأة / حافز</span>`
-      : `<span style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:800;">✂️ خصم وجزاء</span>`;
+      ? `<span style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:800;">🎁 مكافأة / حافز</span>`
+      : `<span style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:800;">✂️ خصم واستقطاع</span>`;
 
     return `
-      <div class="card" style="margin-bottom:10px;padding:14px;border:1px solid ${isPending ? '#f59e0b' : 'var(--border)'};border-radius:12px;background:var(--bg2);">
+      <div class="card" style="margin-bottom:10px;padding:14px;border:1px solid ${isPending ? '#f59e0b' : (isSettled ? 'rgba(16,185,129,0.4)' : 'var(--border)')};border-radius:14px;background:var(--bg2);box-shadow:var(--shadow-sm);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             ${kindBadge}
-            <span style="font-weight:900;font-size:1.02rem;color:var(--text1);">الموظف: ${esc(req.empName)}</span>
-            <span style="font-size:0.8rem;color:var(--text3);">📅 ${req.date || ''} ${req.time || ''}</span>
+            <span style="font-weight:900;font-size:1.05rem;color:var(--text1);">👤 ${esc(req.empName)}</span>
+            <span style="font-size:0.78rem;color:var(--text3);">📅 ${req.date || ''} ${req.time || ''}</span>
           </div>
           <div>
             ${statusBadge}
@@ -17383,37 +17633,41 @@ function renderSalaryAdjApprovalList() {
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
-          <div>
-            <div style="font-size:0.85rem;color:var(--text2);margin-bottom:3px;">
+          <div style="flex:1;min-width:220px;">
+            <div style="font-size:0.86rem;color:var(--text2);margin-bottom:3px;">
               <strong>🏷 البند / السبب:</strong> ${esc(req.reason || (isBonus ? 'حوافز ومكافآت' : 'خصومات'))}
             </div>
             ${req.notes ? `<div style="font-size:0.82rem;color:var(--text3);"><strong>📝 الملاحظات:</strong> ${esc(req.notes)}</div>` : ''}
-            <div style="font-size:0.76rem;color:var(--text3);margin-top:4px;">
-              👤 مقدم الطلب: <strong>${esc(req.requestedByName || 'موظف')}</strong> ${req.requestedRole === 'admin' ? '(مدير)' : ''}
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:4px;">
+              👤 سجلها: <strong>${esc(req.requestedByName || 'موظف')}</strong>
+              ${req.settledBy ? ` • 💵 سددها: <strong>${esc(req.settledBy)}</strong>` : ''}
+              ${req.approvedBy && !req.settledBy ? ` • 👑 اعتمدها: <strong>${esc(req.approvedBy)}</strong>` : ''}
             </div>
-            ${isApproved ? `<div style="font-size:0.76rem;color:#10b981;margin-top:2px;">👑 تم الاعتماد بواسطة: <strong>${esc(req.approvedBy || 'المدير')}</strong> في ${new Date(req.approvedAt).toLocaleDateString('ar-EG')}</div>` : ''}
-            ${isRejected ? `<div style="font-size:0.76rem;color:#ef4444;margin-top:2px;">❌ تم الرفض بواسطة: <strong>${esc(req.rejectedBy || 'المدير')}</strong> ${req.rejectReason ? `— السبب: ${esc(req.rejectReason)}` : ''}</div>` : ''}
           </div>
           <div style="text-align:left;">
-            <div style="font-size:1.3rem;font-weight:900;color:${isBonus ? '#10b981' : '#ef4444'};">
+            <div style="font-size:1.35rem;font-weight:900;color:${isBonus ? '#10b981' : '#ef4444'};">
               ${isBonus ? '+' : '-'}${fmt(req.amount)} ج
             </div>
-            <div style="font-size:0.72rem;color:var(--text3);">مع الراتب (الخزينة: 0)</div>
+            <div style="font-size:0.74rem;color:var(--text3);">
+              ${isSettled ? '✅ سُددت نقداً (لا تكرار في الراتب)' : '📅 مستحقة مع مسير الراتب'}
+            </div>
           </div>
         </div>
 
-        ${isPending && isAdmin ? `
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <label style="font-size:0.78rem;font-weight:800;color:var(--text2);">المبلغ المعتمد:</label>
-              <input type="number" id="adjCustomAmt_${req.id}" value="${req.amount}" step="0.5" min="0" style="width:85px;padding:4px 8px;font-size:0.85rem;border-radius:6px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-weight:900;" />
-            </div>
-            <button type="button" class="btn btn-sm" onclick="approveSalaryAdjustment('${req.id}', parseFloat(document.getElementById('adjCustomAmt_${req.id}')?.value))" style="background:#10b981;color:#fff;border:none;padding:5px 14px;border-radius:8px;font-weight:900;font-size:0.82rem;cursor:pointer;">
-              ✅ اعتماد مع الراتب
+        <!-- أزرار الإجراءات والسداد الفوري -->
+        ${(!isSettled && !isRejected && isAdmin) ? `
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" onclick="settleSalaryAdjustmentNow('${req.id}')" style="background:${isBonus ? '#10b981' : '#3b82f6'};color:#fff;border:none;padding:5px 14px;border-radius:8px;font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:5px;">
+              <span>${isBonus ? '💸 صرف وسداد الآن كاش' : '💵 تحصيل وسداد الآن كاش'}</span>
             </button>
-            <button type="button" class="btn btn-sm btn-ghost" onclick="rejectSalaryAdjustment('${req.id}')" style="color:#ef4444;border:1px solid #ef4444;padding:5px 12px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;">
-              ❌ رفض
-            </button>
+            ${isPending ? `
+              <button type="button" class="btn btn-sm btn-ghost" onclick="approveSalaryAdjustment('${req.id}')" style="color:#6366f1;border:1px solid #6366f1;padding:5px 12px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;">
+                ✅ اعتماد مع الراتب
+              </button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="rejectSalaryAdjustment('${req.id}')" style="color:#ef4444;border:1px solid #ef4444;padding:5px 10px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;">
+                ❌ رفض
+              </button>
+            ` : ''}
           </div>
         ` : ''}
       </div>
@@ -17421,7 +17675,6 @@ function renderSalaryAdjApprovalList() {
   }).join('');
 }
 
-// ── CSV Export for POS Pane ──
 function pdExportCSV() {
   const sub=pdGetSub();
   let c='﻿الكود,التاريخ,النوع,المجموع,الخصم,بعد الخصم,التكلفة,الربحية,الهامش%,العميل,الحالة\n';
@@ -25523,37 +25776,147 @@ function triggerWorkerReminder(title, body) {
 <!-- ═══════════════════════════════════════════════════════════
      📋 نافذة إدارة واعتمادات المكافآت والخصومات (مع الراتب)
      ═══════════════════════════════════════════════════════════ -->
+<!-- ── MODAL: سجل وإدارة حركات الخصومات والمكافآت (شامل الفلاتر والسداد الفوري) ── -->
 <div id="salaryAdjApprovalModal" class="modal-overlay" role="dialog" aria-modal="true"
-     onclick="if(event.target===this)closeSalaryAdjApprovalModal()" style="display:none;z-index:99999;">
-  <div class="modal-box" style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;padding:20px;text-align:right;background:var(--bg1);border-radius:18px;border:2px solid #6366f1;box-shadow:0 20px 45px rgba(0,0,0,0.5);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
-      <div style="font-size:1.1rem;font-weight:900;color:#6366f1;display:flex;align-items:center;gap:8px;">
-        <span>📋</span>
-        <span>اعتمادات وطلبات المكافآت والخصومات</span>
+     onclick="if(event.target===this)closeSalaryAdjApprovalModal()" style="display:none;z-index:99999;align-items:center;justify-content:center;padding:14px;">
+  <div class="modal-box" style="max-width:860px;width:96%;max-height:92vh;display:flex;flex-direction:column;padding:20px;text-align:right;background:var(--bg1);border-radius:20px;border:2px solid #6366f1;box-shadow:0 24px 50px rgba(0,0,0,0.55);overflow:hidden;">
+    
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.6rem;background:rgba(99,102,241,0.15);padding:6px 12px;border-radius:12px;">🎁</span>
+        <div>
+          <div style="font-size:1.2rem;font-weight:900;color:#6366f1;display:flex;align-items:center;gap:8px;">
+            <span>سجل وإدارة حركات الخصومات والمكافآت</span>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text3);margin-top:2px;">
+            متابعة الحوافز والخصومات، إمكانية السداد الفوري، وضمان عدم تكرار الصرف أو الخصم في الراتب
+          </div>
+        </div>
       </div>
-      <button type="button" onclick="closeSalaryAdjApprovalModal()" style="background:none;border:none;font-size:1.3rem;color:var(--text3);cursor:pointer;padding:2px 8px;">✕</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button type="button" class="btn btn-sm" onclick="toggleQuickAddAdjForm()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:6px 14px;border-radius:10px;font-weight:800;font-size:0.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <span>➕ حركة جديدة</span>
+        </button>
+        <button type="button" onclick="closeSalaryAdjApprovalModal()" style="background:none;border:none;font-size:1.4rem;color:var(--text3);cursor:pointer;padding:2px 8px;border-radius:8px;">✕</button>
+      </div>
     </div>
 
-    <!-- Quick Stats -->
+    <!-- Quick Add Form (Collapsible) -->
+    <div id="quickAddAdjFormWrap" style="display:none;background:var(--bg2);border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:14px;animation:fadeInModal .2s ease-out;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong style="color:var(--accent);font-size:0.9rem;">➕ تسجيل حركة مكافأة أو خصم جديدة</strong>
+        <button type="button" onclick="toggleQuickAddAdjForm(false)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.1rem;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.76rem;font-weight:700;color:var(--text2);display:block;margin-bottom:3px;">👤 الموظف:</label>
+          <select id="quickAdjEmp" class="fel" style="width:100%;font-weight:700;padding:6px 10px;font-size:0.85rem;">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.76rem;font-weight:700;color:var(--text2);display:block;margin-bottom:3px;">🏷 النوع:</label>
+          <select id="quickAdjKind" class="fel" onchange="onQuickAdjKindChange()" style="width:100%;font-weight:800;padding:6px 10px;font-size:0.85rem;">
+            <option value="bonus">🎁 مكافأة / حافز</option>
+            <option value="deduction">✂️ خصم / جزاء</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.76rem;font-weight:700;color:var(--text2);display:block;margin-bottom:3px;">💰 المبلغ (جنيه):</label>
+          <input type="number" id="quickAdjAmt" class="fel" min="1" step="0.5" placeholder="مثال: 100" style="width:100%;font-weight:900;padding:6px 10px;font-size:0.95rem;color:#10b981;" />
+        </div>
+        <div>
+          <label style="font-size:0.76rem;font-weight:700;color:var(--text2);display:block;margin-bottom:3px;">💳 طريقة السداد المطلوبة:</label>
+          <select id="quickAdjSettleMethod" class="fel" style="width:100%;font-weight:800;padding:6px 10px;font-size:0.82rem;">
+            <option value="with_salary">📅 مع الراتب القادم نهاية الشهر</option>
+            <option value="pay_now">💵 سداد وصرف نقداً فوراً (من الخزينة)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:0.76rem;font-weight:700;color:var(--text2);display:block;margin-bottom:3px;">🏷 السبب / البند:</label>
+          <input type="text" id="quickAdjReason" class="fel" placeholder="مثال: تميز في المبيعات، عجز شيفت، تأخير..." style="width:100%;font-size:0.85rem;padding:6px 10px;" />
+        </div>
+        <div>
+          <label style="font-size:0.76rem;font-weight:700;color:var(--text2);display:block;margin-bottom:3px;">📝 ملاحظات إضافية:</label>
+          <input type="text" id="quickAdjNotes" class="fel" placeholder="أي تفاصيل أو مرجع..." style="width:100%;font-size:0.85rem;padding:6px 10px;" />
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-sm btn-ghost" onclick="toggleQuickAddAdjForm(false)">إلغاء</button>
+        <button type="button" id="btnSaveQuickAdj" class="btn btn-sm btn-green" onclick="submitQuickAdjustment()" style="font-weight:800;padding:6px 20px;">💾 حفظ الحركة</button>
+      </div>
+    </div>
+
+    <!-- Filters Bar (فلاتر شاملة) -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        
+        <!-- فلتر الموظف -->
+        <div style="flex:1;min-width:160px;">
+          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">👤 الموظف:</label>
+          <select id="adjFilterEmp" onchange="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-weight:700;font-size:0.82rem;">
+            <option value="all">كل الموظفين</option>
+          </select>
+        </div>
+
+        <!-- فلتر النوع -->
+        <div style="min-width:140px;">
+          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">🏷 النوع:</label>
+          <select id="adjFilterKind" onchange="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-weight:700;font-size:0.82rem;">
+            <option value="all">كل الحركات</option>
+            <option value="bonus">🎁 مكافآت وحوافز</option>
+            <option value="deduction">✂️ خصومات واستقطاعات</option>
+          </select>
+        </div>
+
+        <!-- فلتر حالة السداد -->
+        <div style="min-width:160px;">
+          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">💳 حالة السداد:</label>
+          <select id="adjFilterStatus" onchange="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-weight:700;font-size:0.82rem;">
+            <option value="all">كل الحالات</option>
+            <option value="pending">⏳ معلقة (للصرف مع الراتب)</option>
+            <option value="settled_cash">💵 مسددة نقداً فوراً (كاش)</option>
+            <option value="with_salary">✅ معتمدة مع الراتب</option>
+            <option value="rejected">❌ مرفوضة</option>
+          </select>
+        </div>
+
+        <!-- فلتر الشهر -->
+        <div style="min-width:130px;">
+          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">📅 الشهر:</label>
+          <select id="adjFilterMonth" onchange="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:0.82rem;font-weight:700;">
+            <option value="this_month">الشهر الحالي</option>
+            <option value="last_month">الشهر السابق</option>
+            <option value="all">كل الشهور</option>
+          </select>
+        </div>
+
+        <!-- بحث فوري -->
+        <div style="flex:1;min-width:160px;">
+          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">🔍 بحث:</label>
+          <input type="text" id="adjFilterSearch" placeholder="بحث بالسبب أو الملاحظات..." oninput="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:0.82rem;" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Quick Stats Bar -->
     <div id="salaryAdjModalStats"></div>
-
-    <!-- Filter Buttons -->
-    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:thin;">
-      <button type="button" class="salary-adj-tab-btn active" data-filter="all" onclick="setSalaryAdjFilter('all')" style="background:#6366f1;color:#fff;border:none;padding:5px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;">الكل</button>
-      <button type="button" class="salary-adj-tab-btn" data-filter="pending" onclick="setSalaryAdjFilter('pending')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;">⏳ بانتظار الاعتماد</button>
-      <button type="button" class="salary-adj-tab-btn" data-filter="bonus" onclick="setSalaryAdjFilter('bonus')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;">🎁 المكافآت</button>
-      <button type="button" class="salary-adj-tab-btn" data-filter="deduction" onclick="setSalaryAdjFilter('deduction')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;">✂️ الخصومات</button>
-      <button type="button" class="salary-adj-tab-btn" data-filter="approved" onclick="setSalaryAdjFilter('approved')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;">✅ المعتمدة</button>
-      <button type="button" class="salary-adj-tab-btn" data-filter="rejected" onclick="setSalaryAdjFilter('rejected')" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;font-size:0.78rem;font-weight:800;cursor:pointer;white-space:nowrap;">❌ المرفوضة</button>
-    </div>
 
     <!-- Scrollable Request List -->
     <div id="salaryAdjListBody" style="flex:1;overflow-y:auto;padding-left:4px;scrollbar-width:thin;">
-      <!-- Cards rendered here -->
+      <!-- Cards rendered here via JS -->
     </div>
 
-    <div style="display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-      <button type="button" onclick="closeSalaryAdjApprovalModal()" class="btn btn-ghost" style="padding:6px 18px;border-radius:8px;font-size:0.85rem;cursor:pointer;">إغلاق</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px;">
+      <div style="font-size:0.76rem;color:var(--text3);display:flex;align-items:center;gap:6px;">
+        <span>🛡️</span>
+        <span><strong>الحماية المحاسبية:</strong> الحركات المسددة نقداً فوراً تُستبعد تلقائياً من مسير الراتب لمنع الازدواج.</span>
+      </div>
+      <button type="button" onclick="closeSalaryAdjApprovalModal()" class="btn btn-ghost" style="padding:6px 20px;border-radius:8px;font-size:0.85rem;cursor:pointer;">إغلاق</button>
     </div>
   </div>
 </div>
