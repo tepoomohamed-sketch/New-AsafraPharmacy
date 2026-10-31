@@ -17394,14 +17394,32 @@ async function rejectSalaryAdjustment(reqId) {
 // ── فتح نافذة حركات الخصومات والمكافآت وتجهيز الفلاتر ──
 function openSalaryAdjApprovalModal(initialFilter) {
   const modal = document.getElementById('salaryAdjApprovalModal');
-  if (!modal) return;
+  if (!modal) {
+    console.error('salaryAdjApprovalModal element not found!');
+    return;
+  }
 
-  // تجهيز قائمة الموظفين في الفلتر والنموذج
-  populateAdjEmployeesDropdown();
-
+  // إظهار النافذة فوراً
   modal.style.display = 'flex';
   modal.classList.add('on');
-  renderSalaryAdjApprovalList();
+
+  if (typeof toggleSidebar === 'function') {
+    try { toggleSidebar(false); } catch(_) {}
+  }
+
+  // تجهيز قائمة الموظفين في الفلتر والنموذج بأمان
+  try {
+    populateAdjEmployeesDropdown();
+  } catch(e) {
+    console.warn('populateAdjEmployeesDropdown error:', e);
+  }
+
+  // عرض القائمة وتطبيق الفلاتر بأمان
+  try {
+    renderSalaryAdjApprovalList();
+  } catch(e) {
+    console.error('renderSalaryAdjApprovalList error:', e);
+  }
 }
 
 function closeSalaryAdjApprovalModal() {
@@ -17409,19 +17427,30 @@ function closeSalaryAdjApprovalModal() {
   if (!modal) return;
   modal.classList.remove('on');
   modal.style.display = 'none';
-  toggleQuickAddAdjForm(false);
+  try { toggleQuickAddAdjForm(false); } catch(_) {}
 }
 
 function populateAdjEmployeesDropdown() {
   const empSel = document.getElementById('adjFilterEmp');
   const quickEmpSel = document.getElementById('quickAdjEmp');
 
-  // استخراج كافة أسماء الموظفين من الحضور والرواتب والمستخدمين
+  // استخراج كافة أسماء الموظفين من الحضور والرواتب والمستخدمين بأمان تام
   const names = new Set();
-  (attendanceEmployees?.names || []).forEach(n => { if (n) names.add(n.trim()); });
-  Object.keys(attFixedSalaries || {}).forEach(n => { if (n) names.add(n.trim()); });
-  Object.keys(attRates || {}).forEach(n => { if (n) names.add(n.trim()); });
-  (salaryAdjustments || []).forEach(x => { if (x.empName) names.add(x.empName.trim()); });
+  
+  if (typeof attEmpNames !== 'undefined' && Array.isArray(attEmpNames)) {
+    attEmpNames.forEach(n => { if (n) names.add(n.trim()); });
+  }
+  if (typeof attFixedSalaries !== 'undefined' && attFixedSalaries) {
+    Object.keys(attFixedSalaries).forEach(n => { if (n) names.add(n.trim()); });
+  }
+  if (typeof attRates !== 'undefined' && attRates) {
+    Object.keys(attRates).forEach(n => { if (n) names.add(n.trim()); });
+  }
+  if (typeof salaryAdjustments !== 'undefined' && Array.isArray(salaryAdjustments)) {
+    salaryAdjustments.forEach(x => { if (x && x.empName) names.add(x.empName.trim()); });
+  }
+  // أسماء الموظفين بالصيدلية كاحتياط
+  ['حسين', 'حبيبة', 'طارق', 'محمد', 'يوسف', 'ابو زياد', 'د.محمد'].forEach(n => names.add(n));
 
   const sortedNames = Array.from(names).filter(Boolean).sort((a, b) => a.localeCompare(b, 'ar'));
 
