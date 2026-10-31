@@ -2420,6 +2420,28 @@
   background: var(--bg3);
   color: var(--text);
 }
+.adj-status-pill {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.adj-status-pill:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+.adj-status-pill.active {
+  background: #6366f1 !important;
+  color: #fff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35) !important;
+}
+
 .set-tab-pill.active {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   color: #fff !important;
@@ -17532,43 +17554,249 @@ async function submitQuickAdjustment() {
 }
 
 // ── عرض جدول وبطاقات حركات الخصومات والمكافآت مع تطبيق كافة الفلاتر ──
+function setSalaryAdjFilterTab(tabName, el) {
+  const sel = document.getElementById('adjFilterStatus');
+  if (sel) {
+    sel.value = tabName;
+  }
+  document.querySelectorAll('.adj-status-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const pill = document.getElementById('adjPill-' + tabName);
+  if (pill) pill.classList.add('active');
+  renderSalaryAdjApprovalList();
+}
+
+function onSalaryAdjStatusSelectChange() {
+  const sel = document.getElementById('adjFilterStatus');
+  const tabName = sel?.value || 'pending_and_approved';
+  document.querySelectorAll('.adj-status-pill').forEach(p => p.classList.remove('active'));
+  const pill = document.getElementById('adjPill-' + tabName);
+  if (pill) pill.classList.add('active');
+  renderSalaryAdjApprovalList();
+}
+
+function toggleSelectAllAdj(checked) {
+  document.querySelectorAll('.adj-item-chk').forEach(chk => {
+    chk.checked = checked;
+  });
+  updateSelectedAdjCount();
+}
+
+function updateSelectedAdjCount() {
+  const checkedBoxes = document.querySelectorAll('.adj-item-chk:checked');
+  const count = checkedBoxes.length;
+  const btn = document.getElementById('btnBulkDeleteAdj');
+  const cntSpan = document.getElementById('selectedAdjCount');
+  const selectAll = document.getElementById('adjSelectAllChk');
+
+  if (cntSpan) cntSpan.textContent = count;
+  if (btn) {
+    btn.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
+  const allBoxes = document.querySelectorAll('.adj-item-chk');
+  if (selectAll && allBoxes.length > 0) {
+    selectAll.checked = (count === allBoxes.length);
+  }
+}
+
+// ── حذف حركة مكافأة أو خصم (معلقة أو معتمدة أو مرفوضة أو مسددة) ──
+async function deleteSalaryAdjustment(reqId) {
+  if (!me || me.role !== 'admin') {
+    toast('❌ غير مصرح: حذف الحركات مخصص للمدير فقط', false);
+    return;
+  }
+  const req = (salaryAdjustments || []).find(x => x.id === reqId);
+  if (!req) {
+    toast('❌ لم يتم العثور على الحركة', false);
+    return;
+  }
+
+  const isBonus = req.kind === 'bonus';
+  const kindText = isBonus ? 'مكافأة' : 'خصم';
+  const amtText = fmt(req.amount);
+  const empText = req.empName;
+
+  let confirmMsg = `هل تريد بالتأكيد حذف حركة [ ${kindText} بقيمة ${amtText} ج ] للموظف (${empText}) نهائياً؟`;
+  if (req.settled && req.settledHow === 'cash_now') {
+    confirmMsg += `\n\n⚠️ تنبيه: هذه الحركة سُددت نقداً بالفعل من الخزينة. سيتم حذف الحركة وإلغاء أثرها المالي.`;
+  } else if (req.status === 'approved') {
+    confirmMsg += `\n\n• سيتم إزالتها نهائياً من مسير الراتب وسجل القيود.`;
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    // 1. إذا كان للحركة قيد مرتبط في entries
+    if (req.entryId) {
+      try {
+        const ent = (entries || []).find(e => e.id === req.entryId);
+        if (ent) {
+          const isNeutral = (req.settledHow === 'with_salary' || (req.status === 'approved' && !req.settled));
+          if (!isNeutral) {
+            try {
+              await sb.rpc('delete_entry_atomic', { p_entry_id: req.entryId, p_deleted_by: me.name || 'مدير' });
+            } catch(_) {
+              await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me.name || 'مدير' }).eq('id', req.entryId);
+              if (req.settledHow === 'cash_now') {
+                const delta = isBonus ? req.amount : -req.amount;
+                await sbUpdateBalance(delta);
+              }
+            }
+          } else {
+            await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me.name || 'مدير' }).eq('id', req.entryId);
+          }
+          entries = entries.filter(e => e.id !== req.entryId);
+        }
+      } catch(entErr) {
+        console.warn('Error deleting linked entry:', entErr);
+      }
+    }
+
+    // 2. إزالة الحركة من salaryAdjustments
+    salaryAdjustments = (salaryAdjustments || []).filter(x => x.id !== reqId);
+    await saveSalaryAdjustments();
+
+    // 3. تحديث الواجهات
+    renderSalaryAdjApprovalList();
+    updateSalaryAdjBadges();
+    if (typeof fetchEntries === 'function') fetchEntries();
+    if (typeof attShowEmpReport === 'function') {
+      const repEmp = document.getElementById('attRepEmp')?.value;
+      if (repEmp === req.empName) attShowEmpReport();
+    }
+
+    toast(`🗑 تم حذف حركة ${kindText} (${amtText} ج لـ ${empText}) بنجاح`);
+  } catch(e) {
+    console.error('deleteSalaryAdjustment error:', e);
+    toast('❌ فشل حذف الحركة: ' + arErr(e), false);
+  }
+}
+
+// ── حذف الحركات المحددة جماعياً ──
+async function deleteSelectedSalaryAdjustments() {
+  if (!me || me.role !== 'admin') {
+    toast('❌ غير مصرح: حذف الحركات مخصص للمدير فقط', false);
+    return;
+  }
+  const checkedBoxes = Array.from(document.querySelectorAll('.adj-item-chk:checked'));
+  const ids = checkedBoxes.map(c => c.dataset.id).filter(Boolean);
+  if (ids.length === 0) {
+    toast('⚠️ يرجى تحديد حركة واحدة على الأقل للمسح', false);
+    return;
+  }
+
+  if (!confirm(`هل أنت متأكد من رغبتك في حذف (${ids.length}) حركة محددة نهائياً؟\nسيتم مسحها بالكامل من النظام ومسير الرواتب.`)) return;
+
+  const btn = document.getElementById('btnBulkDeleteAdj');
+  if (btn) btn.disabled = true;
+
+  try {
+    for (const id of ids) {
+      const req = (salaryAdjustments || []).find(x => x.id === id);
+      if (req && req.entryId) {
+        try {
+          const isNeutral = (req.settledHow === 'with_salary' || (req.status === 'approved' && !req.settled));
+          if (!isNeutral) {
+            try {
+              await sb.rpc('delete_entry_atomic', { p_entry_id: req.entryId, p_deleted_by: me.name || 'مدير' });
+            } catch(_) {
+              await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me.name || 'مدير' }).eq('id', req.entryId);
+              if (req.settledHow === 'cash_now') {
+                const delta = (req.kind === 'bonus') ? req.amount : -req.amount;
+                await sbUpdateBalance(delta);
+              }
+            }
+          } else {
+            await sb.from('entries').update({ deleted: true, deleted_at: Date.now(), deleted_by: me.name || 'مدير' }).eq('id', req.entryId);
+          }
+          entries = entries.filter(e => e.id !== req.entryId);
+        } catch(_) {}
+      }
+    }
+
+    salaryAdjustments = (salaryAdjustments || []).filter(x => !ids.includes(x.id));
+    await saveSalaryAdjustments();
+
+    renderSalaryAdjApprovalList();
+    updateSalaryAdjBadges();
+    if (typeof fetchEntries === 'function') fetchEntries();
+    if (typeof attShowEmpReport === 'function') {
+      attShowEmpReport();
+    }
+
+    toast(`🗑 تم مسح (${ids.length}) حركة بنجاح`);
+  } catch(e) {
+    console.error('deleteSelectedSalaryAdjustments error:', e);
+    toast('❌ خطأ أثناء المسح: ' + arErr(e), false);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ── عرض جدول وبطاقات حركات الخصومات والمكافآت مع تطبيق كافة الفلاتر ──
 function renderSalaryAdjApprovalList() {
   const listEl = document.getElementById('salaryAdjListBody');
   if (!listEl) return;
 
   const isAdmin = me && me.role === 'admin';
-  let items = salaryAdjustments || [];
+  let allItems = salaryAdjustments || [];
 
   if (!isAdmin) {
-    items = items.filter(x => x.requestedByUid === me?.uid || x.empName === me?.name);
+    allItems = allItems.filter(x => x.requestedByUid === me?.uid || x.empName === me?.name);
   }
 
-  // 1. فلتر الموظف
+  // تحديث عدادات التبويبات السريعة
+  const countPendingApproved = allItems.filter(x => (x.status === 'pending' && !x.settled) || (x.status === 'approved' && !x.settled)).length;
+  const countPending = allItems.filter(x => x.status === 'pending' && !x.settled).length;
+  const countApproved = allItems.filter(x => x.status === 'approved' && !x.settled).length;
+  const countSettled = allItems.filter(x => x.settled && x.settledHow === 'cash_now').length;
+  const countRejected = allItems.filter(x => x.status === 'rejected').length;
+  const countAll = allItems.length;
+
+  const setElText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setElText('adjCountPendingApproved', countPendingApproved);
+  setElText('adjCountPending', countPending);
+  setElText('adjCountApproved', countApproved);
+  setElText('adjCountSettled', countSettled);
+  setElText('adjCountRejected', countRejected);
+  setElText('adjCountAll', countAll);
+
+  let items = [...allItems];
+
+  // 1. فلتر حالة السداد (افتراضياً: المعلقة والمعتمدة معاً)
+  const statusFilter = document.getElementById('adjFilterStatus')?.value || 'pending_and_approved';
+  
+  // مزامنة حالة التبويب النشط
+  document.querySelectorAll('.adj-status-pill').forEach(p => p.classList.remove('active'));
+  const activePill = document.getElementById('adjPill-' + statusFilter);
+  if (activePill) activePill.classList.add('active');
+
+  if (statusFilter === 'pending_and_approved') {
+    items = items.filter(x => (x.status === 'pending' && !x.settled) || (x.status === 'approved' && !x.settled));
+  } else if (statusFilter === 'pending') {
+    items = items.filter(x => x.status === 'pending' && !x.settled);
+  } else if (statusFilter === 'with_salary') {
+    items = items.filter(x => x.status === 'approved' && !x.settled);
+  } else if (statusFilter === 'settled_cash') {
+    items = items.filter(x => x.settled && x.settledHow === 'cash_now');
+  } else if (statusFilter === 'rejected') {
+    items = items.filter(x => x.status === 'rejected');
+  }
+
+  // 2. فلتر الموظف
   const empFilter = document.getElementById('adjFilterEmp')?.value || 'all';
   if (empFilter !== 'all') {
     items = items.filter(x => (x.empName || '').trim() === empFilter.trim());
   }
 
-  // 2. فلتر النوع (مكافأة / خصم)
+  // 3. فلتر النوع (مكافأة / خصم)
   const kindFilter = document.getElementById('adjFilterKind')?.value || 'all';
   if (kindFilter !== 'all') {
     items = items.filter(x => x.kind === kindFilter);
   }
 
-  // 3. فلتر حالة السداد
-  const statusFilter = document.getElementById('adjFilterStatus')?.value || 'all';
-  if (statusFilter === 'pending') {
-    items = items.filter(x => x.status === 'pending');
-  } else if (statusFilter === 'settled_cash') {
-    items = items.filter(x => x.settled && x.settledHow === 'cash_now');
-  } else if (statusFilter === 'with_salary') {
-    items = items.filter(x => x.status === 'approved' && !x.settled);
-  } else if (statusFilter === 'rejected') {
-    items = items.filter(x => x.status === 'rejected');
-  }
-
-  // 4. فلتر الشهر
-  const monthFilter = document.getElementById('adjFilterMonth')?.value || 'this_month';
+  // 4. فلتر الشهر (افتراضياً كل الشهور حتى لا تسقط المعلقات من الشهور السابقة)
+  const monthFilter = document.getElementById('adjFilterMonth')?.value || 'all';
   const nowStr = todayStr();
   const thisMonth = nowStr.slice(0, 7);
   const lastMonthDate = new Date();
@@ -17576,7 +17804,7 @@ function renderSalaryAdjApprovalList() {
   const lastMonth = lastMonthDate.toISOString().slice(0, 7);
 
   if (monthFilter === 'this_month') {
-    items = items.filter(x => (x.date || '').startsWith(thisMonth));
+    items = items.filter(x => (x.date || '').startsWith(thisMonth) || (x.status === 'pending' && !x.settled));
   } else if (monthFilter === 'last_month') {
     items = items.filter(x => (x.date || '').startsWith(lastMonth));
   }
@@ -17592,24 +17820,29 @@ function renderSalaryAdjApprovalList() {
     );
   }
 
+  // تصفير تحديد الكل
+  const selectAllChk = document.getElementById('adjSelectAllChk');
+  if (selectAllChk) selectAllChk.checked = false;
+  updateSelectedAdjCount();
+
   // إحصائيات سريعة للنتائج المعروضة
   const totalItemsCount = items.length;
   const totalBonus = items.filter(x => x.kind === 'bonus' && x.status !== 'rejected').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
   const totalDeduct = items.filter(x => x.kind === 'deduction' && x.status !== 'rejected').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
   const settledCashAmt = items.filter(x => x.settled && x.settledHow === 'cash_now').reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
-  const pendingSalaryAmt = items.filter(x => x.status === 'approved' && !x.settled).reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
+  const pendingSalaryAmt = items.filter(x => (x.status === 'approved' || x.status === 'pending') && !x.settled).reduce((s, x) => s + (parseFloat(x.amount)||0), 0);
 
   const statsEl = document.getElementById('salaryAdjModalStats');
   if (statsEl) {
     statsEl.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px;margin-bottom:12px;flex-wrap:wrap;gap:8px;font-size:0.8rem;">
         <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-          <span>📋 عدد الحركات: <strong>${totalItemsCount}</strong></span>
+          <span>📋 الحركات المعروضة: <strong>${totalItemsCount}</strong></span>
           <span style="color:#10b981;">🎁 إجمالي المكافآت: <strong>+${fmt(totalBonus)} ج</strong></span>
           <span style="color:#ef4444;">✂️ إجمالي الخصومات: <strong>-${fmt(totalDeduct)} ج</strong></span>
-          <span style="color:#3b82f6;">💵 مسددة نقداً: <strong>${fmt(settledCashAmt)} ج</strong></span>
+          <span style="color:#3b82f6;">💵 مسددة كاش: <strong>${fmt(settledCashAmt)} ج</strong></span>
         </div>
-        <div style="color:var(--text3);font-size:0.75rem;">🔒 يتم استبعاد المسدد نقداً فوراً من مسير الراتب</div>
+        <div style="color:var(--text3);font-size:0.75rem;">🔒 الإدارة تتحكم في الاعتماد، السداد الفوري، أو الحذف التام</div>
       </div>
     `;
   }
@@ -17619,7 +17852,7 @@ function renderSalaryAdjApprovalList() {
       <div style="text-align:center;padding:45px 10px;color:var(--text3);">
         <div style="font-size:2.4rem;margin-bottom:8px;">🍃</div>
         <div style="font-weight:800;font-size:0.95rem;">لا توجد حركات مطابقة للفلاتر المحددة</div>
-        <div style="font-size:0.78rem;margin-top:4px;">يمكنك تغيير الفلاتر أو الضغط على <b>➕ حركة جديدة</b> لتسجيل مكافأة أو خصم</div>
+        <div style="font-size:0.78rem;margin-top:4px;">يمكنك تغيير الفلاتر من التبويبات بالأعلى أو الضغط على <b>➕ حركة جديدة</b> لتسجيل مكافأة أو خصم</div>
       </div>
     `;
     return;
@@ -17637,9 +17870,9 @@ function renderSalaryAdjApprovalList() {
     if (isSettled && isCashNow) {
       statusBadge = `<span style="background:rgba(16,185,129,0.18);color:#10b981;border:1px solid #10b981;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">✅ مسددة نقداً فوراً (مستبعدة من الراتب)</span>`;
     } else if (isApprovedWithSal) {
-      statusBadge = `<span style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid #3b82f6;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">📅 معتمدة مع الراتب القادم</span>`;
+      statusBadge = `<span style="background:rgba(99,102,241,0.15);color:#6366f1;border:1px solid #6366f1;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">📅 معتمدة مع الراتب القادم</span>`;
     } else if (isPending) {
-      statusBadge = `<span style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">⏳ بانتظار الاعتماد / السداد</span>`;
+      statusBadge = `<span style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">⏳ معلقة بانتظار الاعتماد</span>`;
     } else if (isRejected) {
       statusBadge = `<span style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;">❌ مرفوضة</span>`;
     }
@@ -17649,9 +17882,10 @@ function renderSalaryAdjApprovalList() {
       : `<span style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:800;">✂️ خصم واستقطاع</span>`;
 
     return `
-      <div class="card" style="margin-bottom:10px;padding:14px;border:1px solid ${isPending ? '#f59e0b' : (isSettled ? 'rgba(16,185,129,0.4)' : 'var(--border)')};border-radius:14px;background:var(--bg2);box-shadow:var(--shadow-sm);">
+      <div class="card" style="margin-bottom:10px;padding:14px;border:1.5px solid ${isPending ? '#f59e0b' : (isSettled ? 'rgba(16,185,129,0.4)' : (isApprovedWithSal ? 'rgba(99,102,241,0.4)' : 'var(--border)'))};border-radius:14px;background:var(--bg2);box-shadow:var(--shadow-sm);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${isAdmin ? `<input type="checkbox" class="adj-item-chk" data-id="${req.id}" onchange="updateSelectedAdjCount()" style="width:17px;height:17px;cursor:pointer;" />` : ''}
             ${kindBadge}
             <span style="font-weight:900;font-size:1.05rem;color:var(--text1);">👤 ${esc(req.empName)}</span>
             <span style="font-size:0.78rem;color:var(--text3);">📅 ${req.date || ''} ${req.time || ''}</span>
@@ -17671,6 +17905,7 @@ function renderSalaryAdjApprovalList() {
               👤 سجلها: <strong>${esc(req.requestedByName || 'موظف')}</strong>
               ${req.settledBy ? ` • 💵 سددها: <strong>${esc(req.settledBy)}</strong>` : ''}
               ${req.approvedBy && !req.settledBy ? ` • 👑 اعتمدها: <strong>${esc(req.approvedBy)}</strong>` : ''}
+              ${req.rejectedBy ? ` • ❌ رفضها: <strong>${esc(req.rejectedBy)}</strong>` : ''}
             </div>
           </div>
           <div style="text-align:left;">
@@ -17678,25 +17913,33 @@ function renderSalaryAdjApprovalList() {
               ${isBonus ? '+' : '-'}${fmt(req.amount)} ج
             </div>
             <div style="font-size:0.74rem;color:var(--text3);">
-              ${isSettled ? '✅ سُددت نقداً (لا تكرار في الراتب)' : '📅 مستحقة مع مسير الراتب'}
+              ${isSettled ? '✅ سُددت نقداً (لا تكرار في الراتب)' : (isApprovedWithSal ? '📅 معتمدة مع مسير الراتب' : (isPending ? '⏳ بانتظار الاعتماد' : '❌ مستبعدة'))}
             </div>
           </div>
         </div>
 
-        <!-- أزرار الإجراءات والسداد الفوري -->
-        ${(!isSettled && !isRejected && isAdmin) ? `
+        <!-- أزرار الإجراءات والسداد الفوري ومسح الحركة -->
+        ${isAdmin ? `
           <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);flex-wrap:wrap;">
-            <button type="button" class="btn btn-sm" onclick="settleSalaryAdjustmentNow('${req.id}')" style="background:${isBonus ? '#10b981' : '#3b82f6'};color:#fff;border:none;padding:5px 14px;border-radius:8px;font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:5px;">
-              <span>${isBonus ? '💸 صرف وسداد الآن كاش' : '💵 تحصيل وسداد الآن كاش'}</span>
-            </button>
+            ${(!isSettled && !isRejected) ? `
+              <button type="button" class="btn btn-sm" onclick="settleSalaryAdjustmentNow('${req.id}')" style="background:${isBonus ? '#10b981' : '#3b82f6'};color:#fff;border:none;padding:5px 14px;border-radius:8px;font-weight:900;font-size:0.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                <span>${isBonus ? '💸 صرف وسداد الآن كاش' : '💵 تحصيل وسداد الآن كاش'}</span>
+              </button>
+            ` : ''}
+
             ${isPending ? `
               <button type="button" class="btn btn-sm btn-ghost" onclick="approveSalaryAdjustment('${req.id}')" style="color:#6366f1;border:1px solid #6366f1;padding:5px 12px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;">
                 ✅ اعتماد مع الراتب
               </button>
-              <button type="button" class="btn btn-sm btn-ghost" onclick="rejectSalaryAdjustment('${req.id}')" style="color:#ef4444;border:1px solid #ef4444;padding:5px 10px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;">
+              <button type="button" class="btn btn-sm btn-ghost" onclick="rejectSalaryAdjustment('${req.id}')" style="color:#f59e0b;border:1px solid #f59e0b;padding:5px 10px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;">
                 ❌ رفض
               </button>
             ` : ''}
+
+            <!-- زر مسح الحركة متاح دائماً لكافة الحالات -->
+            <button type="button" class="btn btn-sm" onclick="deleteSalaryAdjustment('${req.id}')" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:5px 12px;border-radius:8px;font-weight:800;font-size:0.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="حذف هذه الحركة نهائياً">
+              <span>🗑 مسح الحركة</span>
+            </button>
           </div>
         ` : ''}
       </div>
@@ -25902,13 +26145,14 @@ function triggerWorkerReminder(title, body) {
         </div>
 
         <!-- فلتر حالة السداد -->
-        <div style="min-width:160px;">
-          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">💳 حالة السداد:</label>
-          <select id="adjFilterStatus" onchange="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-weight:700;font-size:0.82rem;">
-            <option value="all">كل الحالات</option>
-            <option value="pending">⏳ معلقة (للصرف مع الراتب)</option>
+        <div style="min-width:180px;">
+          <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">💳 حالة الحركة:</label>
+          <select id="adjFilterStatus" onchange="onSalaryAdjStatusSelectChange()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-weight:700;font-size:0.82rem;">
+            <option value="pending_and_approved" selected>⏳ المعلقة والمعتمدة معاً (حركات الرواتب)</option>
+            <option value="all">🌐 جميع الحركات (الكل)</option>
+            <option value="pending">⏳ المعلقة فقط (بانتظار الموافقة)</option>
+            <option value="with_salary">📅 المعتمدة مع الراتب فقط</option>
             <option value="settled_cash">💵 مسددة نقداً فوراً (كاش)</option>
-            <option value="with_salary">✅ معتمدة مع الراتب</option>
             <option value="rejected">❌ مرفوضة</option>
           </select>
         </div>
@@ -25917,9 +26161,9 @@ function triggerWorkerReminder(title, body) {
         <div style="min-width:130px;">
           <label style="font-size:0.74rem;color:var(--text3);font-weight:700;display:block;margin-bottom:2px;">📅 الشهر:</label>
           <select id="adjFilterMonth" onchange="renderSalaryAdjApprovalList()" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:0.82rem;font-weight:700;">
+            <option value="all" selected>كل الشهور</option>
             <option value="this_month">الشهر الحالي</option>
             <option value="last_month">الشهر السابق</option>
-            <option value="all">كل الشهور</option>
           </select>
         </div>
 
@@ -25933,6 +26177,41 @@ function triggerWorkerReminder(title, body) {
     </div>
 
     <!-- Quick Stats Bar -->
+    <!-- شريط تبويبات الحالات وإجراءات الحذف والتحديد المجمع -->
+    <div id="salaryAdjTabsBar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 12px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="btn btn-xs adj-status-pill active" onclick="setSalaryAdjFilterTab('pending_and_approved', this)" id="adjPill-pending_and_approved">
+          ⏳ المعلقة والمعتمدة (<span id="adjCountPendingApproved">0</span>)
+        </button>
+        <button type="button" class="btn btn-xs adj-status-pill" onclick="setSalaryAdjFilterTab('pending', this)" id="adjPill-pending">
+          ⏳ المعلقة (<span id="adjCountPending">0</span>)
+        </button>
+        <button type="button" class="btn btn-xs adj-status-pill" onclick="setSalaryAdjFilterTab('with_salary', this)" id="adjPill-with_salary">
+          📅 المعتمدة (<span id="adjCountApproved">0</span>)
+        </button>
+        <button type="button" class="btn btn-xs adj-status-pill" onclick="setSalaryAdjFilterTab('settled_cash', this)" id="adjPill-settled_cash">
+          💵 مسددة كاش (<span id="adjCountSettled">0</span>)
+        </button>
+        <button type="button" class="btn btn-xs adj-status-pill" onclick="setSalaryAdjFilterTab('rejected', this)" id="adjPill-rejected">
+          ❌ مرفوضة (<span id="adjCountRejected">0</span>)
+        </button>
+        <button type="button" class="btn btn-xs adj-status-pill" onclick="setSalaryAdjFilterTab('all', this)" id="adjPill-all">
+          🌐 الكل (<span id="adjCountAll">0</span>)
+        </button>
+      </div>
+
+      <!-- تحديد وحذف مجمع -->
+      <div id="adjBulkActionsWrap" style="display:flex;align-items:center;gap:10px;margin-right:auto;">
+        <label style="font-size:0.78rem;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="adjSelectAllChk" onchange="toggleSelectAllAdj(this.checked)" style="width:16px;height:16px;cursor:pointer;" />
+          <span>تحديد الكل</span>
+        </label>
+        <button type="button" id="btnBulkDeleteAdj" class="btn btn-xs" onclick="deleteSelectedSalaryAdjustments()" style="display:none;background:#ef4444;color:#fff;border:none;padding:5px 12px;border-radius:8px;font-weight:800;cursor:pointer;align-items:center;gap:4px;box-shadow:0 2px 6px rgba(239,68,68,0.3);">
+          <span>🗑 مسح المحدد (<span id="selectedAdjCount">0</span>)</span>
+        </button>
+      </div>
+    </div>
+
     <div id="salaryAdjModalStats"></div>
 
     <!-- Scrollable Request List -->
