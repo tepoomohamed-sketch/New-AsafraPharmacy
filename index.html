@@ -6768,7 +6768,12 @@ async function doSave() {
     }
 
     const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
-    const newB = isNeutral ? curB : await sbUpdateBalance(delta);
+    let balUpdated = false;
+    let newB = curB;
+    if (!isNeutral) {
+      newB = await sbUpdateBalance(delta);
+      balUpdated = true;
+    }
     const now = new Date();
     const timeStr = now.toTimeString().slice(0,5); // HH:MM
     const newId = crypto.randomUUID();
@@ -6776,7 +6781,13 @@ async function doSave() {
       id: newId, date, type:curType, company:co, invoice:inv, amount:amt, notes:finalNotes,
       uid: me.uid, uname: me.name, balance: newB, time: timeStr, ts: Date.now()
     });
-    if (insErr) throw insErr;
+    if (insErr) {
+      if (balUpdated) {
+        // حماية عند انقطاع النت: التراجع عن تعديل الرصيد إذا فشل حفظ السجل لمنع الخصم المزدوج عند إعادة المحاولة
+        try { await sbUpdateBalance(-delta); } catch(rErr){}
+      }
+      throw insErr;
+    }
 
     // تسجيل في مصفوفة الاعتمادات في حال سجلها المدير مباشرة
     if ((isInc || isDisc) && typeof salaryAdjustments !== 'undefined') {
