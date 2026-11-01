@@ -16663,18 +16663,28 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
     return;
   }
   const inc = parseFloat(incentives) || 0;
+
+  // تحديد تاريخ تسجيل القيد محاسبياً: آخر يوم في شهر الراتب (حتى لو تم الصرف في الشهر التالي)
+  const today = todayStr();
+  let salaryEntryDate = today;
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const [y, m] = month.split('-').map(Number);
+    const lastDayNum = new Date(y, m, 0).getDate();
+    salaryEntryDate = `${month}-${String(lastDayNum).padStart(2, '0')}`;
+  }
+
   const msg = `تأكيد صرف وتسليم باقي راتب شهر ${month} للموظف (${empName})؟\n\n` +
     `• الراتب المستحق: ${fmt(grossSal)} ج\n` +
     (inc > 0 ? `• الحوافز والمكافآت: +${fmt(inc)} ج\n` : '') +
     `• المسحوبات السابقة: ${fmt(withdrawn)} ج\n` +
     `• الخصومات: ${fmt(deduct)} ج\n` +
     `───────────────\n` +
-    `• المبلغ المطلوب صرفه من العهدة: ${fmt(remAmt)} ج\n\n` +
-    `سيتم خصم ${fmt(remAmt)} ج من العهدة الحالية وتسجيل قيد مصاريف بند رواتب فوراً.`;
+    `• المبلغ المطلوب صرفه من العهدة: ${fmt(remAmt)} ج\n` +
+    `• تاريخ تسجيل القيد المحاسبي: [ ${salaryEntryDate} ] (نهاية شهر ${month})\n\n` +
+    `سيتم خصم ${fmt(remAmt)} ج من العهدة الحالية وتسجيل قيد مصاريف بند رواتب بتاريخ [ ${salaryEntryDate} ] ليُحسب على شهر الاستحقاق ولا يؤثر على مصاريف الشهر الجديد.`;
   if (!confirm(msg)) return;
 
   try {
-    const today = todayStr();
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
     const newId = crypto.randomUUID();
@@ -16682,9 +16692,9 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
 
     const notes = `تسليم باقي راتب شهر ${month} (راتب ${fmt(grossSal)}${inc > 0 ? ` + حوافز ${fmt(inc)}` : ''} - مسحوبات ${fmt(withdrawn)} - خصم ${fmt(deduct)})`;
 
-    const { error: insErr } = await sb.from('entries').insert({
+    const entryObj = {
       id: newId,
-      date: today,
+      date: salaryEntryDate,
       type: 'مصاريف',
       company: 'رواتب',
       invoice: empName,
@@ -16695,27 +16705,18 @@ async function attPayRemainingSalary(empName, remAmt, month, grossSal, withdrawn
       balance: newB,
       time: timeStr,
       ts: Date.now()
-    });
+    };
+
+    const { error: insErr } = await sb.from('entries').insert(entryObj);
     if (insErr) throw insErr;
 
-    entries.unshift({
-      id: newId,
-      date: today,
-      type: 'مصاريف',
-      company: 'رواتب',
-      invoice: empName,
-      amount: remAmt,
-      notes: notes,
-      uid: me.uid,
-      uname: me.name,
-      balance: newB,
-      time: timeStr,
-      ts: Date.now()
-    });
+    entries.unshift(entryObj);
 
     updToday();
-    toast(`✅ تم صرف باقي الراتب بنجاح (${fmt(remAmt)} ج) وتحديث العهدة — ${empName}`);
+    toast(`✅ تم صرف باقي الراتب بنجاح (${fmt(remAmt)} ج) بتاريخ ${salaryEntryDate} — ${empName}`);
     attShowEmpReport();
+    if (typeof renderAttStaffSalaries === 'function') renderAttStaffSalaries();
+    if (typeof fetchEntries === 'function') fetchEntries();
   } catch (e) {
     toast('❌ فشل صرف الراتب: ' + arErr(e), false);
   }
