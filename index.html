@@ -3108,6 +3108,23 @@ function ensureXLSX() {
             <div id="eNotesHintMsg" style="display:none;font-size:0.8rem;color:#fc8181;margin-top:6px;font-weight:700;">⚠️ تنبيه: يرجى كتابة اسم الشخص الراسل للمبلغ (مثال: محول من أحمد محمد / رقم المحفظة) لإتمام الحفظ.</div>
           </div>
         </div>
+        <!-- تنبيه بضاعة آجلة لأوفر سيز -->
+        <div id="overseasCreditNotice" style="display:none;margin-top:12px;border:1.5px solid #6366f1;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(79,70,229,0.04));padding:12px 16px;border-radius:12px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.4rem;">📦</span>
+            <div>
+              <div style="font-weight:900;color:#6366f1;font-size:0.92rem;">
+                بضاعة آجلة لمطالبة فارما أوفر سيز (لا تخصم من الخزينة)
+              </div>
+              <div style="font-size:0.8rem;color:var(--text2);margin-top:4px;line-height:1.5;">
+                سيتم تسجيل هذه الفاتورة كـ <strong>بضاعة آجلة</strong> لمتابعة مشتريات الدورة فقط، و<strong>لن يتم خصم قرش واحد من درج النقدية/العهدة</strong> (الأثر على العهدة = 0 ج).
+              </div>
+              <div style="font-size:0.75rem;color:var(--text3);margin-top:4px;">
+                💡 لتسجيل دفعة نقدية مسددة للمطالبة من العهدة، توجه إلى شاشة <strong>مطالبة أوفر سيز</strong> واضغط على زر <strong>➕ إضافة سداد جديد</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
         <button class="btn btn-primary" id="saveBtn" onclick="doSave()" style="margin-top:12px;">💾 حفظ القيد</button>
       </div>
     </div>
@@ -4155,8 +4172,11 @@ function ensureXLSX() {
           <button type="button" class="btn btn-sm os-subtab-btn active" id="osTabBtnPayments" onclick="switchOverseasSubTab('payments')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;">
             💳 سدادات ودفعات الدورة الحالية (<span id="osTabPaymentsBadge">0</span>)
           </button>
+          <button type="button" class="btn btn-sm os-subtab-btn" id="osTabBtnInvoices" onclick="switchOverseasSubTab('invoices')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;background:none;border-color:transparent;color:var(--text2);">
+            📦 فواتير البضاعة الآجلة للدورة (<span id="osTabInvoicesBadge">0</span>)
+          </button>
           <button type="button" class="btn btn-sm os-subtab-btn" id="osTabBtnHistory" onclick="switchOverseasSubTab('history')" style="border-bottom-left-radius:0;border-bottom-right-radius:0;font-weight:700;padding:8px 14px;background:none;border-color:transparent;color:var(--text2);">
-            📜 سجل كل سدادات فارما أوفر سيز
+            📜 كشف الحساب وسجل كل العمليات
           </button>
         </div>
 
@@ -4181,6 +4201,39 @@ function ensureXLSX() {
                 </tr>
               </thead>
               <tbody id="osPaymentsTableBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subtab 2: فواتير البضاعة الآجلة للدورة -->
+        <div id="osSubPaneInvoices" class="os-subpane" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text1);">
+              📦 فواتير البضاعة الآجلة المسجلة لدورة المطالبة (لا تمس الخزينة إطلاقاً):
+            </div>
+            <div style="font-size:0.8rem;color:var(--text2);display:flex;align-items:center;gap:12px;">
+              <span>إجمالي فواتير الدورة: <strong id="osInvoicesSumText" style="color:#6366f1;">0 ج</strong></span>
+              <button type="button" class="btn btn-sm" onclick="swTab('add'); selectOverseasInPaneAdd();" style="background:#6366f1;color:#fff;border-radius:8px;font-weight:700;padding:4px 10px;border:none;cursor:pointer;">
+                ➕ تسجيل فاتورة بضاعة جديدة
+              </button>
+            </div>
+          </div>
+          <div class="tbl-wrap" style="border:1px solid var(--border);border-radius:10px;overflow-x:auto;">
+            <table class="tbl" style="width:100%;font-size:0.84rem;">
+              <thead>
+                <tr>
+                  <th style="width:110px;">تاريخ الفاتورة</th>
+                  <th style="width:120px;">رقم الفاتورة</th>
+                  <th style="width:130px;">المبلغ (جنيه)</th>
+                  <th>البيان والملاحظات</th>
+                  <th style="width:110px;">الموظف</th>
+                  <th style="width:120px;">الوقت</th>
+                  <th style="width:80px;text-align:center;">إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="osInvoicesTableBody">
                 <!-- Populated via JS -->
               </tbody>
             </table>
@@ -7088,8 +7141,9 @@ async function doSave() {
   }
 
   try {
-    // ايرادات = تضيف | مصاريف/طلبيات/ارباح/اصول ثابتة = تخصم | خصومات أو حوافز مؤجلة للراتب = محايدة تماماً (لا تمس الخزينة إطلاقاً)
-    const isNeutral = isDisc || isInc;
+    // ايرادات = تضيف | مصاريف/طلبيات/ارباح/اصول ثابتة = تخصم | خصومات أو حوافز مؤجلة للراتب أو بضاعة أوفر سيز الآجلة = محايدة تماماً (لا تمس الخزينة إطلاقاً)
+    const isOverseasInv = isOverseasCompany(co);
+    const isNeutral = isDisc || isInc || isOverseasInv;
     const isIn = curType === 'ايرادات';
     const delta = isNeutral ? 0 : (isIn ? amt : -amt);
 
@@ -7099,6 +7153,9 @@ async function doSave() {
       if (!finalNotes.includes(tag)) finalNotes = (finalNotes ? finalNotes + ' ' : '') + tag;
     } else if (isDisc) {
       const tag = '[مع الراتب - معتمد من المدير]';
+      if (!finalNotes.includes(tag)) finalNotes = (finalNotes ? finalNotes + ' ' : '') + tag;
+    } else if (isOverseasInv) {
+      const tag = '[فاتورة بضاعة آجلة - مطالبة أوفر سيز]';
       if (!finalNotes.includes(tag)) finalNotes = (finalNotes ? finalNotes + ' ' : '') + tag;
     }
 
@@ -7110,6 +7167,11 @@ async function doSave() {
       id: newId, date, type:curType, company:co, invoice:inv, amount:amt, notes:finalNotes,
       uid: me.uid, uname: me.name, balance: curB, time: timeStr, ts: Date.now()
     };
+    if (isOverseasInv) {
+      entryPayload.isOverseasInvoice = true;
+      entryPayload.isOverseasCredit = true;
+      entryPayload.isOverseasPayment = false;
+    }
 
     let newB = curB;
     let savedViaAtomicRpc = false;
@@ -7168,7 +7230,9 @@ async function doSave() {
       saveSalaryAdjustments();
     }
 
-    toast(`✅ تم حفظ القيد بنجاح ${isNeutral ? '(مع الراتب دون المساس بالخزينة)' : ''} — `+me.name);
+    toast(isOverseasInv ? '✅ تم حفظ فاتورة البضاعة الآجلة لأوفر سيز بنجاح دون المساس بالخزينة' : (`✅ تم حفظ القيد بنجاح ${isNeutral ? '(مع الراتب دون المساس بالخزينة)' : ''} — `+me.name));
+    if (typeof updateOverseasClaimSummary === 'function') updateOverseasClaimSummary();
+    if (document.getElementById('pane-overseas')?.classList.contains('on')) renderOverseasPane();
     updateOnlineDebtsHeader();
     ['eCo','eInv','eAmt','eNotes'].forEach(id=>{ const el = document.getElementById(id); if (el) el.value=''; });
     if (typeof hideCoDrop === 'function') hideCoDrop();
@@ -7415,9 +7479,11 @@ async function saveEdit() {
     const oldInvoice = existingEntry?.invoice || '';
     const oldDate = existingEntry?.date || '';
 
-    // حماية الرصيد المحايد: الخصومات والمكافآت مع الراتب لا تمس الخزينة أبداً (delta = 0)
-    const oldIsNeutral = (oldType === 'خصومات' || oldCo === 'حوافز ومكافآت' || oldNotes.includes('[مع الراتب') || oldNotes.includes('[تُصرف مع الراتب'));
-    const newIsNeutral = (isDisc || isInc || notes.includes('[مع الراتب') || notes.includes('[تُصرف مع الراتب'));
+    // حماية الرصيد المحايد: الخصومات والمكافآت مع الراتب وفواتير بضاعة أوفر سيز الآجلة لا تمس الخزينة أبداً (delta = 0)
+    const oldIsOverseasInv = isOverseasCompany(oldCo) && (existingEntry?.isOverseasInvoice || existingEntry?.isOverseasCredit || isOverseasInvoice(existingEntry));
+    const newIsOverseasInv = isOverseasCompany(co) && !notes.includes('سداد مطالبة');
+    const oldIsNeutral = (oldType === 'خصومات' || oldCo === 'حوافز ومكافآت' || oldNotes.includes('[مع الراتب') || oldNotes.includes('[تُصرف مع الراتب') || oldIsOverseasInv || oldNotes.includes('[فاتورة بضاعة آجلة'));
+    const newIsNeutral = (isDisc || isInc || notes.includes('[مع الراتب') || notes.includes('[تُصرف مع الراتب') || newIsOverseasInv || notes.includes('[فاتورة بضاعة آجلة'));
 
     const oldDelta = oldIsNeutral ? 0 : ((oldType === 'ايرادات') ? oldAmt : -oldAmt);
     const newDelta = newIsNeutral ? 0 : ((type === 'ايرادات') ? amt : -amt);
@@ -7630,31 +7696,41 @@ async function delEntry(id, type, amount) {
   }
   if (!confirm('حذف هذا القيد؟\n(يمكن استعادته من تاب المحذوفات أو سجل الحركات)')) return;
   try {
-    const isNeutral = type === 'خصومات';
+    const entry = entries.find(e => e.id === id);
+    const isNeutral = type === 'خصومات' || (entry && (entry.isOverseasInvoice || entry.isOverseasCredit || isOverseasInvoice(entry)));
     const isIn = type==='ايرادات';
     const delta = isNeutral ? 0 : (isIn ? -amount : amount);
-    const entry = entries.find(e => e.id === id);
     const snap = entry ? { id: entry.id, type: entry.type, company: entry.company, invoice: entry.invoice, amount: entry.amount, date: entry.date } : { type, amount };
 
     let deletedViaRpc = false;
-    try {
-      const { data: rpcRes, error: rpcErr } = await sb.rpc('delete_entry_atomic', {
-        p_entry_id: id,
-        p_deleted_by: (me && (me.name || me.uid)) || 'مدير'
-      });
-      if (!rpcErr && rpcRes && rpcRes.success) {
-        deletedViaRpc = true;
-      }
-    } catch(rpcE){}
-
-    if (!deletedViaRpc) {
+    if (isNeutral) {
       const {error: delEntErr} = await sb.from('entries').update({
         deleted: true,
         deleted_at: Date.now(),
         deleted_by: me.name || me.uid
       }).eq('id', id);
       if (delEntErr) throw delEntErr;
-      if (!isNeutral) await sbUpdateBalance(delta);
+      deletedViaRpc = true;
+    } else {
+      try {
+        const { data: rpcRes, error: rpcErr } = await sb.rpc('delete_entry_atomic', {
+          p_entry_id: id,
+          p_deleted_by: (me && (me.name || me.uid)) || 'مدير'
+        });
+        if (!rpcErr && rpcRes && rpcRes.success) {
+          deletedViaRpc = true;
+        }
+      } catch(rpcE){}
+
+      if (!deletedViaRpc) {
+        const {error: delEntErr} = await sb.from('entries').update({
+          deleted: true,
+          deleted_at: Date.now(),
+          deleted_by: me.name || me.uid
+        }).eq('id', id);
+        if (delEntErr) throw delEntErr;
+        await sbUpdateBalance(delta);
+      }
     }
 
     sbLogAction('delete', [id], [snap]);
@@ -8255,7 +8331,8 @@ function renderAll() {
   if (sumEl) {
     const rev  = filtered.filter(e=>e.type==='ايرادات').reduce((s,e)=>s+(e.amount||0),0);
     const exp  = filtered.filter(e=>e.type==='مصاريف').reduce((s,e)=>s+(e.amount||0),0);
-    const ord  = filtered.filter(e=>e.type==='طلبيات').reduce((s,e)=>s+(e.amount||0),0);
+    const ord  = filtered.filter(e=>e.type==='طلبيات' && !isOverseasInvoice(e)).reduce((s,e)=>s+(e.amount||0),0);
+    const osInvs = filtered.filter(e=>isOverseasInvoice(e)).reduce((s,e)=>s+(e.amount||0),0);
     const prft = filtered.filter(e=>e.type==='ارباح').reduce((s,e)=>s+(e.amount||0),0);
     const asst = filtered.filter(e=>e.type==='اصول ثابتة').reduce((s,e)=>s+(e.amount||0),0);
     const dhm  = filtered.filter(e=>e.type==='ذمم اونلاين').reduce((s,e)=>s+(e.amount||0),0);
@@ -8267,6 +8344,7 @@ function renderAll() {
     if (rev)  items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item"><span class="all-summary-lbl">📥 إيرادات:</span><span class="all-summary-val c-g">+${fmt(rev)} ج</span></span>`);
     if (exp)  items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item"><span class="all-summary-lbl">📤 مصاريف:</span><span class="all-summary-val c-r">-${fmt(exp)} ج</span></span>`);
     if (ord)  items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item"><span class="all-summary-lbl">📦 طلبيات:</span><span class="all-summary-val c-o">-${fmt(ord)} ج</span></span>`);
+    if (osInvs) items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item" title="فواتير بضاعة آجلة لأوفر سيز (لا تمس الخزينة)"><span class="all-summary-lbl">📦 بضاعة آجلة:</span><span class="all-summary-val" style="color:#6366f1;">${fmt(osInvs)} ج (آجل)</span></span>`);
     if (prft) items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item"><span class="all-summary-lbl">💹 سحوبات:</span><span class="all-summary-val" style="color:#f6ad55;">-${fmt(prft)} ج</span></span>`);
     if (asst) items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item"><span class="all-summary-lbl">🏗 أصول:</span><span class="all-summary-val" style="color:#81e6d9;">-${fmt(asst)} ج</span></span>`);
     if (dhm)  items.push(`<span class="all-summary-sep">|</span><span class="all-summary-item"><span class="all-summary-lbl">⏳ ذمم:</span><span class="all-summary-val" style="color:#b794f4;">${fmt(dhmP)} ج معلق${dhm!==dhmP?` / ${fmt(dhm)} ج إجمالي`:''}</span></span>`);
@@ -8347,10 +8425,10 @@ function renderAll() {
       </td>
       <td>${fd(e.date)}</td>
       <td style="font-size:.8rem;color:var(--text2);font-variant-numeric:tabular-nums;">${entryTime}</td>
-      <td><span class="badge ${bCls(e.type)}">${esc(e.type)}</span></td>
+      <td>${isOverseasInvoice(e) ? '<span class="badge" style="background:rgba(99,102,241,0.15);color:#6366f1;border:1px solid rgba(99,102,241,0.3);">📦 بضاعة آجلة</span>' : (isOverseasPayment(e) ? '<span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);">💳 سداد مطالبة</span>' : `<span class="badge ${bCls(e.type)}">${esc(e.type)}</span>`)}</td>
       <td><strong>${esc(e.company)||'—'}</strong>${reviewed?` <span class="pos-rev-badge">🏪 POS</span>`:''}</td>
       <td style="font-size:.77rem;color:#718096;">${esc(e.invoice)||'—'}</td>
-      <td class="${e.type==='خصومات'?'a-':(isIn?'a+':'a-')}">${e.type==='خصومات'?'✂️ -'+fmt(e.amount)+' ج (خصم)':(isIn?'+'+fmt(e.amount)+' ج':'-'+fmt(e.amount)+' ج')}</td>
+      <td class="${isOverseasInvoice(e) ? '' : (e.type==='خصومات'?'a-':(isIn?'a+':'a-'))}" style="${isOverseasInvoice(e) ? 'color:#6366f1;font-weight:700;' : ''}">${isOverseasInvoice(e) ? `📦 ${fmt(e.amount)} ج <span style="font-size:0.7rem;opacity:0.8;">(آجل)</span>` : (isOverseasPayment(e) ? `- ${fmt(e.amount)} ج <span style="font-size:0.7rem;opacity:0.8;">(سداد)</span>` : (e.type==='خصومات'?'✂️ -'+fmt(e.amount)+' ج (خصم)':(isIn?'+'+fmt(e.amount)+' ج':'-'+fmt(e.amount)+' ج')))}</td>
       <td class="${balC}">${typeof e.balance==='number'?fmt(e.balance)+' ج':'—'}</td>
       <td><span class="emp-tag">👤 ${esc(e.uname)||'—'}</span></td>
       <td style="font-size:.77rem;color:#718096;max-width:150px;">${esc(e.notes)||'—'}</td>
@@ -8741,7 +8819,7 @@ function updToday() {
   const ts = entries.filter(e=>e.date===td);
   const r=ts.filter(e=>e.type==='ايرادات').reduce((s,e)=>s+e.amount,0);
   const x=ts.filter(e=>e.type==='مصاريف').reduce((s,e)=>s+e.amount,0);
-  const o=ts.filter(e=>e.type==='طلبيات').reduce((s,e)=>s+e.amount,0);
+  const o=ts.filter(e=>e.type==='طلبيات' && !isOverseasInvoice(e)).reduce((s,e)=>s+e.amount,0);
   const p=ts.filter(e=>e.type==='ارباح').reduce((s,e)=>s+e.amount,0);
   const a=ts.filter(e=>e.type==='اصول ثابتة').reduce((s,e)=>s+e.amount,0);
   const dh=ts.filter(e=>e.type==='ذمم اونلاين').reduce((s,e)=>s+e.amount,0);
@@ -12933,14 +13011,32 @@ function isOverseasCompany(co) {
   return s.includes('اوفر') || s.includes('أوفر') || s.includes('overseas');
 }
 
-function isOverseasPayment(e) {
+function isOverseasInvoice(e) {
   if (!e || e.deleted) return false;
-  // أي حركة مسجلة في السيستم تخص أوفر سيز فهي سداد فعلي من الخزينة
-  if (isOverseasCompany(e.company)) return true;
-  const co = (e.company || '').trim().toLowerCase();
-  if (co.includes('مطالب') && (co.includes('اوفر') || co.includes('أوفر') || co.includes('overseas'))) return true;
+  if (e.isOverseasInvoice === true || e.isOverseasCredit === true) return true;
   const n = (e.notes || '').toLowerCase();
   const inv = String(e.invoice || '').toLowerCase();
+  if (n.includes('فاتورة بضاعة آجلة') || n.includes('بضاعة آجلة') || n.includes('فاتورة مشتريات')) return true;
+  if (isOverseasCompany(e.company) && !e.isOverseasPayment && !n.includes('سداد') && !n.includes('مطالب') && !n.includes('دفعة') && !inv.includes('سداد')) {
+    return true;
+  }
+  return false;
+}
+
+function isOverseasPayment(e) {
+  if (!e || e.deleted) return false;
+  if (isOverseasInvoice(e)) return false;
+  if (e.isOverseasPayment === true) return true;
+  const co = (e.company || '').trim().toLowerCase();
+  const n = (e.notes || '').toLowerCase();
+  const inv = String(e.invoice || '').toLowerCase();
+  if (isOverseasCompany(e.company)) {
+    if (inv.includes('سداد') || inv.includes('مطالب') || inv.includes('دفعة') ||
+        n.includes('سداد') || n.includes('مطالب') || n.includes('دفعة')) {
+      return true;
+    }
+  }
+  if (co.includes('مطالب') && (co.includes('اوفر') || co.includes('أوفر') || co.includes('overseas'))) return true;
   if ((n.includes('اوفر') || n.includes('أوفر') || n.includes('overseas')) && (n.includes('سداد') || n.includes('مطالب') || n.includes('دفعة'))) return true;
   if ((inv.includes('اوفر') || inv.includes('أوفر') || inv.includes('overseas')) && (inv.includes('سداد') || inv.includes('مطالب') || inv.includes('دفعة'))) return true;
   return false;
@@ -13040,7 +13136,7 @@ function getOverseasCycleData(cycleKey) {
   const payStartDate = `${info.year}-${String(info.month).padStart(2, '0')}-01`;
   const payEndDate = `${info.year}-${String(info.month).padStart(2, '0')}-${String(info.lastDay).padStart(2, '0')}`;
 
-  // دفعات وسدادات المطالبة: تسحب أي قيد مدفوع لأوفر سيز ضمن نفس الشهر (من 1 إلى 31)
+  // 1. دفعات وسدادات المطالبة (المدفوعة نقدياً من الخزينة)
   const payments = entries.filter(e => {
     if (e.deleted) return false;
     if (!isOverseasPayment(e)) return false;
@@ -13054,13 +13150,25 @@ function getOverseasCycleData(cycleKey) {
   });
   const paidSum = payments.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
-  const effectiveTarget = target;
+  // 2. فواتير البضاعة الآجلة للدورة: من 17 الشهر السابق إلى 16 الشهر الحالي
+  const invoices = entries.filter(e => {
+    if (e.deleted) return false;
+    if (!isOverseasCompany(e.company)) return false;
+    if (isOverseasPayment(e)) return false;
+    const d = e.date || '';
+    return d >= info.invStartDate && d <= info.invEndDate;
+  });
+  const invoicesSum = invoices.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  const effectiveTarget = target > 0 ? target : invoicesSum;
   const remaining = Math.max(0, effectiveTarget - paidSum);
   const progressPct = effectiveTarget > 0 ? Math.min(100, Math.round((paidSum / effectiveTarget) * 100)) : (paidSum > 0 ? 100 : 0);
 
   return {
     info,
     target,
+    invoices,
+    invoicesSum,
     effectiveTarget,
     payments,
     paidSum,
@@ -13262,11 +13370,16 @@ function renderOverseasPane(cycleKey) {
   // Update Badges on Subtabs
   const bPay = document.getElementById('osTabPaymentsBadge');
   if (bPay) bPay.textContent = data.payments.length;
+  const bInv = document.getElementById('osTabInvoicesBadge');
+  if (bInv) bInv.textContent = data.invoices.length;
 
   // Render Table 1: Payments
   renderOverseasPaymentsTable(data.payments);
 
-  // Render Table 2: Full History
+  // Render Table 2: Invoices
+  renderOverseasInvoicesTable(data.invoices);
+
+  // Render Table 3: Full History
   renderOverseasHistoryTable();
 }
 
@@ -13536,6 +13649,88 @@ async function submitOverseasPayment(e) {
       submitBtn.textContent = '💾 تأكيد وتسجيل السداد';
     }
   }
+}
+
+function renderOverseasInvoicesTable(invoices) {
+  const tbody = document.getElementById('osInvoicesTableBody');
+  const sumEl = document.getElementById('osInvoicesSumText');
+  const bInv = document.getElementById('osTabInvoicesBadge');
+  if (bInv) bInv.textContent = (invoices || []).length;
+
+  const totalSum = (invoices || []).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  if (sumEl) sumEl.textContent = `${fmt(totalSum)} ج`;
+
+  if (!tbody) return;
+
+  if (!invoices || invoices.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center;padding:26px;color:var(--text3);font-size:0.85rem;">
+          لا توجد فواتير بضاعة آجلة مسجلة ضمن فترة هذه الدورة (17 الشهر السابق إلى 16 الحالي).<br>
+          <span style="font-size:0.75rem;color:var(--text3);margin-top:4px;display:inline-block;">يمكنك تسجيل فواتير البضاعة من شاشة "تسجيل قيد جديد" باختيار فارما أوفر سيز.</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const sorted = [...invoices].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  tbody.innerHTML = sorted.map(inv => {
+    const amt = parseFloat(inv.amount) || 0;
+    const canDelete = me && me.role === 'admin';
+    return `
+      <tr>
+        <td style="padding:8px 10px;font-weight:700;color:var(--text1);">${esc(inv.date || '—')}</td>
+        <td style="padding:8px 10px;font-weight:700;color:var(--text2);">${esc(inv.invoice || '—')}</td>
+        <td style="padding:8px 10px;font-weight:900;color:#6366f1;font-size:0.95rem;">${fmt(amt)} ج</td>
+        <td style="padding:8px 10px;color:var(--text2);font-size:0.82rem;">${esc(inv.notes || '—')}</td>
+        <td style="padding:8px 10px;font-size:0.8rem;color:var(--text3);">${esc(inv.uname || inv.user || '—')}</td>
+        <td style="padding:8px 10px;font-size:0.75rem;color:var(--text3);">${esc(inv.time || '—')}</td>
+        <td style="padding:8px 10px;text-align:center;">
+          ${canDelete ? `<button type="button" class="btn btn-ghost btn-sm" onclick="deleteOverseasInvoice('${inv.id}')" title="حذف هذه الفاتورة" style="color:#ef4444;padding:2px 6px;">🗑️</button>` : '—'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function deleteOverseasInvoice(id) {
+  if (!confirm('هل أنت متأكد من حذف هذه الفاتورة؟ (لن تؤثر على الخزينة لأنها بضاعة آجلة)')) return;
+  const entry = entries.find(e => e.id === id);
+  if (!entry) return;
+
+  try {
+    if (typeof sb !== 'undefined' && sb) {
+      await sb.from('entries').update({
+        deleted: true,
+        deleted_at: Date.now(),
+        deleted_by: (me && (me.name || me.uid)) || 'مدير'
+      }).eq('id', id);
+    }
+    entry.deleted = true;
+
+    if (typeof updToday === 'function') updToday();
+    if (typeof renderAll === 'function') renderAll();
+    renderOverseasPane();
+
+    toast('✅ تم حذف فاتورة البضاعة الآجلة بنجاح');
+  } catch(e) {
+    toast('❌ تعذر حذف الفاتورة: ' + arErr(e), false);
+  }
+}
+
+function selectOverseasInPaneAdd() {
+  setTimeout(() => {
+    pickType('طلبيات', document.querySelector('.type-btn.tb-o'));
+    const coInp = document.getElementById('eCo');
+    if (coInp) {
+      coInp.value = 'فارما اوفر سيز';
+      updateInvField('فارما اوفر سيز');
+    }
+    const invInp = document.getElementById('eInv');
+    if (invInp) invInp.focus();
+  }, 100);
 }
 
 async function deleteOverseasPayment(id) {
@@ -17203,7 +17398,19 @@ function updateSalaryAdjFormState() {
   const discWrap = document.getElementById('discDisburseTypeWrap');
   if (discWrap) discWrap.style.display = isDisc ? 'block' : 'none';
 
+  const isOverseas = isOverseasCompany(co);
+  const osNotice = document.getElementById('overseasCreditNotice');
+  if (osNotice) osNotice.style.display = isOverseas ? 'block' : 'none';
+
   const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) {
+    if (isOverseas) {
+      saveBtn.textContent = '📦 حفظ فاتورة بضاعة آجلة (لا تمس الخزينة)';
+      saveBtn.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+      saveBtn.style.color = '#fff';
+      return;
+    }
+  }
   if (saveBtn) {
     if (isInc || isDisc) {
       if (isAdmin) {
