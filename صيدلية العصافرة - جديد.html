@@ -4,6 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>صيدلية العصافرة — النسخة المطوّرة</title>
+  <!-- ════════════ Progressive Web App (PWA) ════════════ -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0c2338">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="صيدلية العصافرة">
+  <meta name="application-name" content="صيدلية العصافرة">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Readex+Pro:wght@300;400;500;600;700&family=Jost:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2511,6 +2525,130 @@
   border-style: dashed;
 }
 
+
+/* ════════════ PWA App & Install Banner Styles ════════════ */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 22px;
+  right: 20px;
+  left: 20px;
+  max-width: 460px;
+  margin: 0 auto;
+  z-index: 9999999;
+  background: rgba(12, 35, 56, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(0, 180, 216, 0.45);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 180, 216, 0.2);
+  color: #fff;
+  padding: 12px 16px;
+  animation: pwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  direction: rtl;
+  font-family: 'Alexandria', 'Tajawal', sans-serif;
+}
+@keyframes pwaSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pwa-install-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pwa-install-banner-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 180, 216, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.pwa-install-banner-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pwa-install-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+.pwa-install-banner-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pwa-install-banner-desc {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+.pwa-install-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.pwa-install-btn {
+  background: linear-gradient(135deg, #00b4d8, #10b981);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 180, 216, 0.3);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.pwa-install-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 180, 216, 0.45);
+}
+.pwa-dismiss-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border: none;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pwa-dismiss-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.pwa-tb-install {
+  background: linear-gradient(135deg, rgba(0, 180, 216, 0.15), rgba(16, 185, 129, 0.15)) !important;
+  border: 1px solid rgba(0, 180, 216, 0.5) !important;
+  color: #00b4d8 !important;
+  font-weight: 700 !important;
+  gap: 5px;
+  padding: 6px 12px !important;
+  cursor: pointer;
+}
+.pwa-tb-install:hover {
+  background: linear-gradient(135deg, rgba(0, 180, 216, 0.28), rgba(16, 185, 129, 0.28)) !important;
+  border-color: #00b4d8 !important;
+  color: #fff !important;
+}
+@media (max-width: 640px) {
+  .pwa-tb-text {
+    display: none;
+  }
+}
 </style>
 </head>
 <body>
@@ -2744,6 +2882,10 @@ function ensureXLSX() {
           <span class="saliim-item-icon">⚙️</span>
           <span>الإعدادات العامة</span>
         </div>
+        <div class="saliim-nav-item" id="navItemInstallApp" onclick="triggerPWAInstall()" style="color:#00b4d8;font-weight:700;">
+          <span class="saliim-item-icon">📲</span>
+          <span>تثبيت التطبيق على الهاتف</span>
+        </div>
       </nav>
 
       <!-- Sidebar Profile Box -->
@@ -2791,6 +2933,9 @@ function ensureXLSX() {
           <span id="hUName" style="display:none;"></span>
           <span id="hURole" style="display:none;"></span>
 
+          <button id="pwaInstallTopbarBtn" class="saliim-tb-btn pwa-tb-install" onclick="triggerPWAInstall()" title="تثبيت التطبيق على الهاتف">
+            <span>📲</span><span class="pwa-tb-text">تثبيت التطبيق</span>
+          </button>
           <button id="themeToggle" class="saliim-tb-btn" onclick="toggleTheme()" title="تبديل المظهر">🌙</button>
           <button id="topbarSearchBtn" class="saliim-tb-btn" onclick="openGlobalSearch()" title="بحث شامل (Ctrl+K)">🔍 <span style="font-size:0.7rem;opacity:0.7;padding:1px 4px;border:1px solid var(--border);border-radius:4px;">Ctrl+K</span></button>
           <button class="saliim-tb-btn saliim-tb-logout" onclick="doLogout()" title="تسجيل الخروج">خروج ↩</button>
@@ -26682,5 +26827,209 @@ function triggerWorkerReminder(title, body) {
   </div>
 </div>
 
+<!-- ══════════════ PWA INSTALL BANNER & MODAL ══════════════ -->
+<!-- Floating Install Banner -->
+<div id="pwaInstallBanner" class="pwa-install-banner" style="display:none;">
+  <div class="pwa-install-banner-inner">
+    <div class="pwa-install-banner-icon">
+      <img src="/icons/icon-192.png" alt="صيدلية العصافرة" width="44" height="44">
+    </div>
+    <div class="pwa-install-banner-text">
+      <div class="pwa-install-banner-title">تطبيق صيدلية العصافرة 🏥</div>
+      <div class="pwa-install-banner-desc">ثبّت التطبيق الآن لفتحه بسرعة وبشاشة كاملة بدون شريط المتصفح</div>
+    </div>
+    <div class="pwa-install-banner-actions">
+      <button class="pwa-install-btn" onclick="triggerPWAInstall()">📲 تثبيت</button>
+      <button class="pwa-dismiss-btn" onclick="dismissPWABanner()" title="إغلاق">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: PWA Installation Guide -->
+<div id="pwaInstructionsModal" class="modal-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)closePWAInstructionsModal()">
+  <div class="modal-box" style="border:1.5px solid #00b4d8;max-width:500px;text-align:right;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+      <div style="font-weight:900;font-size:1.12rem;color:#00b4d8;display:flex;align-items:center;gap:8px;">
+        <span>📲</span><span>تثبيت صيدلية العصافرة كتطبيق على الهاتف</span>
+      </div>
+      <button type="button" onclick="closePWAInstructionsModal()" class="btn btn-ghost btn-sm" style="font-size:1.2rem;padding:2px 8px;">✕</button>
+    </div>
+
+    <div style="text-align:center;margin-bottom:16px;">
+      <img src="/icons/icon-192.png" alt="أيقونة التطبيق" style="width:72px;height:72px;border-radius:18px;box-shadow:0 6px 18px rgba(0,180,216,0.3);margin-bottom:8px;border:1px solid rgba(255,255,255,0.2);">
+      <h3 style="font-size:1.05rem;color:var(--text);margin-bottom:4px;">تطبيق صيدلية العصافرة المالي</h3>
+      <p style="font-size:0.78rem;color:var(--text3);">يعمل كتطبيق هاتف سريع ومستقل بشاشة كاملة وبدون أشرطة المتصفح</p>
+    </div>
+
+    <!-- Quick Direct Button if Prompt is Ready -->
+    <div id="pwaDirectInstallBox" style="display:none;margin-bottom:18px;">
+      <button type="button" onclick="triggerPWAInstallDirect()" class="btn" style="width:100%;background:linear-gradient(135deg, #00b4d8, #10b981);color:#fff;font-weight:900;font-size:1rem;padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,180,216,0.35);cursor:pointer;">
+        📲 اضغط هنا لتثبيت التطبيق الآن بنقرة واحدة
+      </button>
+    </div>
+
+    <!-- Instructions for Android Chrome -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="font-weight:800;color:#10b981;font-size:0.92rem;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+        <span>🤖</span><span>لهواتف أندرويد (Google Chrome):</span>
+      </div>
+      <ol style="margin-right:20px;font-size:0.84rem;color:var(--text2);line-height:1.7;">
+        <li>اضغط على زر القائمة <b>(الثلاث نقاط ⋮)</b> في أعلى متصفح كروم.</li>
+        <li>اختر <b>"تثبيت التطبيق"</b> أو <b>"إضافة إلى الشاشة الرئيسية"</b> (Install app).</li>
+        <li>اضغط <b>"تثبيت"</b> وسينزل التطبيق فوراً على شاشة هاتفك الرئيسية.</li>
+      </ol>
+    </div>
+
+    <!-- Instructions for iPhone Safari -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
+      <div style="font-weight:800;color:#3b82f6;font-size:0.92rem;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+        <span>🍎</span><span>لهواتف آيفون (Safari):</span>
+      </div>
+      <ol style="margin-right:20px;font-size:0.84rem;color:var(--text2);line-height:1.7;">
+        <li>افتح الموقع في متصفح <b>Safari</b>.</li>
+        <li>اضغط على زر المشاركة <b>(مربع به سهم لأعلى ⎋)</b> في شريط الأدوات أسفل الشاشة.</li>
+        <li>مرر للأسفل واختر <b>"إضافة إلى الصفحة الرئيسية"</b> (Add to Home Screen ➕).</li>
+        <li>اضغط <b>"إضافة" (Add)</b> في أعلى الزاوية.</li>
+      </ol>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="button" onclick="closePWAInstructionsModal()" class="btn btn-ghost" style="padding:8px 20px;">حسناً، فهمت</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PWA Installation & Service Worker Integration
+   ═══════════════════════════════════════════════════════════ */
+var deferredInstallPrompt = null;
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) {
+        console.log('[PWA] Service Worker مسجل بنجاح بنطاق:', reg.scope);
+      })
+      .catch(function(err) {
+        console.warn('[PWA] تعذر تسجيل Service Worker:', err);
+      });
+  });
+}
+
+// Detect Chrome beforeinstallprompt event
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+
+  // Show topbar button
+  var topbarBtn = document.getElementById('pwaInstallTopbarBtn');
+  if (topbarBtn) topbarBtn.style.display = 'inline-flex';
+
+  var directBox = document.getElementById('pwaDirectInstallBox');
+  if (directBox) directBox.style.display = 'block';
+
+  // Check if user dismissed recently (24 hours cooldown)
+  var lastDismissed = localStorage.getItem('asafra_pwa_dismissed');
+  var now = Date.now();
+  if (!lastDismissed || (now - Number(lastDismissed)) > 24 * 60 * 60 * 1000) {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.style.display = 'block';
+  }
+});
+
+window.addEventListener('appinstalled', function() {
+  deferredInstallPrompt = null;
+  var banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.style.display = 'none';
+  var topbarBtn = document.getElementById('pwaInstallTopbarBtn');
+  if (topbarBtn) topbarBtn.style.display = 'none';
+  var directBox = document.getElementById('pwaDirectInstallBox');
+  if (directBox) directBox.style.display = 'none';
+  var navItem = document.getElementById('navItemInstallApp');
+  if (navItem) {
+    navItem.innerHTML = '<span class="saliim-item-icon">✅</span><span>التطبيق مثبت على جهازك</span>';
+    navItem.style.color = '#10b981';
+  }
+  if (typeof toast === 'function') {
+    toast('🎉 تم تثبيت تطبيق صيدلية العصافرة بنجاح على جهازك!');
+  }
+});
+
+// Check if running in standalone mode (already installed as PWA)
+(function checkStandaloneMode() {
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.style.display = 'none';
+    var topbarBtn = document.getElementById('pwaInstallTopbarBtn');
+    if (topbarBtn) topbarBtn.style.display = 'none';
+    var navItem = document.getElementById('navItemInstallApp');
+    if (navItem) {
+      navItem.innerHTML = '<span class="saliim-item-icon">✅</span><span>أنت تعمل داخل التطبيق</span>';
+      navItem.style.color = '#10b981';
+    }
+  }
+})();
+
+function triggerPWAInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(function(choice) {
+      if (choice && choice.outcome === 'accepted') {
+        var banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.style.display = 'none';
+      }
+      deferredInstallPrompt = null;
+    });
+  } else {
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+      if (typeof toast === 'function') {
+        toast('✅ أنت بالفعل تتصفح النظام من داخل التطبيق المثبت على جهازك!');
+      } else {
+        alert('✅ أنت بالفعل تتصفح النظام من داخل التطبيق المثبت على جهازك!');
+      }
+      return;
+    }
+    openPWAInstructionsModal();
+  }
+}
+
+function triggerPWAInstallDirect() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(function(choice) {
+      if (choice && choice.outcome === 'accepted') {
+        var banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.style.display = 'none';
+        closePWAInstructionsModal();
+      }
+      deferredInstallPrompt = null;
+    });
+  }
+}
+
+function dismissPWABanner() {
+  var banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.style.display = 'none';
+  localStorage.setItem('asafra_pwa_dismissed', String(Date.now()));
+}
+
+function openPWAInstructionsModal() {
+  var directBox = document.getElementById('pwaDirectInstallBox');
+  if (directBox) {
+    directBox.style.display = deferredInstallPrompt ? 'block' : 'none';
+  }
+  var modal = document.getElementById('pwaInstructionsModal');
+  if (modal) modal.classList.add('active');
+}
+
+function closePWAInstructionsModal() {
+  var modal = document.getElementById('pwaInstructionsModal');
+  if (modal) modal.classList.remove('active');
+}
+</script>
 </body>
 </html>
