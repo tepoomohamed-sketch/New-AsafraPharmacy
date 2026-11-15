@@ -5538,7 +5538,10 @@ function listenAllMetaChanges() {
 }
 
 async function sbGetMeta(key, options = {}) {
-  if (options && options.forceRefresh) {
+  // مفاتيح الحسابات المالية مثل balance لا تعتمد أبداً على الكاش المحلي القديم إذا كان المتصفح متصلاً
+  const isFinancialKey = (key === 'balance');
+  const shouldForce = Boolean(options && options.forceRefresh) || (isFinancialKey && navigator.onLine);
+  if (shouldForce) {
     const {data, error} = await sb.from('meta').select('value').eq('key',key).maybeSingle();
     if (error) { console.error('sbGetMeta:', key, error); return _metaCache[key] || {}; }
     const val = data?.value || {};
@@ -5567,22 +5570,24 @@ async function sbSetMeta(key, value) {
 // ── تحديث الرصيد الآمن مع حماية من التضارب (Atomic Balance Update) ──
 async function sbUpdateBalance(delta) {
   if (!delta || delta === 0) {
-    const m = await sbGetMeta('balance');
-    return Number(m.amount) || 0;
+    const m = await sbGetMeta('balance', { forceRefresh: true });
+    return Number(m?.amount) || 0;
   }
   try {
     // 1. محاولة استخدام الدالة الذرية في PostgreSQL (أعلى درجات الأمان لمنع السباق)
     const { data, error } = await sb.rpc('update_balance_atomic', { delta_amt: delta });
     if (!error && data !== null && data !== undefined) {
-      return Number(data);
+      const updated = Number(data);
+      _metaCache['balance'] = { amount: updated };
+      return updated;
     }
   } catch(rpcErr) {
     // تجاوز للـ fallback التوافقي المباشر إذا لم تكن الدالة منشأة بالسيرفر بعد
   }
 
-  // 2. الـ Fallback التوافقي المباشر
-  const metaV = await sbGetMeta('balance');
-  const prev = Number(metaV.amount) || 0;
+  // 2. الـ Fallback التوافقي المباشر مع جلب إجباري حي من قاعدة البيانات
+  const metaV = await sbGetMeta('balance', { forceRefresh: true });
+  const prev = Number(metaV?.amount) || 0;
   const newB = prev + delta;
   await sbSetMeta('balance', { amount: newB });
   return newB;
@@ -6034,8 +6039,8 @@ async function loadAndListenWalletPin() {
 
 function listenBalance() {
   if (sbChanBalance) { sb.removeChannel(sbChanBalance); sbChanBalance=null; }
-  // Initial load — always fallback to last entry balance if meta is 0/null
-  sbGetMeta('balance').then(async v => {
+  // Initial load — دايما جلب حي من السيرفر لمنع الكاش القديم
+  sbGetMeta('balance', { forceRefresh: true }).then(async v => {
     let bal = v?.amount;
     // لو الرصيد فاضي أو غير معرف — دايما ارجع لآخر قيد كـ fallback (الصفر قيمة صحيحة)
     if (bal === undefined || bal === null || isNaN(bal)) {
