@@ -15518,7 +15518,7 @@ function attBuildSessions(records) {
     const ins  = pool.filter(r=>r.type==='حضور');
     const outs = pool.filter(r=>r.type==='انصراف');
 
-    const MAX_SHIFT_MS = 12 * 3600_000; // حد أقصى ١٢ ساعة للشيفت
+    const MAX_SHIFT_MS = 16 * 3600_000; // حد أقصى ١٦ ساعة للشيفت (يدعم الشفتات المسائية والليلية العابرة لمنتصف الليل)
 
     ins.forEach(inRec=>{
       // أول انصراف غير مستخدم بعد وقت الحضور وفي نطاق ١٢ ساعة فقط
@@ -15624,8 +15624,8 @@ function attRenderEmployee() {
   const today=todayStr();
   const monthStr=today.slice(0,7);
 
-  const todayHrs=attBuildSessions(myRecs.filter(r=>r.date===today)).reduce((a,s)=>a+(s.hours||0),0);
-  const monthHrs=attBuildSessions(myRecs.filter(r=>r.date.startsWith(monthStr))).reduce((a,s)=>a+(s.hours||0),0);
+  const todayHrs=sessions.filter(s => s.date === today || s.outDate === today || s.isLive).reduce((a,s)=>a+(s.hours||0),0);
+  const monthHrs=sessions.filter(s => (s.date && s.date.startsWith(monthStr)) || (s.outDate && s.outDate.startsWith(monthStr))).reduce((a,s)=>a+(s.hours||0),0);
   const rate=attRates[me.name]||0;
 
   // [v13-fix] جدول الحضور اليومي — الموظف يشوف سجلاته هو بس
