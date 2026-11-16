@@ -7346,7 +7346,11 @@ async function doSave() {
         balUpdated = true;
       }
       entryPayload.balance = newB;
-      const { error: insErr } = await sb.from('entries').insert(entryPayload);
+      const dbPayload = { ...entryPayload };
+      delete dbPayload.isOverseasInvoice;
+      delete dbPayload.isOverseasCredit;
+      delete dbPayload.isOverseasPayment;
+      const { error: insErr } = await sb.from('entries').insert(dbPayload);
       if (insErr) {
         if (balUpdated) {
           try { await sbUpdateBalance(-delta); } catch(rErr){}
@@ -13740,25 +13744,14 @@ async function submitOverseasPayment(e) {
   try {
     const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
     const delta = -amt; // دفعات التوريد تخفض رصيد الخزينة
-    let newB = curB;
-
-    if (typeof sbUpdateBalance === 'function') {
-      try {
-        newB = await sbUpdateBalance(delta);
-      } catch(balErr) {
-        console.warn('Balance atomic update warning, falling back:', balErr);
-        newB = curB + delta;
-      }
-    } else {
-      newB = curB + delta;
-    }
+    let newB = curB + delta;
 
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
     const newId = crypto.randomUUID();
     const finalNotes = `سداد مطالبة أوفر سيز دورة ${cycleKey} [${info.shortLabel}] (${method})${userNotes ? ' - ' + userNotes : ''}`;
 
-    const newEntry = {
+    const dbPayload = {
       id: newId,
       date: date,
       type: 'طلبيات',
@@ -13770,16 +13763,51 @@ async function submitOverseasPayment(e) {
       uname: (typeof me !== 'undefined' && me && me.name) ? me.name : 'المدير',
       balance: newB,
       time: timeStr,
-      ts: Date.now(),
+      ts: Date.now()
+    };
+
+    let savedViaAtomic = false;
+    if (typeof sb !== 'undefined' && sb) {
+      // 1. محاولة الحفظ الذري (تحديث الرصيد + إضافة القيد في خطوة واحدة لا تنقسم)
+      try {
+        const { data: rpcRes, error: rpcErr } = await sb.rpc('save_entry_atomic', {
+          p_entry: dbPayload,
+          p_delta: delta
+        });
+        if (!rpcErr && rpcRes && rpcRes.success) {
+          newB = Number(rpcRes.balance) || (curB + delta);
+          dbPayload.balance = newB;
+          savedViaAtomic = true;
+        }
+      } catch(rpcE){}
+
+      // 2. الـ Fallback التوافقي مع حماية التراجع الذاتي
+      if (!savedViaAtomic) {
+        let balUpdated = false;
+        if (typeof sbUpdateBalance === 'function') {
+          newB = await sbUpdateBalance(delta);
+          balUpdated = true;
+        } else {
+          newB = curB + delta;
+        }
+        dbPayload.balance = newB;
+        const { error: insErr } = await sb.from('entries').insert(dbPayload);
+        if (insErr) {
+          if (balUpdated && typeof sbUpdateBalance === 'function') {
+            try { await sbUpdateBalance(-delta); } catch(rErr){}
+          }
+          throw insErr;
+        }
+      }
+    }
+
+    const memEntry = {
+      ...dbPayload,
+      balance: newB,
       isOverseasPayment: true
     };
 
-    if (typeof sb !== 'undefined' && sb) {
-      const { error: insErr } = await sb.from('entries').insert(newEntry);
-      if (insErr) throw insErr;
-    }
-
-    entries.unshift(newEntry);
+    entries.unshift(memEntry);
     currentBal = newB;
 
     // تحديث الهيدر وشاشات النظام
