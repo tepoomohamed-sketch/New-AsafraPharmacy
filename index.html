@@ -7234,29 +7234,34 @@ function checkDuplicateInvoice(isEdit = false) {
 // ═══════════════════════════════════════════
 // ── استرجاع الرصيد الحي الفعلي للعهدة (بدون أي اعتماد على entries[0] القديم) ──
 function getCurrentLiveBalance() {
-  if (typeof window.currentBal === 'number' && !isNaN(window.currentBal)) {
+  if (typeof window.currentBal === 'number' && !isNaN(window.currentBal) && window.currentBal !== -100) {
     return window.currentBal;
   }
   const el = document.getElementById('hBal');
-  if (el) {
-    const raw = el.textContent.replace(/[^0-9.-]/g, '');
-    const parsed = parseFloat(raw);
-    if (!isNaN(parsed)) {
-      window.currentBal = parsed;
-      return parsed;
+  if (el && el.textContent) {
+    let txt = el.textContent;
+    const arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    for (let i = 0; i < 10; i++) txt = txt.replaceAll(arDigits[i], String(i));
+    const cleaned = txt.replace(/[^0-9.-]/g, '');
+    const p = parseFloat(cleaned);
+    if (!isNaN(p) && p !== -100) {
+      window.currentBal = p;
+      return p;
     }
   }
   const cached = localStorage.getItem('asafra_new_cached_balance');
-  if (cached !== null && cached !== '' && !isNaN(Number(cached))) {
+  if (cached !== null && cached !== '' && !isNaN(Number(cached)) && Number(cached) !== -100) {
     window.currentBal = Number(cached);
     return Number(cached);
   }
   if (Array.isArray(entries) && entries.length > 0) {
-    // entries مرتب تصاعدياً — آخر عنصر هو الأحدث زمنياً
-    const sortedDesc = [...entries].filter(e => !e.deleted && typeof e.balance === 'number').sort((a,b) => (b.ts || 0) - (a.ts || 0));
-    if (sortedDesc[0] && typeof sortedDesc[0].balance === 'number') {
-      window.currentBal = sortedDesc[0].balance;
-      return sortedDesc[0].balance;
+    const valid = entries.filter(e => !e.deleted && typeof e.balance === 'number' && e.balance !== -100);
+    if (valid.length > 0) {
+      const latest = valid.reduce((prev, cur) => ((cur.ts || 0) > (prev.ts || 0) ? cur : prev), valid[0]);
+      if (latest && typeof latest.balance === 'number') {
+        window.currentBal = latest.balance;
+        return latest.balance;
+      }
     }
   }
   return 0;
@@ -7398,8 +7403,8 @@ async function doSave() {
 
     const curB = getCurrentLiveBalance();
 
-    // صمام أمان الخزينة: تحذير استباقي إذا كانت الحركة ستجعل رصيد الخزينة سالباً
-    if (!isNeutral && delta < 0) {
+    // صمام أمان الخزينة: تحذير استباقي فقط إذا كان الرصيد معروفاً وأكبر من صفر وسيصبح سالباً بعد الصرف
+    if (!isNeutral && delta < 0 && curB > 0) {
       const projectedBal = curB + delta;
       if (projectedBal < 0) {
         const warnMsg = `⚠️ تنبيه حماية الخزينة:\n\n` +
@@ -7410,6 +7415,7 @@ async function doSave() {
         if (!confirm(warnMsg)) {
           btn.textContent = '💾 حفظ القيد';
           btn.disabled = false;
+          window._isSavingEntryLock = false;
           return;
         }
       }
