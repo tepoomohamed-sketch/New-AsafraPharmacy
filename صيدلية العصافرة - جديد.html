@@ -7495,7 +7495,16 @@ async function doSave() {
       saveSalaryAdjustments();
     }
 
-    toast(isOverseasInv ? '✅ تم حفظ فاتورة البضاعة الآجلة لأوفر سيز بنجاح دون المساس بالخزينة' : (`✅ تم حفظ القيد بنجاح ${isNeutral ? '(مع الراتب دون المساس بالخزينة)' : ''} — `+me.name));
+    if (isOverseasInv) {
+      try {
+        const cycleKey = curOverseasCycleKey || (typeof getOverseasCycleInfo === 'function' ? getOverseasCycleInfo(date ? date.slice(0, 7) : '').cycleKey : '');
+        if (cycleKey && typeof saveOverseasClaimTarget === 'function') {
+          const curTarget = parseFloat(overseasClaims[cycleKey]) || 0;
+          await saveOverseasClaimTarget(cycleKey, curTarget + amt);
+        }
+      } catch(osErr) { console.warn('Auto-increment overseas claim error:', osErr); }
+    }
+    toast(isOverseasInv ? '✅ تم حفظ فاتورة البضاعة الآجلة وزيادة مطالبة أوفر سيز بنجاح دون المساس بالخزينة' : (`✅ تم حفظ القيد بنجاح ${isNeutral ? '(مع الراتب دون المساس بالخزينة)' : ''} — `+me.name));
     if (typeof updateOverseasClaimSummary === 'function') updateOverseasClaimSummary();
     if (document.getElementById('pane-overseas')?.classList.contains('on')) renderOverseasPane();
     updateOnlineDebtsHeader();
@@ -7773,6 +7782,18 @@ async function saveEdit() {
     if (diff !== 0) {
       await sbUpdateBalance(diff);
     }
+    if (newIsOverseasInv || oldIsOverseasInv) {
+      try {
+        const cycleKey = (typeof getOverseasCycleInfo === 'function' ? getOverseasCycleInfo(date ? date.slice(0, 7) : '').cycleKey : '');
+        if (cycleKey && typeof saveOverseasClaimTarget === 'function') {
+          const curTarget = parseFloat(overseasClaims[cycleKey]) || 0;
+          const diffAmt = (newIsOverseasInv ? amt : 0) - (oldIsOverseasInv ? oldAmt : 0);
+          if (diffAmt !== 0) {
+            await saveOverseasClaimTarget(cycleKey, Math.max(0, curTarget + diffAmt));
+          }
+        }
+      } catch(osErr) { console.warn('Edit overseas claim error:', osErr); }
+    }
 
     // تسجيل حركة التعديل في سجل حركات المدير (Audit Trail)
     try {
@@ -7998,6 +8019,15 @@ async function delEntry(id, type, amount) {
       }
     }
 
+    if (entry && (entry.isOverseasInvoice || entry.isOverseasCredit || isOverseasInvoice(entry))) {
+      try {
+        const cycleKey = (typeof getOverseasCycleInfo === 'function' ? getOverseasCycleInfo(entry.date ? entry.date.slice(0, 7) : '').cycleKey : '');
+        if (cycleKey && typeof saveOverseasClaimTarget === 'function') {
+          const curTarget = parseFloat(overseasClaims[cycleKey]) || 0;
+          await saveOverseasClaimTarget(cycleKey, Math.max(0, curTarget - (entry.amount || 0)));
+        }
+      } catch(osErr) { console.warn('Del overseas claim error:', osErr); }
+    }
     sbLogAction('delete', [id], [snap]);
     toast('🗑 تم حذف القيد — يمكن استعادته من سجل الحركات');
     fetchEntries();
