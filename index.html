@@ -5537,6 +5537,25 @@ function listenAllMetaChanges() {
   } catch(e){}
 }
 
+// ── درع تعقيم بيانات القيود: يمنع رفض السيرفر لأي حقول إضافية غير موجودة بجدول entries ──
+const DB_ENTRIES_ALLOWED_COLS = new Set([
+  'id', 'date', 'type', 'company', 'invoice', 'amount', 'notes',
+  'uid', 'uname', 'balance', 'time', 'ts', 'deleted', 'deleted_at',
+  'deleted_by', 'pos_reviewed', 'pos_reviewed_by', 'pos_reviewed_at'
+]);
+
+function sanitizeEntryForDb(entry) {
+  if (!entry || typeof entry !== 'object') return entry;
+  const clean = {};
+  for (const k of Object.keys(entry)) {
+    if (DB_ENTRIES_ALLOWED_COLS.has(k)) {
+      clean[k] = entry[k];
+    }
+  }
+  return clean;
+}
+
+let _balUpdateLock = false;
 async function sbGetMeta(key, options = {}) {
   // مفاتيح الحسابات المالية مثل balance لا تعتمد أبداً على الكاش المحلي القديم إذا كان المتصفح متصلاً
   const isFinancialKey = (key === 'balance');
@@ -5573,24 +5592,33 @@ async function sbUpdateBalance(delta) {
     const m = await sbGetMeta('balance', { forceRefresh: true });
     return Number(m?.amount) || 0;
   }
+
+  // حماية التزامن المحلي (Mutex Lock لمنع التداخل بين طلبيات متزامنة في نفس اللحظة)
+  while (_balUpdateLock) {
+    await new Promise(r => setTimeout(r, 40));
+  }
+  _balUpdateLock = true;
+
   try {
     // 1. محاولة استخدام الدالة الذرية في PostgreSQL (أعلى درجات الأمان لمنع السباق)
-    const { data, error } = await sb.rpc('update_balance_atomic', { delta_amt: delta });
-    if (!error && data !== null && data !== undefined) {
-      const updated = Number(data);
-      _metaCache['balance'] = { amount: updated };
-      return updated;
-    }
-  } catch(rpcErr) {
-    // تجاوز للـ fallback التوافقي المباشر إذا لم تكن الدالة منشأة بالسيرفر بعد
-  }
+    try {
+      const { data, error } = await sb.rpc('update_balance_atomic', { delta_amt: delta });
+      if (!error && data !== null && data !== undefined) {
+        const updated = Number(data);
+        _metaCache['balance'] = { amount: updated };
+        return updated;
+      }
+    } catch(rpcErr) {}
 
-  // 2. الـ Fallback التوافقي المباشر مع جلب إجباري حي من قاعدة البيانات
-  const metaV = await sbGetMeta('balance', { forceRefresh: true });
-  const prev = Number(metaV?.amount) || 0;
-  const newB = prev + delta;
-  await sbSetMeta('balance', { amount: newB });
-  return newB;
+    // 2. الـ Fallback التوافقي المباشر مع جلب إجباري حي من قاعدة البيانات
+    const metaV = await sbGetMeta('balance', { forceRefresh: true });
+    const prev = Number(metaV?.amount) || 0;
+    const newB = prev + delta;
+    await sbSetMeta('balance', { amount: newB });
+    return newB;
+  } finally {
+    _balUpdateLock = false;
+  }
 }
 
 // ── أداة تدقيق وتصحيح الرصيد الذاتي (Balance Self-Audit & Healing) ──
@@ -6088,6 +6116,34 @@ window.addEventListener('online', () => {
       try { fetchEntriesDebounced(300); } catch(e){}
     }
   }, 1200);
+});
+
+// ── درع المزامنة الفورية عند العودة للتبويب (Window Focus / Visibility Sync) ──
+// يضمن جلب رصيد الخزينة الحي من السيرفر فور فتح الشاشة ومنع أي كاش متأخر
+window.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && navigator.onLine) {
+    try {
+      sbGetMeta('balance', { forceRefresh: true }).then(v => {
+        if (v && v.amount !== undefined) {
+          const el = document.getElementById('hBal');
+          if (el) { el.textContent = fmt(v.amount); el.style.color = v.amount >= 0 ? '#d4edda' : '#ffb3b3'; }
+        }
+      });
+      if (typeof fetchEntriesDebounced === 'function') fetchEntriesDebounced(300);
+    } catch(e){}
+  }
+});
+window.addEventListener('focus', () => {
+  if (navigator.onLine) {
+    try {
+      sbGetMeta('balance', { forceRefresh: true }).then(v => {
+        if (v && v.amount !== undefined) {
+          const el = document.getElementById('hBal');
+          if (el) { el.textContent = fmt(v.amount); el.style.color = v.amount >= 0 ? '#d4edda' : '#ffb3b3'; }
+        }
+      });
+    } catch(e){}
+  }
 });
 
 window.addEventListener('offline', () => {
@@ -7310,6 +7366,24 @@ async function doSave() {
     }
 
     const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+
+    // صمام أمان الخزينة: تحذير استباقي إذا كانت الحركة ستجعل رصيد الخزينة سالباً
+    if (!isNeutral && delta < 0) {
+      const projectedBal = curB + delta;
+      if (projectedBal < 0) {
+        const warnMsg = `⚠️ تنبيه حماية الخزينة:\n\n` +
+          `• رصيد الخزينة الحالي المسجل: ${fmt(curB)} ج\n` +
+          `• المبلغ المطلوب صرفه: ${fmt(amt)} ج\n` +
+          `• الرصيد بعد الصرف سيصبح بالسالب: ${fmt(projectedBal)} ج\n\n` +
+          `هل أنت متأكد من رغبتك في تسجيل هذه الحركة؟`;
+        if (!confirm(warnMsg)) {
+          btn.textContent = '💾 حفظ القيد';
+          btn.disabled = false;
+          return;
+        }
+      }
+    }
+
     const now = new Date();
     const timeStr = now.toTimeString().slice(0,5); // HH:MM
     const newId = crypto.randomUUID();
@@ -7329,7 +7403,7 @@ async function doSave() {
     // 1. المحاولة الذرية في PostgreSQL (تحديث الرصيد + القيد في خطوة واحدة لا تنقسم)
     try {
       const { data: rpcRes, error: rpcErr } = await sb.rpc('save_entry_atomic', {
-        p_entry: entryPayload,
+        p_entry: sanitizeEntryForDb(entryPayload),
         p_delta: isNeutral ? 0 : delta
       });
       if (!rpcErr && rpcRes && rpcRes.success) {
