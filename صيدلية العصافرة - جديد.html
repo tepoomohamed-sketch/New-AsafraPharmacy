@@ -6081,6 +6081,7 @@ function listenBalance() {
         bal = 0;
       }
     }
+    window.currentBal = bal;
     const el = document.getElementById('hBal');
     if (el) { el.textContent = fmt(bal); el.style.color = bal>=0 ? '#d4edda' : '#ffb3b3'; }
     // احفظ في localStorage كـ cache احتياطي
@@ -7231,6 +7232,36 @@ function checkDuplicateInvoice(isEdit = false) {
 // ═══════════════════════════════════════════
 //  SAVE ENTRY
 // ═══════════════════════════════════════════
+// ── استرجاع الرصيد الحي الفعلي للعهدة (بدون أي اعتماد على entries[0] القديم) ──
+function getCurrentLiveBalance() {
+  if (typeof window.currentBal === 'number' && !isNaN(window.currentBal)) {
+    return window.currentBal;
+  }
+  const el = document.getElementById('hBal');
+  if (el) {
+    const raw = el.textContent.replace(/[^0-9.-]/g, '');
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed)) {
+      window.currentBal = parsed;
+      return parsed;
+    }
+  }
+  const cached = localStorage.getItem('asafra_new_cached_balance');
+  if (cached !== null && cached !== '' && !isNaN(Number(cached))) {
+    window.currentBal = Number(cached);
+    return Number(cached);
+  }
+  if (Array.isArray(entries) && entries.length > 0) {
+    // entries مرتب تصاعدياً — آخر عنصر هو الأحدث زمنياً
+    const sortedDesc = [...entries].filter(e => !e.deleted && typeof e.balance === 'number').sort((a,b) => (b.ts || 0) - (a.ts || 0));
+    if (sortedDesc[0] && typeof sortedDesc[0].balance === 'number') {
+      window.currentBal = sortedDesc[0].balance;
+      return sortedDesc[0].balance;
+    }
+  }
+  return 0;
+}
+
 async function doSave() {
   // ── حماية فورية: منع الحفظ عند انقطاع الإنترنت ──
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -7365,7 +7396,7 @@ async function doSave() {
       if (!finalNotes.includes(tag)) finalNotes = (finalNotes ? finalNotes + ' ' : '') + tag;
     }
 
-    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
 
     // صمام أمان الخزينة: تحذير استباقي إذا كانت الحركة ستجعل رصيد الخزينة سالباً
     if (!isNeutral && delta < 0) {
@@ -13816,7 +13847,7 @@ async function submitOverseasPayment(e) {
   }
 
   try {
-    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
     const delta = -amt; // دفعات التوريد تخفض رصيد الخزينة
     let newB = curB + delta;
 
@@ -17150,7 +17181,7 @@ async function quickAddDeduction(empName) {
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
     const newId = crypto.randomUUID();
-    const curB = typeof currentBal === 'number' ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
 
     const { error: insErr } = await sb.from('entries').insert({
       id: newId,
@@ -17832,7 +17863,7 @@ async function settleSalaryAdjustmentNow(reqId) {
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
     const entryId = crypto.randomUUID();
-    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
 
     if (isBonus) {
       // صرف نقدي للمكافأة من الخزينة
@@ -17950,7 +17981,7 @@ async function approveSalaryAdjustment(reqId, customAmt) {
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 5);
     const entryId = crypto.randomUUID();
-    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
 
     const baseReason = req.reason || (isBonus ? 'حوافز ومكافآت' : 'خصومات');
     const notesTag = isBonus
@@ -23183,7 +23214,7 @@ async function confirmSaveLuckyBonus() {
     const finalNotes = `🎲 مكافأة حظ تميز: ${reason} (رقم غير مكرر) ${tag}`;
 
     // تُصرف دائماً مع الراتب: محايدة للعهدة تماماً (لا تمس الخزينة إطلاقاً)
-    const curB = (typeof currentBal === 'number') ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
 
     const { error: insErr } = await sb.from('entries').insert({
       id: newId,
@@ -25078,7 +25109,7 @@ async function confirmAdminDeduction() {
     const today = todayStr();
     const timeStr = new Date().toTimeString().slice(0, 5);
     const newId = crypto.randomUUID();
-    const curB = typeof currentBal === 'number' ? currentBal : (entries[0]?.balance || 0);
+    const curB = getCurrentLiveBalance();
 
     const entryObj = {
       id: newId,
