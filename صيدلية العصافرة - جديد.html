@@ -15248,61 +15248,124 @@ function attDateOffset(days) {
   return localDateStr(d);
 }
 
-// ── حضور مفتوح من قبل أمس أو أقدم → حجب كامل ──
-// (شيفت المساء يسمح بانصراف في اليوم التالي مباشرة = أمس فقط مسموح)
-// ── دالة مشتركة: كل جلسات الموظف المفتوحة (حضور بلا انصراف) ──
-function attGetUnmatchedSessions(name) {
+// ── حساب متوسط فترة العمل اليومية الحقيقية لكل موظف ──
+// يحسب من شفتاته المكتملة الطبيعية (بين 3 و 14 ساعة)، وإذا كان موظف جديد يرجع 8 ساعات كمعيار افتراضي
+function attGetEmployeeAvgShiftHours(name, recs = null) {
+  const pool = (recs || attRecords).filter(r => r.name === name);
+  if (!pool.length) return 8.0;
+
+  const byDt = pool.map(r => ({ ...r, _dt: new Date(r.date + 'T' + r.time) })).sort((a,b) => a._dt - b._dt);
+  const ins = byDt.filter(r => r.type === 'حضور');
+  const outs = byDt.filter(r => r.type === 'انصراف');
+  const used = new Set();
+  const validDurations = [];
+
+  ins.forEach(inR => {
+    const outR = outs.find(o => !used.has(o.id) && o._dt > inR._dt && (o._dt - inR._dt) <= 16 * 3600000);
+    if (outR) {
+      used.add(outR.id);
+      const hrs = (outR._dt - inR._dt) / 3600000;
+      if (hrs >= 3 && hrs <= 14) {
+        validDurations.push(hrs);
+      }
+    }
+  });
+
+  if (validDurations.length > 0) {
+    const sum = validDurations.reduce((a, b) => a + b, 0);
+    const avg = sum / validDurations.length;
+    return Number(avg.toFixed(1));
+  }
+  return 8.0;
+}
+
+// ── فحص الجلسة النشطة حالياً (حاضر الآن ومستمر في عمله) ──
+function attGetActiveLiveSession(name) {
   const allSess = attBuildSessions(attRecords.filter(r => r.name === name));
-  return allSess.filter(s => !s.outTime && (s.isLive || s.error === 'لم يسجل الانصراف'));
+  return allSess.find(s => s.isLive && s.inTime && !s.outTime) || null;
 }
 
-// ── نفس اليوم: حضور مفتوح → حجب (منع الدخول مرتين) ──
-function attGetTodayDoubleBlock(name) {
-  const today = localDateStr(new Date());
-  return attGetUnmatchedSessions(name).find(s => s.date === today) || null;
+// ── فحص الشفتات السابقة المفتوحة التي نسي الموظف انصرافها ──
+function attGetUnclosedOrphanedSessions(name) {
+  const allSess = attBuildSessions(attRecords.filter(r => r.name === name));
+  return allSess.filter(s => !s.isLive && s.inTime && !s.outId && s.inRec);
 }
 
-// ── قبل يومين أو أكثر: حضور مفتوح → حجب ──
-function attGetBlockingMissing(name) {
-  const beforeYesterday = attDateOffset(-2);
-  return attGetUnmatchedSessions(name).find(s => s.date <= beforeYesterday) || null;
+// ── إقفال الشفت القديم المنسي تلقائياً في قاعدة البيانات بمتوسط ساعات العمل ──
+async function attAutoCloseSessionInDb(session) {
+  const name = session.name;
+  const inRec = session.inRec;
+  if (!inRec) return null;
+
+  const avgHrs = attGetEmployeeAvgShiftHours(name);
+  const inDt = new Date(inRec.date + 'T' + inRec.time);
+  const outDt = new Date(inDt.getTime() + avgHrs * 3600000);
+  const outDate = localDateStr(outDt);
+  const outTime = outDt.getHours().toString().padStart(2, '0') + ':' + outDt.getMinutes().toString().padStart(2, '0');
+
+  const empEntry = Object.values(users).find(u => u.name === name);
+  const empUid = empEntry ? empEntry.id : (name === me.name ? me.uid : inRec.uid);
+
+  const autoOutRec = {
+    id: crypto.randomUUID(),
+    uid: empUid,
+    name: name,
+    type: 'انصراف',
+    date: outDate,
+    time: outTime,
+    ts: outDt.getTime(),
+    notes: `[تقفيل تلقائي لنسيان الانصراف - بمتوسط العمل: ${avgHrs} س]`
+  };
+
+  try {
+    const { error: insErr } = await sb.from('attendance').insert(autoOutRec);
+    if (!insErr) {
+      attRecords.push(autoOutRec);
+      return autoOutRec;
+    }
+  } catch(e) {
+    console.warn('Auto-close attendance error:', e);
+  }
+  return null;
 }
 
-// ── أمس فقط: حضور مفتوح → تحذير (محتمل شيفت مساء) ──
-function attGetEveningShiftWarn(name) {
-  const yesterday = attDateOffset(-1);
-  return attGetUnmatchedSessions(name).find(s => s.date === yesterday) || null;
-}
-
+// ── التوجيه الذكي والتحذيرات عند اختيار اسم الموظف ──
 function attCheckWarn(name) {
   const wb = document.getElementById('attWarnBanner');
   if (!wb) return;
-  if (!name) { wb.style.display='none'; return; }
+  if (!name) { wb.style.display = 'none'; return; }
 
-  const todayDouble = attGetTodayDoubleBlock(name);
-  const blocking    = attGetBlockingMissing(name);
-  const evening     = attGetEveningShiftWarn(name);
+  const activeShift = attGetActiveLiveSession(name);
+  const selType = document.getElementById('attRecType');
 
-  if (todayDouble) {
+  if (activeShift) {
+    // الموظف حاضر الآن — يوجه الزر والقائمة تلقائياً لـ انصراف
+    if (selType && selType.value !== 'انصراف') {
+      selType.value = 'انصراف';
+      attTypeChange(selType);
+    }
     wb.style.display = 'block';
-    wb.style.borderColor = '#fc8181';
-    wb.style.background = 'rgba(229,62,62,.18)';
-    wb.style.color = '#fc8181';
-    wb.innerHTML = `🚫 ممنوع تسجيل الحضور — <strong>${esc(name)}</strong> سجّل حضوراً الساعة <strong>${esc(todayDouble.inTime||'—')}</strong> اليوم ولم يُسجِّل انصرافه بعد. سجّل الانصراف أولاً.`;
-  } else if (blocking) {
-    wb.style.display = 'block';
-    wb.style.borderColor = '#fc8181';
-    wb.style.background = 'rgba(229,62,62,.15)';
-    wb.style.color = '#fc8181';
-    wb.innerHTML = `🚫 محجوب — <strong>${esc(name)}</strong> لديه حضور مفتوح منذ <strong>${esc(blocking.date)}</strong> (${esc(blocking.inTime||'—')}) لم يُسجَّل انصرافه. يجب التقفيل أولاً.`;
-  } else if (evening) {
-    wb.style.display = 'block';
-    wb.style.borderColor = '#f6ad55';
-    wb.style.background = 'rgba(214,158,46,.12)';
-    wb.style.color = '#f6ad55';
-    wb.innerHTML = `⚠️ تنبيه — <strong>${esc(name)}</strong> لديه حضور أمس <strong>${esc(evening.date)}</strong> (${esc(evening.inTime||'—')}) بدون انصراف. إذا كان شيفت مساء يمكن المتابعة.`;
+    wb.style.borderColor = '#48bb78';
+    wb.style.background = 'rgba(72,187,120,.15)';
+    wb.style.color = '#48bb78';
+    wb.innerHTML = `🟢 <strong>${esc(name)}</strong> حاضر منذ الساعة <strong>${esc(activeShift.inTime)}</strong> (${activeShift.hours ? activeShift.hours.toFixed(1) + ' س' : ''}). الزر جاهز لتسجيل الانصراف.`;
   } else {
-    wb.style.display = 'none';
+    // الموظف غير حاضر — يوجه الزر والقائمة تلقائياً لـ حضور
+    if (selType && selType.value !== 'حضور') {
+      selType.value = 'حضور';
+      attTypeChange(selType);
+    }
+    const orphaned = attGetUnclosedOrphanedSessions(name);
+    if (orphaned.length > 0) {
+      const avg = attGetEmployeeAvgShiftHours(name);
+      wb.style.display = 'block';
+      wb.style.borderColor = '#f6ad55';
+      wb.style.background = 'rgba(214,158,46,.12)';
+      wb.style.color = '#f6ad55';
+      wb.innerHTML = `ℹ️ <strong>${esc(name)}</strong> لم يُسجَّل انصرافه يوم <strong>${esc(orphaned[0].date)}</strong> (${esc(orphaned[0].inTime||'—')}). سيقوم النظام بإقفال اليوم تلقائياً بمتوسط عمله (<strong>${avg} ساعة</strong>) فور تسجيل حضور اليوم دون أي تعطيل.`;
+    } else {
+      wb.style.display = 'none';
+    }
   }
 }
 
@@ -15357,35 +15420,41 @@ async function attRecord() {
     return;
   }
 
-  // ── فحص قبل تسجيل الانصراف: يجب وجود حضور مفتوح ──
+  // ── فحص قبل تسجيل الانصراف: ممنوع نهائياً تسجيل انصراف بدون حضور نشط ──
   if (type === 'انصراف') {
-    const openSession = attGetUnmatchedSessions(name).find(s => s.inTime); // حضور غير مكتمل
-    if (!openSession) {
-      toast(`🚫 لا يمكن تسجيل انصراف — ${name} لم يسجّل حضوراً بعد!`, false);
+    const activeShift = attGetActiveLiveSession(name);
+    if (!activeShift) {
+      toast(`🚫 لا يمكن تسجيل انصراف — "${name}" ليس لديه حضور مفتوح حالياً! سجّل الحضور أولاً.`, false);
+      const selType = document.getElementById('attRecType');
+      if (selType) { selType.value = 'حضور'; attTypeChange(selType); }
       attCheckWarn(name);
       return;
     }
   }
 
-  // ── فحص قبل تسجيل الحضور ──
+  // ── فحص ومعالجة قبل تسجيل الحضور ──
+  let autoClosedDays = [];
   if (type === 'حضور') {
-    // ١. نفس اليوم → حجب مطلق
-    const todayDouble = attGetTodayDoubleBlock(name);
-    if (todayDouble) {
+    // ١. هل الموظف مسجل حضور بالفعل حالياً في نفس الشيفت؟
+    const activeShift = attGetActiveLiveSession(name);
+    if (activeShift) {
+      toast(`⚠️ "${name}" مسجّل حضور بالفعل الساعة ${activeShift.inTime} (شغال حالياً). لتسجيل نهاية العمل، اختر "انصراف".`, false);
+      const selType = document.getElementById('attRecType');
+      if (selType) { selType.value = 'انصراف'; attTypeChange(selType); }
       attCheckWarn(name);
-      toast(`🚫 ممنوع — ${name} سجّل حضوراً الساعة ${todayDouble.inTime||'—'} اليوم ولم يسجّل انصرافه!`, false);
       return;
     }
-    // ٢. قبل يومين أو أكثر → حجب
-    const blocking = attGetBlockingMissing(name);
-    if (blocking) {
-      attCheckWarn(name);
-      toast(`🚫 محجوب — ${name} لديه حضور مفتوح منذ ${blocking.date} بدون انصراف. قفّل اليوم أولاً.`, false);
-      return;
+
+    // ٢. لو نسي يسجل انصراف يوم سابق: نقفل اليوم السابق تلقائياً بمتوسط ساعات عمله
+    const orphaned = attGetUnclosedOrphanedSessions(name);
+    if (orphaned.length > 0) {
+      for (const unclosed of orphaned) {
+        const closedRec = await attAutoCloseSessionInDb(unclosed);
+        if (closedRec) {
+          autoClosedDays.push(unclosed.date);
+        }
+      }
     }
-    // ٣. أمس → تحذير فقط (شيفت مساء محتمل)
-    const evening = attGetEveningShiftWarn(name);
-    if (evening) attCheckWarn(name);
   }
 
   const btn = document.getElementById('attRecBtn');
@@ -15414,7 +15483,11 @@ async function attRecord() {
 
     const lastEl=document.getElementById('attLastRec');
     if (lastEl) lastEl.textContent=`✅ آخر تسجيل: ${type} لـ "${name}" الساعة ${time}`;
-    toast(`✅ تم تسجيل ${type} لـ ${name} (${time})`);
+    if (autoClosedDays.length > 0) {
+      toast(`✅ تم تسجيل ${type} لـ ${name} (${time}) — (تم إقفال شيفت ${autoClosedDays.join(', ')} تلقائياً بمتوسط عمله)`);
+    } else {
+      toast(`✅ تم تسجيل ${type} لـ ${name} (${time})`);
+    }
     attCheckWarn(name); // تحديث حالة التحذير
   } catch(e) {
     toast('❌ خطأ في التسجيل: '+arErr(e), false);
@@ -15483,11 +15556,17 @@ function attBuildSessions(records) {
             inRec, outRec:null
           });
         } else {
+          // شيفت منتهي نسي الموظف انصرافه — يحسب تلقائياً بمتوسط ساعات العمل اليومية للموظف
+          const avgHrs = attGetEmployeeAvgShiftHours(name, records);
+          const outDt = new Date(inMs + avgHrs * 3600000);
+          const calcOutTime = outDt.getHours().toString().padStart(2, '0') + ':' + outDt.getMinutes().toString().padStart(2, '0');
           sessions.push({
-            name, date:inRec.date, outDate:null,
-            inTime:inRec.time, outTime:null,
-            hours:null, error:'لم يسجل الانصراف',
+            name, date:inRec.date, outDate:localDateStr(outDt),
+            inTime:inRec.time, outTime:calcOutTime,
+            hours: avgHrs,
+            error: null,
             isLive: false,
+            isAutoClosed: true,
             inId:inRec.id, outId:null,
             inRec, outRec:null
           });
@@ -15728,7 +15807,7 @@ function attRenderAdmin() {
             ${isAdm&&s.outId?`<button class="btn-edit" title="تعديل الانصراف" onclick="attOpenEdit('${s.outId}')">✏️</button>`:''}
           </td>
           <td>${s.isLive ? `<span style="color:#48bb78;font-weight:700;" title="محسوبة حتى الآن">${s.hours.toFixed(2)} س <span style="font-size:.72rem;">(الآن 🟢)</span></span>` : (s.hours!=null&&!s.error?s.hours.toFixed(2)+' س':'—')}</td>
-          <td>${s.isLive ? `<span style="background:rgba(72,187,120,.2);color:#48bb78;border:1px solid rgba(72,187,120,.35);padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:700;">🟢 حاضر الآن</span>` : (s.error?`<span class="att-err-badge">⚠️ ${esc(s.error)}</span>`:`<span class="at-sess-ok">✅</span>`)}</td>
+          <td>${s.isLive ? `<span style="background:rgba(72,187,120,.2);color:#48bb78;border:1px solid rgba(72,187,120,.35);padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:700;">🟢 حاضر الآن</span>` : (s.isAutoClosed ? `<span style="background:rgba(214,158,46,.15);border:1px solid rgba(214,158,46,.35);padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:700;color:#f6ad55;" title="تقفيل تلقائي لنسيان الانصراف">⏱ بمتوسط العمل (${s.hours.toFixed(1)}س)</span>` : (s.error?`<span class="att-err-badge">⚠️ ${esc(s.error)}</span>`:`<span class="at-sess-ok">✅</span>`))}</td>
           ${isAdm?`<td style="white-space:nowrap;min-width:120px;">
             ${s.inId?`<button class="btn-del" title="حذف الحضور" onclick="attDeleteRecord('${s.inId}')">🗑ح</button>`:''}
             ${s.outId?`<button class="btn-del" title="حذف الانصراف" onclick="attDeleteRecord('${s.outId}')">🗑ا</button>`:''}
@@ -16053,21 +16132,20 @@ function attRenderLiveDash(allSess, today) {
     }
   });
 
-  // موظفون بانصراف مفقود — نوعين: محجوب (2+ يوم) أو تحذير فقط (أمس = شيفت مساء محتمل)
-  const blockedList = [];   // 2+ يوم → حجب
-  const eveningList = [];   // أمس فقط → تحذير (شيفت مساء)
+  // موظفون لديهم انصراف مفقود — يُقفل تلقائياً بمتوسط ساعات عمل الموظف (لا حجب نهائياً)
+  const autoCloseList = [];
   attEmpNames.filter(isAttOn).forEach(n => {
-    const b = attGetBlockingMissing(n);
-    const e = attGetEveningShiftWarn(n);
-    if (b) {
-      blockedList.push({ name: n, date: b.date, inTime: b.inTime });
-      if (empStatus[n]) empStatus[n].missingOut = { ...b, blocking: true };
-    } else if (e) {
-      eveningList.push({ name: n, date: e.date, inTime: e.inTime });
-      if (empStatus[n]) empStatus[n].missingOut = { ...e, blocking: false };
+    const unclosed = attGetUnclosedOrphanedSessions(n);
+    if (unclosed.length > 0) {
+      const u = unclosed[0];
+      const avg = attGetEmployeeAvgShiftHours(n);
+      autoCloseList.push({ name: n, date: u.date, inTime: u.inTime, avgHours: avg });
+      if (empStatus[n]) empStatus[n].missingOut = { date: u.date, inTime: u.inTime, avgHours: avg };
     }
   });
-  const missingOutList = [...blockedList, ...eveningList];
+  const blockedList = [];
+  const eveningList = [];
+  const missingOutList = autoCloseList;
 
   const presentCount = Object.values(empStatus).filter(e => e.status === 'in' || e.status === 'done').length;
   const inCount      = Object.values(empStatus).filter(e => e.status === 'in').length;
@@ -16122,14 +16200,15 @@ function attRenderLiveDash(allSess, today) {
 
     <div class="att-live-cards">${statusCards}</div>
 
-    ${blockedList.length ? `
-    <div class="ch-card" style="margin-bottom:10px;border:1.5px solid rgba(252,129,129,.5);">
-      <div class="ch-t" style="color:#fc8181;">🚫 محجوبون — انصراف مفقود من يومين أو أكثر</div>
+    ${autoCloseList.length ? `
+    <div class="ch-card" style="margin-bottom:10px;border:1.5px solid rgba(246,173,85,.5);">
+      <div class="ch-t" style="color:#f6ad55;">⏱ شفتات سابقة قيد الإقفال التلقائي بمتوسط العمل</div>
       <div class="tbl-w"><table>
-        <thead><tr><th>الموظف</th><th>تاريخ المشكلة</th><th>وقت الحضور</th><th>الحالة</th></tr></thead>
-        <tbody>${blockedList.map(m=>`<tr style="background:rgba(229,62,62,.07);">
+        <thead><tr><th>الموظف</th><th>تاريخ الحضور</th><th>وقت الحضور</th><th>متوسط العمل</th><th>الحالة</th></tr></thead>
+        <tbody>${autoCloseList.map(m=>`<tr style="background:rgba(214,158,46,.07);">
           <td><strong>${esc(m.name)}</strong></td><td>${m.date}</td><td>${m.inTime||'—'}</td>
-          <td><span style="color:#fc8181;font-weight:700;">🚫 ممنوع من تسجيل حضور جديد</span></td>
+          <td><b>${m.avgHours} ساعة</b></td>
+          <td><span style="color:#68d391;font-weight:700;">✅ يُقفل تلقائياً بمتوسط عمله فور حضور اليوم</span></td>
         </tr>`).join('')}</tbody>
       </table></div>
     </div>` : ''}
