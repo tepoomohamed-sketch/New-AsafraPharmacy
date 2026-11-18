@@ -13848,6 +13848,8 @@ function openOverseasPaymentModal() {
   }
   const inpDate = document.getElementById('osPayInputDate');
   if (inpDate) inpDate.value = todayStr();
+  const inpMethod = document.getElementById('osPayInputMethod');
+  if (inpMethod) inpMethod.value = 'من العهدة الحالية';
   const inpNotes = document.getElementById('osPayInputNotes');
   if (inpNotes) inpNotes.value = '';
 
@@ -13870,7 +13872,7 @@ async function submitOverseasPayment(e) {
   }
 
   const date = document.getElementById('osPayInputDate')?.value || todayStr();
-  const method = document.getElementById('osPayInputMethod')?.value || 'نقد من الخزينة';
+  const method = document.getElementById('osPayInputMethod')?.value || 'من العهدة الحالية';
   const userNotes = (document.getElementById('osPayInputNotes')?.value || '').trim();
 
   const cycleKey = curOverseasCycleKey || getOverseasCycleInfo().cycleKey;
@@ -27024,10 +27026,9 @@ function triggerWorkerReminder(title, body) {
         <div class="fg" style="flex:1;margin-bottom:0;">
           <label style="font-size:0.82rem;font-weight:700;color:var(--text2);display:block;margin-bottom:4px;">🏦 طريقة الدفع</label>
           <select id="osPayInputMethod" class="fel" style="width:100%;">
-            <option value="نقد من الخزينة">💵 نقد من الخزينة</option>
+            <option value="من العهدة الحالية" selected>💵 من العهدة الحالية</option>
             <option value="تحويل بنكي / انستاباي">📱 تحويل بنكي / انستاباي</option>
             <option value="شيك">📑 شيك بنكي</option>
-            <option value="عهدة الصيدلي">👤 عهدة الصيدلي</option>
           </select>
         </div>
       </div>
